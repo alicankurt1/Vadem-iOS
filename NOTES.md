@@ -95,6 +95,14 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ders:** Ölçüm aletini de ölçmek gerekir. "0 sorun" çıktısı, aletin sorunları görebildiği kanıtlanmadıkça anlamsızdır. Bilinen bir hatayla (ana ekrandaki kontrast) aleti doğruladık: düzeltmeden sonra aynı ekranda 4 sorunun hepsi görünüyor.
 - **Süreç:** Altyapı düzeltmesi ürün issue'sunun branch'ine girmedi; reviewer'ın kapsam uyarısı üzerine ayrı bir PR oldu.
 
+### Koşu #10 — Sürüm etiketi kontrastı ve okunabilirliği
+
+- **Ne yapıldı:** Kök ekrandaki `v0.1.0` yazısı `.subheadline` + `.primary` stilinde `Version 0.1.0` oldu; `UICheckTests` her varyantta etiketin metnini (`^Version x.y.z$`), dokunulabilirliğini ve başlığın altında/daha küçük olduğunu kontrol ediyor (PR #12).
+- **UI check kapısı:** 1. turda `Label not human-readable — 'v0.1.0'` (önceden harness tarafından gizlenmişti). Ayrı bir `accessibilityLabel("Version …")` eklemek 2. turda yeni bir hata doğurdu: `Text clipped`. Denetim, görünen metin ile okunan etiket uyuşmayınca bunu kırpılma olarak sayıyor. Çözüm: görünen metnin kendisini okunabilir yapmak.
+- **Tasarım kararı:** `.secondary` açık modda kontrast denetimini geçemiyor; hiyerarşiyi renk yerine boyut ve konum taşıyor (minor bulgu olarak kabul edildi).
+- **Metrikler:** ~29 dk, 11 verify koşusu, 3 düzeltme turu; review 1 major / 2 minor / 3 nit, UI check 5 major / 1 minor / 2 nit (major'ların 3'ü harness hatasıydı, PR #11).
+- **Ders:** Erişilebilirlik etiketini görünen metinden farklı yapmak bir yamadır; asıl düzeltme görünen metni anlaşılır kılmaktır.
+
 ### Mülakat sorusu: Ekran görüntüsünü agent'a değerlendirtmek ile kural tabanlı denetim
 
 **Soru:** UI testlerinde ekran görüntüsünü bir agent'a değerlendirtmek ile `performAccessibilityAudit()` gibi kural tabanlı bir denetim arasındaki fark nedir? Birbirinin yerini tutar mı? Ölçüm aletinin kendisi hatalıyken bunu nasıl fark ettik?
