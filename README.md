@@ -10,7 +10,7 @@ This repository is also an experiment in **developing with an AI agent team**. A
 
 ## Status
 
-🚧 Phase 9 — Persistence (SwiftData). The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`.
+🚧 Phase 9 — Persistence (SwiftData). The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`.
 
 ## The pipeline
 
@@ -70,7 +70,8 @@ One row per pipeline run, from [`metrics/runs.jsonl`](metrics/runs.jsonl) (`scri
 | #10 | #12 | 29 | 11 (0) | 3 | 0 / 1 / 2 / 3 | 0 / 5 / 1 / 2 |
 | #15 | #16 | 32 | 7 (0) | 1 | 0 / 0 / 2 / 4 | — |
 | #19 | #20 | 5 | 4 (0) | 0 | 0 / 0 / 0 / 2 | — |
-| **5 runs** | | **76** | **33 (0)** | **5** | **0 / 1 / 6 / 11** | **0 / 5 / 1 / 2** |
+| #23 | #24 | 5 | 4 (0) | 0 | 0 / 0 / 0 / 2 | — |
+| **6 runs** | | **81** | **37 (0)** | **5** | **0 / 1 / 6 / 13** | **0 / 5 / 1 / 2** |
 <!-- metrics:end -->
 
 ## Using it
