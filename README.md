@@ -8,7 +8,7 @@ This repository is also an experiment in **developing with an AI agent team**: c
 
 ## Status
 
-🚧 Phase 3 — Review agent
+🚧 Phase 4 — UI check agent
 
 ## Stack
 
