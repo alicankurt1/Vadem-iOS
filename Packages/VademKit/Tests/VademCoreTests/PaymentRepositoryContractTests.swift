@@ -155,6 +155,32 @@ enum PaymentRepositoryContract {
         #expect(try repo.installments() == [lastYear, januaryA, januaryB, march])
     }
 
+    static func installmentsWithSameMonthAndTitleSortedByID(_ repo: any PaymentRepository) throws {
+        // Aynı ay, harf duyarsız olarak aynı başlık: eşitlik id ile bozulur (…1 < …2 < …3).
+        let card = try Fixture.card()
+        try repo.save(card)
+        let plan = try Fixture.plan(first: Fixture.month(2026, 4))
+        let second = try Fixture.installment("koltuk", id: Fixture.id(2), card: card.id, plan: plan)
+        let third = try Fixture.installment("KOLTUK", id: Fixture.id(3), card: card.id, plan: plan)
+        let first = try Fixture.installment("Koltuk", id: Fixture.id(1), card: card.id, plan: plan)
+        for item in [second, third, first] {
+            try repo.save(item)
+        }
+        #expect(try repo.installments() == [first, second, third])
+    }
+
+    static func installmentTitlesComparedCaseInsensitively(_ repo: any PaymentRepository) throws {
+        // Aynı ayda; harf duyarlı sıralama "Zımba"yı "ayna"dan önce koyardı.
+        let card = try Fixture.card()
+        try repo.save(card)
+        let plan = try Fixture.plan(first: Fixture.month(2026, 4))
+        let zimba = try Fixture.installment("Zımba", card: card.id, plan: plan)
+        let ayna = try Fixture.installment("ayna", card: card.id, plan: plan)
+        try repo.save(zimba)
+        try repo.save(ayna)
+        #expect(try repo.installments() == [ayna, zimba])
+    }
+
     static func savingInstallmentWithSameIDReplacesIt(_ repo: any PaymentRepository) throws {
         let card = try Fixture.card()
         try repo.save(card)
@@ -215,6 +241,33 @@ enum PaymentRepositoryContract {
             try repo.save(item)
         }
         #expect(try repo.subscriptions() == [bulut, muzik, video])
+    }
+
+    static func subscriptionsWithSameTitleSortedByID(_ repo: any PaymentRepository) throws {
+        // Harf duyarsız olarak aynı başlık: eşitlik id ile bozulur (…1 < …2 < …3).
+        let second = try Fixture.subscriptionItem("müzik", id: Fixture.id(2), card: nil)
+        let third = try Fixture.subscriptionItem("MÜZIK", id: Fixture.id(3), card: nil)
+        let first = try Fixture.subscriptionItem("Müzik", id: Fixture.id(1), card: nil)
+        for item in [third, second, first] {
+            try repo.save(item)
+        }
+        #expect(try repo.subscriptions() == [first, second, third])
+    }
+
+    static func subscriptionTitlesUseNonLocalizedCaseInsensitiveCompare(_ repo: any PaymentRepository) throws {
+        // Beklenen sıra yalnızca `String.caseInsensitiveCompare` (yerelleştirilmemiş) kuralından
+        // ayrı bir betikle hesaplandı: ayna, Çiçek, Işık, Ozan, Zımba, ılık.
+        // Türkçe yerel sıralama "ılık"ı "Işık"ın yanına koyardı; harf duyarlı sıralama "ayna"yı sona atardı.
+        let titles = ["Zımba", "ılık", "Çiçek", "Işık", "ayna", "Ozan"]
+        var saved: [String: SubscriptionItem] = [:]
+        for (offset, title) in titles.enumerated() {
+            let item = try Fixture.subscriptionItem(title, id: Fixture.id(offset + 1), card: nil)
+            saved[title] = item
+            try repo.save(item)
+        }
+        let expected = try ["ayna", "Çiçek", "Işık", "Ozan", "Zımba", "ılık"].map { try #require(saved[$0]) }
+        #expect(try repo.subscriptions().map(\.title) == expected.map(\.title))
+        #expect(try repo.subscriptions() == expected)
     }
 
     static func savingSubscriptionWithSameIDReplacesIt(_ repo: any PaymentRepository) throws {
@@ -354,6 +407,16 @@ struct PaymentRepositoryContractTests {
         try Contract.installmentsSortedByFirstMonthThenTitle(factory.make())
     }
 
+    @Test("Installments with the same month and title are sorted by id", arguments: RepositoryFactory.all)
+    func installmentsTieByID(factory: RepositoryFactory) throws {
+        try Contract.installmentsWithSameMonthAndTitleSortedByID(factory.make())
+    }
+
+    @Test("Installment titles are compared case-insensitively", arguments: RepositoryFactory.all)
+    func installmentTitlesCaseInsensitive(factory: RepositoryFactory) throws {
+        try Contract.installmentTitlesComparedCaseInsensitively(factory.make())
+    }
+
     @Test("Saving an installment with an existing id replaces it", arguments: RepositoryFactory.all)
     func installmentUpsert(factory: RepositoryFactory) throws {
         try Contract.savingInstallmentWithSameIDReplacesIt(factory.make())
@@ -382,6 +445,16 @@ struct PaymentRepositoryContractTests {
     @Test("Subscriptions are sorted by title", arguments: RepositoryFactory.all)
     func subscriptionsSorted(factory: RepositoryFactory) throws {
         try Contract.subscriptionsSortedByTitle(factory.make())
+    }
+
+    @Test("Subscriptions with the same title are sorted by id", arguments: RepositoryFactory.all)
+    func subscriptionsTieByID(factory: RepositoryFactory) throws {
+        try Contract.subscriptionsWithSameTitleSortedByID(factory.make())
+    }
+
+    @Test("Subscription titles use non-localized case-insensitive order", arguments: RepositoryFactory.all)
+    func subscriptionTitlesNonLocalized(factory: RepositoryFactory) throws {
+        try Contract.subscriptionTitlesUseNonLocalizedCaseInsensitiveCompare(factory.make())
     }
 
     @Test("Saving a subscription with an existing id replaces it", arguments: RepositoryFactory.all)
