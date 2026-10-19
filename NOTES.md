@@ -52,3 +52,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Araç kısıtı ve talimat kısıtı:** `tools:` listesi agent'ın neyi *yapabileceğini*, talimat neyi *yapması gerektiğini* belirler. "Test yazarı production koduna dokunmaz" bir talimat kuralı; review ve diff ile denetlenir.
 - **Kabul kriterleri sözleşmedir:** Issue şablonu (`.github/ISSUE_TEMPLATE/task.md`) her işi test edilebilir maddelere böler; iki agent da aynı sözleşmeden çalışır.
 - **Metrikler:** `metrics/runs.jsonl` her koşuyu bir satır JSON olarak tutar (süre, kırmızı verify sayısı, yakalanan hata). Vitrin için veri buradan gelecek.
+
+## Phase 3 — Review agent'ı
+
+- **Okuma yetkisi = araç kısıtı:** Reviewer'ın `tools:` listesinde `Edit`/`Write` yok; dosya düzenleyemez. Kodlayıcıdaki "test yazma" kuralı bir talimattı, buradaki kısıt araç seviyesinde. Not: `Bash` hâlâ var (git diff, verify için), yani teorik olarak komutla dosya değiştirebilir; tam izolasyon için ileride Bash'i daraltmak gerekir.
+- **Önem seviyeleri:** `blocker` / `major` / `minor` / `nit`. Seviye, pipeline'ın ne yapacağını belirler: blocker+major düzeltilmeden PR açılmaz; minor/nit PR açıklamasına yazılır.
+- **`dosya:satır` formatı:** Bulgu doğrulanabilir olmalı. "Şurası kötü" değil, "`Money.swift:42`, -0.005 girdisinde -0.00 döner" gibi.
+- **Döngü sınırı:** En fazla 2 review turu. Sınırsız döngü hem maliyet hem "agent'lar birbirini ikna etmeye çalışıyor" riski.
+- **Görünür mod (B modu):** Her rol ayrı bir oturumda, yan yana pencerede. Fark: ayrı oturumda `tools:` kısıtı uygulanmaz (oturum tam yetkili), rolü sadece talimat belirler. Subagent modu daha sıkı, görünür mod daha şeffaf.

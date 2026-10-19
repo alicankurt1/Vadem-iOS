@@ -46,6 +46,7 @@ Agents live in `.claude/agents/`. The main session is the **orchestrator**: it p
 | Coder | `.claude/agents/coder.md` | Production code only |
 | Test writer | `.claude/agents/test-writer.md` | Tests only, from acceptance criteria |
 | Verify | `scripts/verify.sh` (not an agent) | Pass/fail verdict |
+| Reviewer | `.claude/agents/reviewer.md` | Nothing (read-only tools); returns findings |
 
 When the user says "do #N" (until `/ship` exists in Phase 5):
 1. Read the issue, write a short plan (files, approach, risks) and show it to the user. Wait for "ok".
@@ -53,8 +54,12 @@ When the user says "do #N" (until `/ship` exists in Phase 5):
 3. **Coder** → implements and commits.
 4. **Test writer** → writes tests from the acceptance criteria and commits.
 5. **Verify** → run `scripts/verify.sh` yourself. On FAIL, send the output back to the coder (max 3 rounds), then rerun verify.
-6. Report to the user in short bullets; push and open the PR only when the user asks.
-7. Append one line to `metrics/runs.jsonl` (format in `metrics/README.md`).
+6. **Reviewer** → reviews `main...HEAD`. Give it the issue and branch only.
+7. **Fix loop** → on `CHANGES_REQUESTED`, send `blocker`/`major` findings (and cheap `minor`s) to the coder; test gaps go to the test writer. Verify again, then one re-review of the fix commits. Max 2 review rounds; anything left goes to the PR description.
+8. Report to the user in short bullets; push and open the PR only when the user asks. The PR description includes the review findings and their status (fixed / open).
+9. Append one line to `metrics/runs.jsonl` (format in `metrics/README.md`).
+
+**Visible mode** (on request): instead of subagents, each role runs as its own session in the desktop app (split view), started one at a time in this checkout. The session's brief says: "Read `.claude/agents/<role>.md` and act as that role" plus the issue and branch. The orchestrator relays only what the next role needs, same as with subagents.
 
 Rules:
 - Branch per issue: `issue/N-<slug>`. Commits: `<imperative summary> (#N)`.
