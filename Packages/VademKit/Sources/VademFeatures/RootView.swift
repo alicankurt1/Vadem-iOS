@@ -16,12 +16,12 @@ public struct RootView: View {
 
     // Sürüm etiketi: varsayılan .secondary stil açık temada kontrast denetimini
     // geçemiyor; .primary ile okunabilir kalırken hiyerarşiyi küçük font sağlıyor.
-    // VoiceOver "v0.1.0" yerine anlamlı bir ifade okusun diye ayrı erişilebilirlik etiketi.
+    // Görünen metin doğrudan okunabilir; ayrı erişilebilirlik etiketi yok, böylece
+    // VoiceOver ile ekrandaki metin aynı (denetim uyumsuzluğu "kırpılmış" sayıyor).
     private var versionLabel: Text {
-        Text("v\(VademCore.version)")
+        Text("Version \(VademCore.version)")
             .font(.subheadline)
             .foregroundStyle(.primary)
-            .accessibilityLabel(Text("Version \(VademCore.version)"))
     }
 }
 
