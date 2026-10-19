@@ -25,10 +25,14 @@ public struct InstallmentPlan: Sendable, Hashable {
     /// The month of the first payment.
     public let firstMonth: YearMonth
 
-    /// Creates a plan, or returns `nil` unless `count` is in ``supportedCounts``
-    /// and `total` is greater than zero.
+    /// Creates a plan, or returns `nil` unless `count` is in ``supportedCounts``,
+    /// `total` is greater than zero and the last payment month is within
+    /// ``YearMonth/supportedYears``.
     public init?(total: Money, count: Int, firstMonth: YearMonth) {
         guard InstallmentPlan.supportedCounts.contains(count), total > .zero else { return nil }
+        // Son taksit desteklenen son ayı aşarsa lastMonth/payments çökerdi; planı baştan reddediyoruz.
+        let lastSupported = YearMonth(year: YearMonth.supportedYears.upperBound, month: 12)!
+        guard firstMonth.months(until: lastSupported) >= count - 1 else { return nil }
         self.total = total
         self.count = count
         self.firstMonth = firstMonth
@@ -73,6 +77,8 @@ public struct InstallmentPlan: Sendable, Hashable {
 }
 
 // Çözümlemede de aynı kurallar geçerli: geçersiz plan (ör. count 0) reddedilir.
+// Hangi alanın hatalı olduğu tek başına belli olmayabilir (ör. firstMonth + count),
+// bu yüzden hata tek bir anahtara değil, planın tamamına bağlanır.
 extension InstallmentPlan: Codable {
     private enum CodingKeys: String, CodingKey {
         case total, count, firstMonth
@@ -84,10 +90,12 @@ extension InstallmentPlan: Codable {
         let count = try container.decode(Int.self, forKey: .count)
         let firstMonth = try container.decode(YearMonth.self, forKey: .firstMonth)
         guard let plan = InstallmentPlan(total: total, count: count, firstMonth: firstMonth) else {
-            throw DecodingError.dataCorruptedError(
-                forKey: .count,
-                in: container,
-                debugDescription: "Invalid installment plan: total \(total.amount), count \(count)"
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Invalid installment plan: total \(total.amount), count \(count), "
+                        + "firstMonth \(firstMonth.year)-\(firstMonth.month)"
+                )
             )
         }
         self = plan
