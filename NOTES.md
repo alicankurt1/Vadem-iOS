@@ -85,3 +85,12 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **`performAccessibilityAudit()` (iOS 17+):** Apple'ın deterministik erişilebilirlik denetimi: kontrast, eksik etiket, dokunma alanı, Dynamic Type, kırpılan metin. İlk koşuda gerçek bir bulgu verdi: açık modda gri `v0.1.0` yazısının kontrastı sınırda ("Contrast nearly passed").
 - **İki katman:** Denetim kural tabanlı sorunları bulur; agent ise kuralın göremediklerini (yanlış veri, garip boşluk, koyu modda kaybolan öğe) görür.
 - **Maliyet:** Simülatör koşusu ~2 dk; bu yüzden UI kontrol sadece diff UI'a dokunuyorsa çalışır.
+
+### Phase 4 düzeltmesi — Pipeline kendi ölçüm aletinde hata buldu
+
+#10 koşusunda UI check ve review agent'ları, ürünü değil **test altyapısını** yakaladı:
+- **Koyu mod hiç uygulanmıyordu:** `XCUIDevice.shared.appearance` bu ortamda etkisizdi; koyu ve açık görüntüler byte byte aynıydı. Çözüm: görünümü test dışından `xcrun simctl ui <udid> appearance dark` ile ayarlamak ve testi her görünüm için ayrı koşmak (`build-for-testing` bir kez, `test-without-building` iki kez). Test, `TEST_RUNNER_` önekiyle verilen ortam değişkeninden hangi görünümde olduğunu öğreniyor.
+- **Hatalar eksik sayılıyordu:** `xcresulttool get test-results summary` test başına sadece **ilk** hatayı veriyor. İlk Phase 4 koşusunda "1 sorun" dedik; gerçekte "Label not human-readable" de vardı ama gizlenmişti. Çözüm: `get test-results tests` ağacındaki her `Failure Message` düğümünü okumak.
+- **Zayıf koruma:** Koyu modu iki PNG'nin byte karşılaştırmasıyla kontrol etmek, saat değişirse yanlış yere geçer. Çözüm: durum çubuğundan uzak bir pikselin parlaklığına bakmak.
+- **Ders:** Ölçüm aletini de ölçmek gerekir. "0 sorun" çıktısı, aletin sorunları görebildiği kanıtlanmadıkça anlamsızdır. Bilinen bir hatayla (ana ekrandaki kontrast) aleti doğruladık: düzeltmeden sonra aynı ekranda 4 sorunun hepsi görünüyor.
+- **Süreç:** Altyapı düzeltmesi ürün issue'sunun branch'ine girmedi; reviewer'ın kapsam uyarısı üzerine ayrı bir PR oldu.
