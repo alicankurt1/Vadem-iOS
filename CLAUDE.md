@@ -71,11 +71,12 @@ Rules:
 - SwiftUI + Observation (`@Observable`), MVVM.
 - `Vadem/` — thin app target (entry point only).
 - `Packages/VademKit/` — local Swift package:
-  - `VademCore` — pure domain. Must not import UIKit, SwiftUI or SwiftData. Builds on macOS so `swift test` works.
-  - `VademFeatures` — SwiftUI screens and view models.
+  - `VademCore` — pure domain. Must not import UIKit, SwiftUI or SwiftData. Builds on macOS so `swift test` works. Defines **repository protocols** (what the app needs to save and load), never their storage.
+  - `VademPersistence` — the **only** module that imports SwiftData. `@Model` record classes, mapping to/from `VademCore` value types, and SwiftData implementations of the repository protocols. Schema is versioned from day one (`VersionedSchema` + `SchemaMigrationPlan`); never change a shipped schema version in place, add a new one. The store lives in the App Group container (`VademPersistence.appGroupIdentifier`), tests use an in-memory container.
+  - `VademFeatures` — SwiftUI screens and view models. Depends on repository protocols, not on SwiftData.
 - Swift 6 language mode, strict concurrency. **Default actor isolation is off**; write `@MainActor` explicitly.
 - Deployment target iOS 18. Newer APIs (e.g. FoundationModels, iOS 26) behind `@available`.
 - Money is `Decimal`, never `Double`.
 - Tests: Swift Testing for unit tests, XCUITest for UI tests.
 - No third-party dependencies without discussing first.
-- Build settings live in `Config/Shared.xcconfig`; keep target-level overrides in the `.pbxproj` empty.
+- Build settings live in `Config/Shared.xcconfig` (all targets) and `Config/App.xcconfig` (app target: includes Shared, adds `CODE_SIGN_ENTITLEMENTS = Config/Vadem.entitlements` with the App Group); keep target-level overrides in the `.pbxproj` empty.
