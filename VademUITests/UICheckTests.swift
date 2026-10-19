@@ -122,6 +122,7 @@ final class UICheckTests: XCTestCase {
 
     /// Ekranın alt kısmından, durum çubuğu ve içerikten uzak bir pikselin parlaklığıyla
     /// açık/koyu modu doğrular. Saat gibi değişen öğelerden etkilenmez.
+    @MainActor
     private func assertAppearance(of screenshot: XCUIScreenshot, is expected: Appearance, name: String) {
         guard let image = screenshot.image.cgImage,
               let brightness = Self.brightness(of: image, x: image.width / 2, y: image.height * 9 / 10)

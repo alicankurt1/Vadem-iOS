@@ -94,3 +94,25 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Zayıf koruma:** Koyu modu iki PNG'nin byte karşılaştırmasıyla kontrol etmek, saat değişirse yanlış yere geçer. Çözüm: durum çubuğundan uzak bir pikselin parlaklığına bakmak.
 - **Ders:** Ölçüm aletini de ölçmek gerekir. "0 sorun" çıktısı, aletin sorunları görebildiği kanıtlanmadıkça anlamsızdır. Bilinen bir hatayla (ana ekrandaki kontrast) aleti doğruladık: düzeltmeden sonra aynı ekranda 4 sorunun hepsi görünüyor.
 - **Süreç:** Altyapı düzeltmesi ürün issue'sunun branch'ine girmedi; reviewer'ın kapsam uyarısı üzerine ayrı bir PR oldu.
+
+### Mülakat sorusu: Ekran görüntüsünü agent'a değerlendirtmek ile kural tabanlı denetim
+
+**Soru:** UI testlerinde ekran görüntüsünü bir agent'a değerlendirtmek ile `performAccessibilityAudit()` gibi kural tabanlı bir denetim arasındaki fark nedir? Birbirinin yerini tutar mı? Ölçüm aletinin kendisi hatalıyken bunu nasıl fark ettik?
+
+**Cevap:**
+- **Kural tabanlı denetim:** Deterministik, hızlı, tekrarlanabilir. Kontrast oranı, eksik/anlamsız etiket, dokunma alanı, kırpılan metin, Dynamic Type gibi *ölçülebilir* kuralları kontrol eder. Aynı ekran her seferinde aynı sonucu verir; kapı (gate) olmaya uygundur.
+- **Agent değerlendirmesi:** Kuralın tanımlayamadığı şeyleri görür: görsel hiyerarşi, yanlış/placeholder veri, koyu modda "teknik olarak geçen ama kötü görünen" öğe, iki görüntünün aynı olması gibi tutarsızlıklar. Ama olasılıksaldır; kapı değil, danışman olarak kullanılır.
+- **Yerini tutmazlar, tamamlarlar:** Denetim "kural ihlali var mı?", agent "bu ekran doğru ve iyi mi?" sorusunu cevaplar. #10'da kontrast ve kırpılma bulgularını denetim, hiyerarşi zayıflığını ve koyu modun hiç uygulanmadığını agent buldu.
+- **Hatalı ölçüm aletini nasıl fark ettik:**
+  - Agent, kurala değil **tutarlılığa** baktı: koyu ve açık görüntünün MD5'i aynıydı. Kural tabanlı denetim bunu asla söylemezdi; "0 sorun" demeye devam ederdi.
+  - Agent ham veriye (result bundle) inip script'in özetiyle karşılaştırdı: script 1 hata dedi, bundle'da 4 vardı.
+  - Düzeltmeden sonra aleti **bilinen bir hatayla** doğruladık: eski ekranda beklenen 4 sorunun hepsi göründü, koyu görüntü gerçekten koyu çıktı.
+- **Ders:** Her kapının kendi doğrulaması olmalı (koyu modu piksel ile kontrol etmek gibi "aletin aleti"). Ve "yeşil" sonuç, aletin kırmızıyı görebildiği kanıtlanmadan güven vermez.
+
+## Phase 5 — Orkestratör (`/ship`) ve yazar agent'ı
+
+- **Skill = prosedür, agent = rol:** `/ship` bir agent değil; ana oturumun (orkestratör) izlediği adım adım prosedür. Agent'lar (coder, test-writer, reviewer, ui-checker, writer) bu prosedürün çağırdığı roller.
+- **Yetki kapsamı:** `/ship #N` yazmak, *sadece o issue için* agent commit'leri, branch push'u, PR ve metrik commit'i için izin demek. Merge yine insanda. İnsan kapıları: başta plan onayı, sonda merge.
+- **Eskalasyon kuralları:** Döngü sınırları (verify 3, review 2), fabrika bulgusu, rol dışı dosya değişikliği → durup sor. Otomasyonun "ne zaman durması gerektiğini" bilmesi, ne zaman devam edeceğini bilmesi kadar önemli.
+- **Yazar agent'ı (`/after-merge #P`):** Merge'den sonra CHANGELOG (kullanıcı gözüyle ne değişti), README (sadece görünür değişiklik varsa) ve NOTES'u (koşudan bir ders çıktıysa) günceller. Ayrı bir `docs/pr-P` branch'inde küçük bir PR açar. Neden merge sonrası? Dokümanın anlattığı şey, gerçekten `main`'e girmiş olan kod olmalı.
+- **Fabrika ayrımı kurala dönüştü:** #10'daki ders artık `/ship` prosedüründe yazılı: altyapı bulgusu issue branch'inde düzeltilmez.
