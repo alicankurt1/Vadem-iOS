@@ -124,3 +124,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Eskalasyon kuralları:** Döngü sınırları (verify 3, review 2), fabrika bulgusu, rol dışı dosya değişikliği → durup sor. Otomasyonun "ne zaman durması gerektiğini" bilmesi, ne zaman devam edeceğini bilmesi kadar önemli.
 - **Yazar agent'ı (`/after-merge #P`):** Merge'den sonra CHANGELOG (kullanıcı gözüyle ne değişti), README (sadece görünür değişiklik varsa) ve NOTES'u (koşudan bir ders çıktıysa) günceller. Ayrı bir `docs/pr-P` branch'inde küçük bir PR açar. Neden merge sonrası? Dokümanın anlattığı şey, gerçekten `main`'e girmiş olan kod olmalı.
 - **Fabrika ayrımı kurala dönüştü:** #10'daki ders artık `/ship` prosedüründe yazılı: altyapı bulgusu issue branch'inde düzeltilmez.
+
+### Koşu #15 — Taksit planı ve yuvarlama kararı (ADR-0001)
+
+- **Ne yapıldı:** `VademCore`'a `InstallmentPlan` eklendi: toplam tutarı 1–36 aylık taksite böler; ödeme takvimi saklanmaz, `firstMonth`'tan hesaplanır. İlk `/ship` koşusu (test yazarı görünür oturumda, coder ve reviewer subagent olarak) (PR #16).
+- **Tasarım kararı (ADR-0001):** Her taksit toplam / adet, kuruşa **aşağı** yuvarlanır; artan kuruşlar **ilk** taksite eklenir (`1000.00 / 3 → 333.34, 333.33, 333.33`). Toplam her zaman tam tutar. Artanı son taksite koymak da aynı derecede doğruydu ama Türk kart ekstrelerinde daha az tanıdık olduğu için reddedildi.
+- **Review kapısı:** 9999-12'ye yakın başlayan bir plan oluşturulabiliyor (ya da JSON'dan çözülebiliyor), sonra `lastMonth` / `payments` çöküyordu. Kriterlerde olmayan bu sınırı testler değil review yakaladı; init'e "son taksit 9999-12'den sonra olamaz" kuralı eklendi. Ayrıca geçersiz JSON'un reddedildiğini gösteren test eksikti.
+- **Metrikler:** ~32 dk, 7 verify koşusu, 1 düzeltme turu; review 0 blocker / 0 major / 2 minor / 4 nit (2 nit açık bırakıldı), UI check atlandı (sadece domain).
+- **Ders:** #7'deki yıl sınırı dersi tekrarlandı: bir tipin desteklediği aralık, onu kullanan her yeni tipte yeniden sınanmalı. Decoding de failable init'ten geçmeli; yoksa doğrulama JSON yolundan atlatılır.
