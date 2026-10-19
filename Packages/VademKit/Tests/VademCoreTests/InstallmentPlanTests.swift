@@ -215,8 +215,8 @@ struct InstallmentPlanTests {
         for total in [1, 2, 5, 99, 100, 101, 33_334, 100_003] {
             let plan = try #require(InstallmentPlan(total: kurus(total), count: count, firstMonth: ym(2026, 1)))
             for payment in plan.payments {
-                // Money(amount) kuruşa yuvarlar; tam kuruş bir tutar değişmemeli.
-                #expect(Money(payment.amount.amount) == payment.amount)
+                // Bağımsız kontrol: tutar × 100 tamsayı olmalı (en fazla iki ondalık hane).
+                #expect(isWholeKurus(payment.amount.amount), "amount \(payment.amount.amount)")
                 #expect(!payment.amount.isNegative)
             }
         }
@@ -291,6 +291,82 @@ struct InstallmentPlanTests {
         #expect(decoded.plan.firstMonth == first)
         #expect(decoded.plan.payments == plan.payments)
     }
+
+    // MARK: - Desteklenen yıl aralığı (son ay 9999-12'yi geçemez)
+
+    @Test(
+        "Accepts plans whose last installment is at most 9999-12",
+        arguments: [
+            (ym(9999, 12), 1),
+            (ym(9999, 1), 12),
+            (ym(9999, 11), 2),
+            (ym(9998, 1), 24),
+            (ym(9997, 1), 36),
+        ]
+    )
+    func acceptsPlansEndingByLastSupportedMonth(first: YearMonth, count: Int) throws {
+        let plan = try #require(InstallmentPlan(total: money("100.00"), count: count, firstMonth: first))
+        #expect(plan.lastMonth == ym(9999, 12) || plan.lastMonth < ym(9999, 12))
+        #expect(plan.payments.count == count)
+    }
+
+    @Test(
+        "Rejects plans whose last installment would fall after 9999-12",
+        arguments: [
+            (ym(9999, 12), 2),
+            (ym(9999, 1), 13),
+            (ym(9999, 12), 36),
+            (ym(9998, 1), 25),
+            (ym(9997, 2), 36),
+        ]
+    )
+    func rejectsPlansPastLastSupportedMonth(first: YearMonth, count: Int) {
+        #expect(InstallmentPlan(total: money("100.00"), count: count, firstMonth: first) == nil)
+    }
+
+    @Test("9999-01 with 12 installments ends exactly in 9999-12")
+    func lastSupportedYearExactFit() throws {
+        let plan = try #require(InstallmentPlan(total: money("1200.00"), count: 12, firstMonth: ym(9999, 1)))
+        #expect(plan.lastMonth == ym(9999, 12))
+        #expect(plan.payments.last?.month == ym(9999, 12))
+    }
+
+    // MARK: - Codable doğrulama
+
+    @Test("Decodes a hand-written valid plan JSON")
+    func decodesHandWrittenValidJSON() throws {
+        // Elle yazılan JSON'un şekli doğru olmalı; aksi halde aşağıdaki throw testleri anlamsız olur.
+        let json = #"{"plan":{"total":"1000.00","count":3,"firstMonth":"2026-11"}}"#
+        let decoded = try JSONDecoder().decode(Box.self, from: Data(json.utf8))
+        let expected = try #require(InstallmentPlan(total: money("1000.00"), count: 3, firstMonth: ym(2026, 11)))
+        #expect(decoded.plan == expected)
+    }
+
+    @Test(
+        "Decoding an invalid plan throws",
+        arguments: [
+            #"{"plan":{"total":"1000.00","count":0,"firstMonth":"2026-11"}}"#,
+            #"{"plan":{"total":"1000.00","count":37,"firstMonth":"2026-11"}}"#,
+            #"{"plan":{"total":"1000.00","count":-1,"firstMonth":"2026-11"}}"#,
+            #"{"plan":{"total":"0.00","count":3,"firstMonth":"2026-11"}}"#,
+            #"{"plan":{"total":"-1.00","count":3,"firstMonth":"2026-11"}}"#,
+            #"{"plan":{"total":"1000.00","count":2,"firstMonth":"9999-12"}}"#,
+            #"{"plan":{"total":"1000.00","count":13,"firstMonth":"9999-01"}}"#,
+        ]
+    )
+    func decodingInvalidPlanThrows(json: String) {
+        #expect(throws: (any Error).self) {
+            try JSONDecoder().decode(Box.self, from: Data(json.utf8))
+        }
+    }
+}
+
+// Tutar × 100 tamsayı mı? Money'nin yuvarlamasından bağımsız kontrol.
+private func isWholeKurus(_ value: Decimal) -> Bool {
+    var scaled = value * 100
+    var rounded = Decimal()
+    NSDecimalRound(&rounded, &scaled, 0, .plain)
+    return rounded == scaled
 }
 
 private extension Money {
