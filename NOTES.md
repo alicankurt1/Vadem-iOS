@@ -44,3 +44,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
   - `scripts/`, `.claude/` ve test silme değişiklikleri review'da "yüksek önem" olarak işaretlenir; ileride CI'da bu dosyalara dokunan PR'lar ayrıca uyarı verir.
   - Script CI'da da koşar (Phase 7): yerelde ne denirse densin, son söz temiz bir makinede.
   - Merge her zaman insanda: son kapı otomatik değil.
+
+## Phase 2 — Kodlayıcı + test yazarı agent'ları
+
+- **Subagent nedir:** `.claude/agents/<ad>.md` dosyası. Üstte frontmatter (ad, açıklama, araçlar, model), altta sistem talimatı. Ana oturum (orkestratör) bu agent'a bir görev verir; agent kendi bağlamında çalışır, sonunda tek bir rapor döner.
+- **Ayrı bağlam = bağımsızlık:** Test yazarı kodlayıcının düşünce sürecini görmez; sadece issue'yu ve public API'yi görür. Böylece testler kodu "aynalamaz", kabul kriterlerini doğrular.
+- **Araç kısıtı ve talimat kısıtı:** `tools:` listesi agent'ın neyi *yapabileceğini*, talimat neyi *yapması gerektiğini* belirler. "Test yazarı production koduna dokunmaz" bir talimat kuralı; review ve diff ile denetlenir.
+- **Kabul kriterleri sözleşmedir:** Issue şablonu (`.github/ISSUE_TEMPLATE/task.md`) her işi test edilebilir maddelere böler; iki agent da aynı sözleşmeden çalışır.
+- **Metrikler:** `metrics/runs.jsonl` her koşuyu bir satır JSON olarak tutar (süre, kırmızı verify sayısı, yakalanan hata). Vitrin için veri buradan gelecek.
