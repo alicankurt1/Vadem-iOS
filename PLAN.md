@@ -32,7 +32,7 @@ Principles:
 - [x] **Phase 1 — Verify script**: `scripts/verify.sh` (build + unit tests) and a `/verify` skill.
 - [x] **Phase 2 — Coder + test writer subagents**: end-to-end trial on a small issue.
 - [x] **Phase 3 — Review subagent**: findings format (severity, file:line), fix loop.
-- [ ] **Phase 4 — UI check subagent**: deterministic screenshot capture + agent evaluation.
+- [x] **Phase 4 — UI check subagent**: deterministic screenshot capture + agent evaluation.
 - [ ] **Phase 5 — Orchestrator**: `/ship #N` skill, PR creation, writer subagent.
 - [ ] **Phase 6 — Showcase**: first feature through the pipeline, screen recording, README diagram + metrics.
 - [ ] **Phase 7 — Cloud (optional)**: GitHub Actions CI + automatic PR review agent.

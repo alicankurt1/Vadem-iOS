@@ -49,18 +49,14 @@ Agents live in `.claude/agents/`. The main session is the **orchestrator**: it p
 | Verify | `scripts/verify.sh` (not an agent) | Pass/fail verdict |
 | Reviewer | `.claude/agents/reviewer.md` | Nothing (read-only tools); returns findings |
 | UI check | `.claude/agents/ui-checker.md` + `scripts/ui-check.sh` | Nothing; returns visual / a11y findings |
+| Writer | `.claude/agents/writer.md` | Docs only (`CHANGELOG.md`, `README.md`, `NOTES.md`), after merge |
 
-When the user says "do #N" (until `/ship` exists in Phase 5):
-1. Read the issue, write a short plan (files, approach, risks) and show it to the user. Wait for "ok".
-2. Branch: `issue/N-<slug>` from up-to-date `main`.
-3. **Coder** → implements and commits.
-4. **Test writer** → writes tests from the acceptance criteria and commits.
-5. **Verify** → run `scripts/verify.sh` yourself. On FAIL, send the output back to the coder (max 3 rounds), then rerun verify.
-6. **Reviewer** → reviews `main...HEAD`. Give it the issue and branch only.
-7. **Fix loop** → on `CHANGES_REQUESTED`, send `blocker`/`major` findings (and cheap `minor`s) to the coder; test gaps go to the test writer. Verify again, then one re-review of the fix commits. Max 2 review rounds; anything left goes to the PR description.
-8. **UI check** (only if the diff touches `Vadem/`, `VademFeatures` or `VademUITests/`) → ui-checker runs the capture and reports. `blocker`/`major` go through the same fix loop. Skip it and say so when the change is domain-only.
-9. Report to the user in short bullets; push and open the PR only when the user asks. The PR description includes review and UI findings with their status (fixed / open) and lists the screenshots.
-10. Append one line to `metrics/runs.jsonl` (format in `metrics/README.md`).
+**Commands** (skills in `.claude/skills/`):
+- `/ship #N` — the whole pipeline for issue N: plan (waits for "ok") → coder → test writer → verify → reviewer → UI check (if UI is touched) → fix loop (max 2 review rounds) → push + PR → metrics. The procedure lives in `.claude/skills/ship/SKILL.md`; "do #N" means the same.
+- `/after-merge #P` — after the human merges PR P: writer agent updates docs on `docs/pr-P` and opens a docs PR.
+- `/verify` — the gate on its own.
+
+Harness / factory problems found during a run (`scripts/`, `UICheckTests` plumbing, agent definitions) are never fixed on the issue branch; they get their own `phase-N/...` PR first.
 
 **Visible mode** (on request): instead of subagents, each role runs as its own session in the desktop app (split view), started one at a time in this checkout. The session's brief says: "Read `.claude/agents/<role>.md` and act as that role" plus the issue and branch. The orchestrator relays only what the next role needs, same as with subagents.
 
