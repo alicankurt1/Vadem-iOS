@@ -36,7 +36,7 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
   Last line is `VERIFY: PASS` / `VERIFY: FAIL`. Logs in `.build/verify/`, summary in `.build/verify/last-run.json`.
 - Never claim tests pass without a `VERIFY: PASS` on the current tree. Never weaken tests to get green.
 - The shared `Vadem` scheme lives in `Vadem.xcodeproj/xcshareddata/xcschemes/`.
-- **UI capture** (simulator, ~2 min): `scripts/ui-check.sh` runs `VademUITests/UICheckTests` and writes screenshots (light / dark / AX5 text) and the accessibility audit to `.build/ui-check/latest/`. Last line `UI-CHECK: PASS` / `UI-CHECK: FAIL`. Every new screen gets a `capture(screen:)` test in `UICheckTests.swift` (written by the test writer).
+- **UI capture** (simulator, ~1–2 min): `scripts/ui-check.sh` builds once, then runs `VademUITests/UICheckTests` in two passes (light, dark), setting the appearance with `simctl ui … appearance` (not `XCUIDevice.appearance`, which does not apply). It writes screenshots (light / dark / AX5 text), **every** test failure (accessibility audit + appearance check) to `.build/ui-check/latest/`. Last line `UI-CHECK: PASS` / `UI-CHECK: FAIL`. Every new screen gets a `capture(screen:)` test in `UICheckTests.swift` (written by the test writer).
 
 ## Agent pipeline
 
