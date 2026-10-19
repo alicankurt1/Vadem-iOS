@@ -2,6 +2,8 @@
 
 One JSON object per pipeline run in `runs.jsonl`, appended by the orchestrator at the end of a run.
 
+`scripts/metrics-report.sh` prints them as a Markdown table; `--update-readme` refreshes the table in the root README.
+
 | Field | Meaning |
 |---|---|
 | `date` | Run date (`YYYY-MM-DD`) |

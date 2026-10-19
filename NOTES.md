@@ -132,3 +132,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Review kapısı:** 9999-12'ye yakın başlayan bir plan oluşturulabiliyor (ya da JSON'dan çözülebiliyor), sonra `lastMonth` / `payments` çöküyordu. Kriterlerde olmayan bu sınırı testler değil review yakaladı; init'e "son taksit 9999-12'den sonra olamaz" kuralı eklendi. Ayrıca geçersiz JSON'un reddedildiğini gösteren test eksikti.
 - **Metrikler:** ~32 dk, 7 verify koşusu, 1 düzeltme turu; review 0 blocker / 0 major / 2 minor / 4 nit (2 nit açık bırakıldı), UI check atlandı (sadece domain).
 - **Ders:** #7'deki yıl sınırı dersi tekrarlandı: bir tipin desteklediği aralık, onu kullanan her yeni tipte yeniden sınanmalı. Decoding de failable init'ten geçmeli; yoksa doğrulama JSON yolundan atlatılır.
+
+## Phase 6 — Vitrin
+
+- **README bir vitrin:** Projeyi ilk kez gören biri 30 saniyede şunu anlamalı: ne yapıyor, pipeline nasıl akıyor (Mermaid diyagramı, GitHub'da render olur), roller ve kurallar, gerçekte ne yakalandı, sayılar.
+- **Metrikler veriden üretilir:** `scripts/metrics-report.sh --update-readme`, `metrics/runs.jsonl`'dan tabloyu yeniden yazar. Elle yazılan rakam eskir; script'le üretilen güncel kalır. README'deki `<!-- metrics:start -->` işaretleri script'in nereye yazacağını belirler.
+- **Hikâye > özellik listesi:** "5 agent'ım var" yerine "testler yeşilken reviewer şunu buldu" ve "test altyapısının kendisi bozuktu" gibi somut olaylar daha ikna edici.
+- **Dürüst sayılar:** 4 koşu, 71 dakika, 0 kırmızı verify (agent'lar kendi koşularında düzeltiyor), 5 düzeltme turu. Abartısız, kaynağı repoda.
