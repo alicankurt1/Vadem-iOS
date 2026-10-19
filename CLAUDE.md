@@ -37,6 +37,31 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
 - Never claim tests pass without a `VERIFY: PASS` on the current tree. Never weaken tests to get green.
 - The shared `Vadem` scheme lives in `Vadem.xcodeproj/xcshareddata/xcschemes/`.
 
+## Agent pipeline
+
+Agents live in `.claude/agents/`. The main session is the **orchestrator**: it plans, delegates to subagents, runs the gate and reports. Subagents cannot spawn other subagents.
+
+| Role | Definition | Writes |
+|---|---|---|
+| Coder | `.claude/agents/coder.md` | Production code only |
+| Test writer | `.claude/agents/test-writer.md` | Tests only, from acceptance criteria |
+| Verify | `scripts/verify.sh` (not an agent) | Pass/fail verdict |
+
+When the user says "do #N" (until `/ship` exists in Phase 5):
+1. Read the issue, write a short plan (files, approach, risks) and show it to the user. Wait for "ok".
+2. Branch: `issue/N-<slug>` from up-to-date `main`.
+3. **Coder** → implements and commits.
+4. **Test writer** → writes tests from the acceptance criteria and commits.
+5. **Verify** → run `scripts/verify.sh` yourself. On FAIL, send the output back to the coder (max 3 rounds), then rerun verify.
+6. Report to the user in short bullets; push and open the PR only when the user asks.
+7. Append one line to `metrics/runs.jsonl` (format in `metrics/README.md`).
+
+Rules:
+- Branch per issue: `issue/N-<slug>`. Commits: `<imperative summary> (#N)`.
+- Agents commit only on the issue branch; they never push, open PRs or merge.
+- Agent comments on GitHub start with their role, e.g. `**[Review agent]**`.
+- Coder and test writer get the issue, not each other's reasoning; independence is the point.
+
 ## Architecture
 
 - SwiftUI + Observation (`@Observable`), MVVM.

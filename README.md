@@ -8,7 +8,7 @@ This repository is also an experiment in **developing with an AI agent team**: c
 
 ## Status
 
-🚧 Phase 1 — Verify script
+🚧 Phase 2 — Coder + test writer agents
 
 ## Stack
 
