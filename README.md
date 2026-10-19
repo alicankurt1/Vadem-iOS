@@ -8,7 +8,7 @@ This repository is also an experiment in **developing with an AI agent team**: c
 
 ## Status
 
-🚧 Phase 0 — Foundation
+🚧 Phase 1 — Verify script
 
 ## Stack
 
@@ -25,10 +25,10 @@ cp Config/Local.xcconfig.example Config/Local.xcconfig   # set your DEVELOPMENT_
 open Vadem.xcodeproj
 ```
 
-Unit tests without a simulator:
+Verify (package unit tests + app build, no simulator):
 
 ```bash
-swift test --package-path Packages/VademKit
+scripts/verify.sh
 ```
 
 ## License

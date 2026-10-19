@@ -28,14 +28,14 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
 ## Build & test
 
 - Do **not** launch the simulator or run UI tests unless asked (exception: the UI check agent in the pipeline).
-- Compile check:
+- **Verification gate** (single source of truth for pass/fail; also available as `/verify`):
   ```
-  xcodebuild build -project Vadem.xcodeproj -scheme Vadem -destination 'generic/platform=iOS Simulator' -quiet
+  scripts/verify.sh            # package tests + app build-for-testing
+  scripts/verify.sh --skip-app # package tests only (fast inner loop)
   ```
-- Unit tests (business rules, no simulator):
-  ```
-  swift test --package-path Packages/VademKit
-  ```
+  Last line is `VERIFY: PASS` / `VERIFY: FAIL`. Logs in `.build/verify/`, summary in `.build/verify/last-run.json`.
+- Never claim tests pass without a `VERIFY: PASS` on the current tree. Never weaken tests to get green.
+- The shared `Vadem` scheme lives in `Vadem.xcodeproj/xcshareddata/xcschemes/`.
 
 ## Architecture
 
