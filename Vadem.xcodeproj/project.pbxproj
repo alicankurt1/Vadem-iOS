@@ -1,0 +1,586 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		D8A0000000000000000000A5 /* VademFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = D8A0000000000000000000A4 /* VademFeatures */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D89CF0C4308634860062F685 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D89CF0AE308634850062F685 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D89CF0B5308634850062F685;
+			remoteInfo = Vadem;
+		};
+		D89CF0CE308634860062F685 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D89CF0AE308634850062F685 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D89CF0B5308634850062F685;
+			remoteInfo = Vadem;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		D8A0000000000000000000A1 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
+		D89CF0B6308634850062F685 /* Vadem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vadem.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D89CF0C3308634860062F685 /* VademTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VademTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D89CF0CD308634860062F685 /* VademUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VademUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		D89CF0B8308634850062F685 /* Vadem */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Vadem;
+			sourceTree = "<group>";
+		};
+		D89CF0C6308634860062F685 /* VademTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VademTests;
+			sourceTree = "<group>";
+		};
+		D89CF0D0308634860062F685 /* VademUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VademUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D89CF0B3308634850062F685 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D8A0000000000000000000A5 /* VademFeatures in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89CF0C0308634860062F685 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89CF0CA308634860062F685 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D8A0000000000000000000A2 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				D8A0000000000000000000A1 /* Shared.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		D89CF0AD308634850062F685 = {
+			isa = PBXGroup;
+			children = (
+				D8A0000000000000000000A2 /* Config */,
+				D89CF0B8308634850062F685 /* Vadem */,
+				D89CF0C6308634860062F685 /* VademTests */,
+				D89CF0D0308634860062F685 /* VademUITests */,
+				D89CF0B7308634850062F685 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D89CF0B7308634850062F685 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D89CF0B6308634850062F685 /* Vadem.app */,
+				D89CF0C3308634860062F685 /* VademTests.xctest */,
+				D89CF0CD308634860062F685 /* VademUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D89CF0B5308634850062F685 /* Vadem */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D89CF0D7308634860062F685 /* Build configuration list for PBXNativeTarget "Vadem" */;
+			buildPhases = (
+				D89CF0B2308634850062F685 /* Sources */,
+				D89CF0B3308634850062F685 /* Frameworks */,
+				D89CF0B4308634850062F685 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D89CF0B8308634850062F685 /* Vadem */,
+			);
+			name = Vadem;
+			packageProductDependencies = (
+				D8A0000000000000000000A4 /* VademFeatures */,
+			);
+			productName = Vadem;
+			productReference = D89CF0B6308634850062F685 /* Vadem.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D89CF0C2308634860062F685 /* VademTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D89CF0DA308634860062F685 /* Build configuration list for PBXNativeTarget "VademTests" */;
+			buildPhases = (
+				D89CF0BF308634860062F685 /* Sources */,
+				D89CF0C0308634860062F685 /* Frameworks */,
+				D89CF0C1308634860062F685 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D89CF0C5308634860062F685 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D89CF0C6308634860062F685 /* VademTests */,
+			);
+			name = VademTests;
+			packageProductDependencies = (
+			);
+			productName = VademTests;
+			productReference = D89CF0C3308634860062F685 /* VademTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D89CF0CC308634860062F685 /* VademUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D89CF0DD308634860062F685 /* Build configuration list for PBXNativeTarget "VademUITests" */;
+			buildPhases = (
+				D89CF0C9308634860062F685 /* Sources */,
+				D89CF0CA308634860062F685 /* Frameworks */,
+				D89CF0CB308634860062F685 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D89CF0CF308634860062F685 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D89CF0D0308634860062F685 /* VademUITests */,
+			);
+			name = VademUITests;
+			packageProductDependencies = (
+			);
+			productName = VademUITests;
+			productReference = D89CF0CD308634860062F685 /* VademUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D89CF0AE308634850062F685 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2610;
+				LastUpgradeCheck = 2610;
+				TargetAttributes = {
+					D89CF0B5308634850062F685 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
+					D89CF0C2308634860062F685 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = D89CF0B5308634850062F685;
+					};
+					D89CF0CC308634860062F685 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = D89CF0B5308634850062F685;
+					};
+				};
+			};
+			buildConfigurationList = D89CF0B1308634850062F685 /* Build configuration list for PBXProject "Vadem" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D89CF0AD308634850062F685;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D8A0000000000000000000A3 /* XCLocalSwiftPackageReference "Packages/VademKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D89CF0B7308634850062F685 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D89CF0B5308634850062F685 /* Vadem */,
+				D89CF0C2308634860062F685 /* VademTests */,
+				D89CF0CC308634860062F685 /* VademUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D89CF0B4308634850062F685 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89CF0C1308634860062F685 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89CF0CB308634860062F685 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D89CF0B2308634850062F685 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89CF0BF308634860062F685 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89CF0C9308634860062F685 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D89CF0C5308634860062F685 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D89CF0B5308634850062F685 /* Vadem */;
+			targetProxy = D89CF0C4308634860062F685 /* PBXContainerItemProxy */;
+		};
+		D89CF0CF308634860062F685 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D89CF0B5308634850062F685 /* Vadem */;
+			targetProxy = D89CF0CE308634860062F685 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		D89CF0D5308634860062F685 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D8A0000000000000000000A1 /* Shared.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D89CF0D6308634860062F685 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D8A0000000000000000000A1 /* Shared.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		D89CF0D8308634860062F685 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.Vadem;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D89CF0D9308634860062F685 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.Vadem;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		D89CF0DB308634860062F685 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.VademTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vadem.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vadem";
+			};
+			name = Debug;
+		};
+		D89CF0DC308634860062F685 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.VademTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vadem.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vadem";
+			};
+			name = Release;
+		};
+		D89CF0DE308634860062F685 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.VademUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Vadem;
+			};
+			name = Debug;
+		};
+		D89CF0DF308634860062F685 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.VademUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Vadem;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D89CF0B1308634850062F685 /* Build configuration list for PBXProject "Vadem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D89CF0D5308634860062F685 /* Debug */,
+				D89CF0D6308634860062F685 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D89CF0D7308634860062F685 /* Build configuration list for PBXNativeTarget "Vadem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D89CF0D8308634860062F685 /* Debug */,
+				D89CF0D9308634860062F685 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D89CF0DA308634860062F685 /* Build configuration list for PBXNativeTarget "VademTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D89CF0DB308634860062F685 /* Debug */,
+				D89CF0DC308634860062F685 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D89CF0DD308634860062F685 /* Build configuration list for PBXNativeTarget "VademUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D89CF0DE308634860062F685 /* Debug */,
+				D89CF0DF308634860062F685 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D8A0000000000000000000A3 /* XCLocalSwiftPackageReference "Packages/VademKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/VademKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D8A0000000000000000000A4 /* VademFeatures */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VademFeatures;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D89CF0AE308634850062F685 /* Project object */;
+}

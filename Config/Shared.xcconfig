@@ -1,0 +1,15 @@
+// Shared build settings, applied at project level to every target.
+// Target-level settings in the .pbxproj must stay empty so these values win.
+
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
+
+// Swift 6 language mode, strict concurrency.
+SWIFT_VERSION = 6.0
+SWIFT_STRICT_CONCURRENCY = complete
+// Default actor isolation is OFF: @MainActor is written explicitly.
+SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated
+SWIFT_APPROACHABLE_CONCURRENCY = YES
+SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
+
+// Local, git-ignored overrides (DEVELOPMENT_TEAM etc.).
+#include? "Local.xcconfig"
