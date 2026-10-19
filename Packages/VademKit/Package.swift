@@ -8,13 +8,17 @@ let package = Package(
     platforms: [.iOS(.v18), .macOS(.v15)],
     products: [
         .library(name: "VademCore", targets: ["VademCore"]),
+        .library(name: "VademPersistence", targets: ["VademPersistence"]),
         .library(name: "VademFeatures", targets: ["VademFeatures"]),
     ],
     targets: [
-        // Pure domain: no UIKit, no SwiftUI, no SwiftData.
+        // Pure domain: no UIKit, no SwiftUI, no SwiftData. Defines repository protocols.
         .target(name: "VademCore"),
-        .target(name: "VademFeatures", dependencies: ["VademCore"]),
+        // The only module that imports SwiftData; implements VademCore's repository protocols.
+        .target(name: "VademPersistence", dependencies: ["VademCore"]),
+        .target(name: "VademFeatures", dependencies: ["VademCore", "VademPersistence"]),
         .testTarget(name: "VademCoreTests", dependencies: ["VademCore"]),
+        .testTarget(name: "VademPersistenceTests", dependencies: ["VademPersistence"]),
     ],
     swiftLanguageModes: [.v6]
 )

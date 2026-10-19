@@ -1,0 +1,8 @@
+// App target only: shared settings plus app-specific signing.
+// Test targets use Shared.xcconfig (project level) without these entitlements.
+
+#include "Shared.xcconfig"
+
+// App Group shared with the widget and App Intents (Phase 13).
+// Must match VademPersistence.appGroupIdentifier.
+CODE_SIGN_ENTITLEMENTS = Config/Vadem.entitlements

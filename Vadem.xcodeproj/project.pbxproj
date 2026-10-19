@@ -31,6 +31,8 @@
 		D89CF0B6308634850062F685 /* Vadem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vadem.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D89CF0C3308634860062F685 /* VademTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VademTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D89CF0CD308634860062F685 /* VademUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VademUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8A0000000000000000000A6 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
+		D8A0000000000000000000A7 /* Vadem.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Vadem.entitlements; sourceTree = "<group>"; };
 		D8A0000000000000000000A1 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -102,7 +104,9 @@
 		D8A0000000000000000000A2 /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				D8A0000000000000000000A6 /* App.xcconfig */,
 				D8A0000000000000000000A1 /* Shared.xcconfig */,
+				D8A0000000000000000000A7 /* Vadem.entitlements */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -409,6 +413,7 @@
 		};
 		D89CF0D8308634860062F685 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D8A0000000000000000000A6 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -436,6 +441,7 @@
 		};
 		D89CF0D9308634860062F685 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D8A0000000000000000000A6 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

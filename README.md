@@ -10,7 +10,7 @@ This repository is also an experiment in **developing with an AI agent team**. A
 
 ## Status
 
-🚧 Phase 6 — Showcase. The pipeline is complete. Features (Phase 8+) go through it, starting with the domain model.
+🚧 Phase 9 — Persistence (SwiftData). The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`.
 
 ## The pipeline
 

@@ -139,3 +139,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Metrikler veriden üretilir:** `scripts/metrics-report.sh --update-readme`, `metrics/runs.jsonl`'dan tabloyu yeniden yazar. Elle yazılan rakam eskir; script'le üretilen güncel kalır. README'deki `<!-- metrics:start -->` işaretleri script'in nereye yazacağını belirler.
 - **Hikâye > özellik listesi:** "5 agent'ım var" yerine "testler yeşilken reviewer şunu buldu" ve "test altyapısının kendisi bozuktu" gibi somut olaylar daha ikna edici.
 - **Dürüst sayılar:** 4 koşu, 71 dakika, 0 kırmızı verify (agent'lar kendi koşularında düzeltiyor), 5 düzeltme turu. Abartısız, kaynağı repoda.
+
+## Phase 9 — Kalıcılık temeli (fabrika kısmı)
+
+- **Neden ayrı modül:** `VademPersistence` SwiftData'yı import eden tek modül. `VademCore` saf kalıyor; repository protokolleri Core'da, uygulamaları Persistence'ta. Ekranlar protokolü tanır, SwiftData'yı tanımaz (**DIP**). Testlerde sahte depo, uygulamada SwiftData.
+- **Domain struct, kayıt sınıfı ayrı:** SwiftData `@Model` sınıf ister; domain tiplerimiz değer tipi (`struct`, `Sendable`). Aradaki dönüşüm (mapping) Persistence'ta yapılır, domain tipleri depolamaya göre şekil değiştirmez.
+- **İlk günden versiyonlu şema:** `VersionedSchema V1` + `SchemaMigrationPlan`. Yayınlanmış bir şema yerinde değiştirilmez, yeni versiyon eklenir; yoksa kullanıcı verisi güncellemede kaybolabilir.
+- **App Group:** Veri baştan `group.com.alicankurt.Vadem` container'ında. Widget ve Siri (Phase 13) aynı veriyi okuyacak; sonradan taşımak migration demek.
+- **Hedefe özel xcconfig:** Entitlements sadece uygulama hedefinde olmalı (test bundle'larında değil). `App.xcconfig`, `Shared.xcconfig`'i include edip sadece uygulamaya `CODE_SIGN_ENTITLEMENTS` ekliyor.
