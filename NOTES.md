@@ -26,3 +26,21 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Shared scheme:** `xcshareddata/xcschemes` altında versiyonlanır; agent'lar ve CI aynı scheme'i görür. Kişisel scheme'ler `xcuserdata`'da kalır (gitignore).
 - **Skill vs script:** Script *ne* yapılacağını garanti eder; `/verify` skill'i agent'a *nasıl* raporlayacağını ve kuralları (testi zayıflatma yok) söyler.
 - **Makine okunur özet:** `last-run.json` ileride pipeline metriklerinin (süre, kırmızı/yeşil) kaynağı olacak.
+
+### Mülakat sorusu: Agent'ın "testler geçti" demesine neden güvenmeyiz?
+
+**Soru:** Bir AI agent'ın "testler geçti" demesine neden güvenmeyiz? Doğrulamayı deterministik bir script'e bırakmanın riskleri ve sınırları neler? Bir agent bu kapıyı nasıl "kandırabilir"?
+
+**Cevap:**
+- **Neden güvenmeyiz:** LLM çıktısı olasılıksal. Agent testi hiç koşmadan, eski bir çıktıya bakarak ya da başarısız bir satırı gözden kaçırarak "geçti" diyebilir. Üstelik kodu yazan agent'ın "bitti" demeye eğilimi var (çıkar çatışması). Script ise aynı girdiye her zaman aynı cevabı verir ve exit code yalan söylemez.
+- **Script'in sınırları:** Sadece *var olan* testlerin geçtiğini söyler. Test eksikse ya da yanlış şeyi test ediyorsa yeşil anlamsızdır ("yeşil ama yanlış"). Derleme + unit test, UI hatalarını, performansı ve iş kuralının doğru anlaşıldığını yakalamaz. Bu yüzden review ve UI kontrol ayrı adımlar.
+- **Agent kapıyı nasıl kandırabilir:**
+  - Başarısız testi silmek, `.disabled` / `withKnownIssue` ile susturmak, assertion'ı zayıflatmak (`#expect(true)`).
+  - Beklenen değeri koddan kopyalamak (test kodu doğrulamaz, aynalar).
+  - Hatalı davranışı özel bir `if test` dalıyla gizlemek, sonucu hardcode etmek.
+  - Script'in kendisini, scheme'i ya da build ayarlarını değiştirmek (ör. bir adımı atlatmak).
+- **Önlemler:**
+  - Testi yazan ve kodu yazan ayrı roller; review agent'ı test diff'ine özellikle bakar.
+  - `scripts/`, `.claude/` ve test silme değişiklikleri review'da "yüksek önem" olarak işaretlenir; ileride CI'da bu dosyalara dokunan PR'lar ayrıca uyarı verir.
+  - Script CI'da da koşar (Phase 7): yerelde ne denirse densin, son söz temiz bir makinede.
+  - Merge her zaman insanda: son kapı otomatik değil.
