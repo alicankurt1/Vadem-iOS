@@ -4,14 +4,18 @@ import Foundation
 ///
 /// Installments and subscriptions are planned per month; this type is the key for that.
 public struct YearMonth: Sendable, Hashable {
-    /// The Gregorian year, e.g. `2026`.
+    /// The supported years. Every value fits the 4-digit `"YYYY-MM"` encoding.
+    public static let supportedYears: ClosedRange<Int> = 1...9999
+
+    /// The Gregorian year, in ``supportedYears``.
     public let year: Int
     /// The month, `1...12`.
     public let month: Int
 
-    /// Creates a value, or returns `nil` unless `month` is in `1...12`.
+    /// Creates a value, or returns `nil` unless `month` is in `1...12`
+    /// and `year` is in ``supportedYears``.
     public init?(year: Int, month: Int) {
-        guard (1...12).contains(month) else { return nil }
+        guard (1...12).contains(month), YearMonth.supportedYears.contains(year) else { return nil }
         self.year = year
         self.month = month
     }
@@ -19,25 +23,33 @@ public struct YearMonth: Sendable, Hashable {
     /// The month that contains `date` in `calendar`'s time zone.
     ///
     /// Only the calendar's time zone is used; the month is always Gregorian.
+    /// - Precondition: The date's year is in ``supportedYears``.
     public init(date: Date, calendar: Calendar) {
         // Gregorian dışı takvimlerde (ör. 13 aylı) ay numarası 1...12 dışına çıkabilir;
         // bu yüzden sadece saat dilimini alıp Gregoryen takvimle hesaplıyoruz.
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
-        let components = gregorian.dateComponents([.year, .month], from: date)
-        self.year = components.year!
-        self.month = components.month!
+        let components = gregorian.dateComponents([.era, .year, .month], from: date)
+        // Milattan önceki tarihlerde era 0 olur ve year geriye doğru sayar; bunları da aralık dışı sayıyoruz.
+        guard components.era == 1, let value = YearMonth(year: components.year!, month: components.month!) else {
+            preconditionFailure("Date is outside YearMonth.supportedYears: \(date)")
+        }
+        self = value
     }
 
     /// The month `months` after (or before, if negative) this one.
+    ///
+    /// - Precondition: The result's year is in ``supportedYears``;
+    ///   otherwise this traps with a clear message (it never wraps or clamps).
     public func adding(months: Int) -> YearMonth {
-        // Ayları tek bir sayıya çevirip aşağı yuvarlayan bölme ile geri ayırıyoruz;
-        // böylece negatif yönde de yıl geçişi doğru olur.
-        let total = index + months
-        let (quotient, remainder) = total.quotientAndRemainder(dividingBy: 12)
-        let year = remainder < 0 ? quotient - 1 : quotient
-        let month = (remainder < 0 ? remainder + 12 : remainder) + 1
-        return YearMonth(uncheckedYear: year, month: month)
+        // Taşmayı önce kontrol ediyoruz; sonuç aralık dışındaysa sessizce kırpmak yerine
+        // açık bir mesajla duruyoruz (yanlış aya ödeme planlamaktansa hata görünür olsun).
+        let (total, overflow) = index.addingReportingOverflow(months)
+        guard !overflow, YearMonth.indexRange.contains(total) else {
+            preconditionFailure("YearMonth \(year)-\(month) + \(months) months is outside supportedYears")
+        }
+        // Aralık kontrolünden sonra total pozitif; düz bölme yeterli.
+        return YearMonth(year: total / 12, month: total % 12 + 1)!
     }
 
     /// Signed number of months from this month to `other` (`2026-11 → 2027-02 = 3`).
@@ -63,14 +75,12 @@ public struct YearMonth: Sendable, Hashable {
     }
 
     // Sıfırdan başlayan ay sırası: karşılaştırma ve aritmetik için tek ölçek.
+    // Yıl aralığı sınırlı olduğu için bu hesap taşamaz.
     private var index: Int {
         year * 12 + (month - 1)
     }
 
-    private init(uncheckedYear year: Int, month: Int) {
-        self.year = year
-        self.month = month
-    }
+    private static let indexRange = (supportedYears.lowerBound * 12)...(supportedYears.upperBound * 12 + 11)
 }
 
 extension YearMonth: Comparable {
