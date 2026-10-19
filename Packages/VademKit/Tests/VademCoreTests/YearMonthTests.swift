@@ -250,6 +250,98 @@ struct YearMonthTests {
         }
     }
 
+    // MARK: - Desteklenen yıl aralığı (1...9999)
+
+    @Test("Supported years are 1...9999")
+    func supportedYears() {
+        #expect(YearMonth.supportedYears == 1...9999)
+    }
+
+    @Test("Init returns nil outside the supported years", arguments: [0, -1, 10000, Int.min, Int.max])
+    func initInvalidYear(year: Int) {
+        #expect(YearMonth(year: year, month: 1) == nil)
+        #expect(YearMonth(year: year, month: 12) == nil)
+    }
+
+    @Test("Init accepts the first and last supported year", arguments: [(1, 1), (1, 12), (9999, 1), (9999, 12)])
+    func initBoundaryYear(year: Int, month: Int) throws {
+        let value = try #require(YearMonth(year: year, month: month))
+        #expect(value.year == year)
+        #expect(value.month == month)
+    }
+
+    @Test(
+        "Round-trips exactly at the year boundaries",
+        arguments: [(ym(1, 1), "0001-01"), (ym(9999, 12), "9999-12")]
+    )
+    func roundTripBoundaries(value: YearMonth, text: String) throws {
+        let data = try JSONEncoder().encode(Box(month: value))
+        #expect(String(data: data, encoding: .utf8) == #"{"month":"\#(text)"}"#)
+        let decoded = try JSONDecoder().decode(Box.self, from: data)
+        #expect(decoded.month == value)
+    }
+
+    @Test("Decoding a year outside the supported range throws", arguments: ["0000-01", "10000-01"])
+    func decodeOutOfRangeYearThrows(text: String) throws {
+        let data = try JSONEncoder().encode(["month": text])
+        #expect(throws: (any Error).self) {
+            try JSONDecoder().decode(Box.self, from: data)
+        }
+    }
+
+    @Test(
+        "adding(months:) reaches the edges of the supported years",
+        arguments: [
+            (ym(9999, 11), 1, ym(9999, 12)),
+            (ym(1, 2), -1, ym(1, 1)),
+            (ym(9998, 12), 12, ym(9999, 12)),
+            (ym(2, 1), -12, ym(1, 1)),
+            (ym(1, 1), 9999 * 12 - 1, ym(9999, 12)),
+        ]
+    )
+    func addingToEdges(start: YearMonth, months: Int, expected: YearMonth) {
+        #expect(start.adding(months: months) == expected)
+    }
+
+    // Exit test'ler yalnızca macOS'ta var; iOS derlemesinde atlanır.
+    #if os(macOS)
+    @Test("adding(months:) traps past 9999-12")
+    func addingPastUpperBoundTraps() async {
+        await #expect(processExitsWith: .failure) {
+            _ = YearMonth(year: 9999, month: 12)!.adding(months: 1)
+        }
+    }
+
+    @Test("adding(months:) traps before 0001-01")
+    func addingPastLowerBoundTraps() async {
+        await #expect(processExitsWith: .failure) {
+            _ = YearMonth(year: 1, month: 1)!.adding(months: -1)
+        }
+    }
+    #endif
+
+    // MARK: - Gregoryen olmayan takvim
+
+    @Test(
+        "init(date:calendar:) yields the Gregorian month for non-Gregorian calendars",
+        arguments: [
+            ("2026-03-15T12:00:00Z", Calendar.Identifier.hebrew, "UTC", ym(2026, 3)),
+            ("2026-03-15T12:00:00Z", Calendar.Identifier.persian, "UTC", ym(2026, 3)),
+            ("2026-03-15T12:00:00Z", Calendar.Identifier.japanese, "UTC", ym(2026, 3)),
+            ("2026-03-15T12:00:00Z", Calendar.Identifier.islamicUmmAlQura, "UTC", ym(2026, 3)),
+            // Takvimin saat dilimi yine ayı belirler.
+            ("2026-03-31T23:30:00Z", Calendar.Identifier.persian, "Europe/Istanbul", ym(2026, 4)),
+            ("2026-01-01T05:00:00Z", Calendar.Identifier.hebrew, "Pacific/Honolulu", ym(2025, 12)),
+        ]
+    )
+    func initFromDateNonGregorian(
+        iso: String, identifier: Calendar.Identifier, timeZoneID: String, expected: YearMonth
+    ) throws {
+        var calendar = Calendar(identifier: identifier)
+        calendar.timeZone = try #require(TimeZone(identifier: timeZoneID))
+        #expect(YearMonth(date: try instant(iso), calendar: calendar) == expected)
+    }
+
     @Test("Decoding a non-string value throws")
     func decodeNonStringThrows() {
         let data = Data(#"{"month":202603}"#.utf8)
