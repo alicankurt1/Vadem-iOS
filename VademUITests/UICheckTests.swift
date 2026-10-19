@@ -45,23 +45,58 @@ final class UICheckTests: XCTestCase {
 
     @MainActor
     func testRootScreen() throws {
-        try capture(screen: "root") { _ in
-            // Kök ekran açılışta görünür; gezinme gerekmez.
+        try capture(screen: "root") { app, variant in
+            // Kök ekran açılışta görünür; gezinme gerekmez. Sürüm etiketi kontrolleri (#10).
+            Self.assertVersionLabel(in: app, name: "root__\(variant.name)")
         }
+    }
+
+    /// Sürüm etiketi görünür, "Version x.y.z" biçiminde, dokunulabilir ve başlığın altında,
+    /// başlıktan daha küçük olmalı (ikincil bilgi hiyerarşisi).
+    @MainActor
+    private static func assertVersionLabel(in app: XCUIApplication, name: String) {
+        let title = app.staticTexts["Vadem"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5), "[ui-check] \(name): 'Vadem' title not found")
+
+        let version = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Version ")).firstMatch
+        guard version.waitForExistence(timeout: 5) else {
+            XCTFail("[ui-check] \(name): version label ('Version …') not found")
+            return
+        }
+
+        // Etiketin tamamı eşleşmeli; önek/sonek ("v", fazladan metin) kabul edilmez.
+        let label = version.label
+        XCTAssertNotNil(
+            label.wholeMatch(of: /Version [0-9]+(\.[0-9]+)*/),
+            "[ui-check] \(name): version label '\(label)' does not match ^Version [0-9]+(\\.[0-9]+)*$"
+        )
+        XCTAssertTrue(version.isHittable, "[ui-check] \(name): version label is not hittable")
+
+        guard title.exists else { return }
+        let titleFrame = title.frame
+        let versionFrame = version.frame
+        XCTAssertGreaterThanOrEqual(
+            versionFrame.minY, titleFrame.maxY,
+            "[ui-check] \(name): version label top (\(versionFrame.minY)) is above title bottom (\(titleFrame.maxY))"
+        )
+        XCTAssertLessThan(
+            versionFrame.height, titleFrame.height,
+            "[ui-check] \(name): version label height (\(versionFrame.height)) is not smaller than title height (\(titleFrame.height))"
+        )
     }
 
     // MARK: - Helpers
 
-    /// Uygulamayı her varyantta açar, `navigate` ile ekrana gider, görüntü alır ve denetler.
+    /// Uygulamayı her varyantta açar, `navigate` ile (uygulama, varyant) ekrana gider, görüntü alır ve denetler.
     @MainActor
-    private func capture(screen: String, navigate: (XCUIApplication) -> Void) throws {
+    private func capture(screen: String, navigate: (XCUIApplication, Variant) -> Void) throws {
         for variant in Self.variants {
             let name = "\(screen)__\(variant.name)"
 
             let app = XCUIApplication()
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", variant.contentSize]
             app.launch()
-            navigate(app)
+            navigate(app, variant)
 
             let screenshot = app.screenshot()
             let attachment = XCTAttachment(screenshot: screenshot)
