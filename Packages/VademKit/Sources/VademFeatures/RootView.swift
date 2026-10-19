@@ -10,8 +10,16 @@ public struct RootView: View {
         ContentUnavailableView(
             "Vadem",
             systemImage: "creditcard",
-            description: Text("v\(VademCore.version)")
+            description: versionLabel
         )
+    }
+
+    // Sürüm etiketi: varsayılan .secondary stil açık temada kontrast denetimini
+    // geçemiyor; .primary ile okunabilir kalırken hiyerarşiyi küçük font sağlıyor.
+    private var versionLabel: Text {
+        Text("v\(VademCore.version)")
+            .font(.subheadline)
+            .foregroundStyle(.primary)
     }
 }
 
