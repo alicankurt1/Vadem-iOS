@@ -30,7 +30,7 @@ Principles:
 ### Pipeline (local)
 - [x] **Phase 0 — Foundation**: Xcode project, SwiftUI skeleton, Swift package modules, Swift 6 settings, docs, smoke test, `gh`.
 - [x] **Phase 1 — Verify script**: `scripts/verify.sh` (build + unit tests) and a `/verify` skill.
-- [ ] **Phase 2 — Coder + test writer subagents**: end-to-end trial on a small issue.
+- [x] **Phase 2 — Coder + test writer subagents**: end-to-end trial on a small issue.
 - [ ] **Phase 3 — Review subagent**: findings format (severity, file:line), fix loop.
 - [ ] **Phase 4 — UI check subagent**: deterministic screenshot capture + agent evaluation.
 - [ ] **Phase 5 — Orchestrator**: `/ship #N` skill, PR creation, writer subagent.
