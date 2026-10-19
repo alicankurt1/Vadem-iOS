@@ -28,10 +28,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		D8A0000000000000000000A1 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		D89CF0B6308634850062F685 /* Vadem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vadem.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D89CF0C3308634860062F685 /* VademTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VademTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D89CF0CD308634860062F685 /* VademUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VademUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8A0000000000000000000A1 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -78,14 +78,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		D8A0000000000000000000A2 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				D8A0000000000000000000A1 /* Shared.xcconfig */,
-			);
-			path = Config;
-			sourceTree = "<group>";
-		};
 		D89CF0AD308634850062F685 = {
 			isa = PBXGroup;
 			children = (
@@ -105,6 +97,14 @@
 				D89CF0CD308634860062F685 /* VademUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		D8A0000000000000000000A2 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				D8A0000000000000000000A1 /* Shared.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

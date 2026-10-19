@@ -27,7 +27,7 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
 
 ## Build & test
 
-- Do **not** launch the simulator or run UI tests unless asked (exception: the UI check agent in the pipeline).
+- Do **not** launch the simulator or run UI tests unless asked (exception: the UI check agent in the pipeline, via `scripts/ui-check.sh`).
 - **Verification gate** (single source of truth for pass/fail; also available as `/verify`):
   ```
   scripts/verify.sh            # package tests + app build-for-testing
@@ -36,6 +36,7 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
   Last line is `VERIFY: PASS` / `VERIFY: FAIL`. Logs in `.build/verify/`, summary in `.build/verify/last-run.json`.
 - Never claim tests pass without a `VERIFY: PASS` on the current tree. Never weaken tests to get green.
 - The shared `Vadem` scheme lives in `Vadem.xcodeproj/xcshareddata/xcschemes/`.
+- **UI capture** (simulator, ~2 min): `scripts/ui-check.sh` runs `VademUITests/UICheckTests` and writes screenshots (light / dark / AX5 text) and the accessibility audit to `.build/ui-check/latest/`. Last line `UI-CHECK: PASS` / `UI-CHECK: FAIL`. Every new screen gets a `capture(screen:)` test in `UICheckTests.swift` (written by the test writer).
 
 ## Agent pipeline
 
@@ -47,6 +48,7 @@ Agents live in `.claude/agents/`. The main session is the **orchestrator**: it p
 | Test writer | `.claude/agents/test-writer.md` | Tests only, from acceptance criteria |
 | Verify | `scripts/verify.sh` (not an agent) | Pass/fail verdict |
 | Reviewer | `.claude/agents/reviewer.md` | Nothing (read-only tools); returns findings |
+| UI check | `.claude/agents/ui-checker.md` + `scripts/ui-check.sh` | Nothing; returns visual / a11y findings |
 
 When the user says "do #N" (until `/ship` exists in Phase 5):
 1. Read the issue, write a short plan (files, approach, risks) and show it to the user. Wait for "ok".
@@ -56,8 +58,9 @@ When the user says "do #N" (until `/ship` exists in Phase 5):
 5. **Verify** → run `scripts/verify.sh` yourself. On FAIL, send the output back to the coder (max 3 rounds), then rerun verify.
 6. **Reviewer** → reviews `main...HEAD`. Give it the issue and branch only.
 7. **Fix loop** → on `CHANGES_REQUESTED`, send `blocker`/`major` findings (and cheap `minor`s) to the coder; test gaps go to the test writer. Verify again, then one re-review of the fix commits. Max 2 review rounds; anything left goes to the PR description.
-8. Report to the user in short bullets; push and open the PR only when the user asks. The PR description includes the review findings and their status (fixed / open).
-9. Append one line to `metrics/runs.jsonl` (format in `metrics/README.md`).
+8. **UI check** (only if the diff touches `Vadem/`, `VademFeatures` or `VademUITests/`) → ui-checker runs the capture and reports. `blocker`/`major` go through the same fix loop. Skip it and say so when the change is domain-only.
+9. Report to the user in short bullets; push and open the PR only when the user asks. The PR description includes review and UI findings with their status (fixed / open) and lists the screenshots.
+10. Append one line to `metrics/runs.jsonl` (format in `metrics/README.md`).
 
 **Visible mode** (on request): instead of subagents, each role runs as its own session in the desktop app (split view), started one at a time in this checkout. The session's brief says: "Read `.claude/agents/<role>.md` and act as that role" plus the issue and branch. The orchestrator relays only what the next role needs, same as with subagents.
 

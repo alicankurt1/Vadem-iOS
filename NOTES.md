@@ -60,3 +60,28 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **`dosya:satır` formatı:** Bulgu doğrulanabilir olmalı. "Şurası kötü" değil, "`Money.swift:42`, -0.005 girdisinde -0.00 döner" gibi.
 - **Döngü sınırı:** En fazla 2 review turu. Sınırsız döngü hem maliyet hem "agent'lar birbirini ikna etmeye çalışıyor" riski.
 - **Görünür mod (B modu):** Her rol ayrı bir oturumda, yan yana pencerede. Fark: ayrı oturumda `tools:` kısıtı uygulanmaz (oturum tam yetkili), rolü sadece talimat belirler. Subagent modu daha sıkı, görünür mod daha şeffaf.
+
+### Mülakat sorusu: Testler ile code review neyi ayrı yakalar? Aynı model kendi hatasını görebilir mi?
+
+**Soru:** #7'de testler yeşilken review iki bug buldu. Otomatik testler ile code review'un yakaladığı hata türleri nasıl ayrışır? Review'u da bir LLM yapıyorsa "aynı model kendi hatasını göremez" riskine karşı ne yaparsın?
+
+**Cevap:**
+- **Testler sözleşmeyi doğrular:** "Yazılan kriter karşılanıyor mu?" sorusunu deterministik ve tekrarlanabilir şekilde cevaplar. Regresyonu yakalar. Ama sadece *düşünülmüş* durumları test eder; kriterde olmayan bir sınır (#7'deki yıl aralığı) testte de yoktur.
+- **Review sözleşmenin dışına bakar:** Eksik kriterler, tasarım hataları, API'nin kendi ürettiği ama işleyemediği değerler (`9999-12 + 1 → "10000-01"`), taşma, mimari ihlaller, okunabilirlik, testlerin kalitesi. Yani "doğru şeyi mi yaptık?" sorusu.
+- **İkisi birbirini besler:** Review bir açık bulunca, bulgu bir teste dönüşür (#7'de sınır testleri). Böylece aynı hata bir daha review'a kalmaz.
+- **"Aynı model kendi hatasını göremez" riskine karşı:**
+  - **Bağlam izolasyonu:** Reviewer kodlayıcının gerekçesini görmez; sadece diff + issue. Gerekçeyi görse aynı varsayıma ikna olur.
+  - **Farklı talimat ve rol:** Reviewer'ın işi "bitirmek" değil "bulmak"; kontrol listesi ve "kanıt göster" kuralı var (#7'de bulguyu scratch script ile doğruladı).
+  - **Farklı model:** Kör noktalar modele özgü olabilir. Review'u farklı bir modelle (ör. Codex) yapmak çeşitlilik sağlar (planda var).
+  - **Deterministik araçlar:** Lint, statik analiz, property-based / fuzz testleri LLM'den bağımsız sinyal verir.
+  - **İnsan kapısı:** Merge her zaman insanda; LLM review, insan review'unu hızlandırır, yerine geçmez.
+- **Ölçmek:** Hangi hatayı kimin yakaladığını metriklerde tutmak (`bugs_caught_by_tests`, `review_findings`) hangi kapının işe yaradığını gösterir.
+
+## Phase 4 — UI kontrol agent'ı
+
+- **Yine "yakalayan script, karar veren agent":** `scripts/ui-check.sh` simülatörde `UICheckTests`'i koşar, ekran görüntülerini `.xcresult`'tan çıkarır. Agent sadece görüntülere bakıp yorum yapar. Ekran görüntüsü almayı LLM'e bırakmak yavaş ve kırılgan olurdu.
+- **XCUITest attachment'ları:** `XCTAttachment(screenshot:)` + `lifetime = .keepAlways` → görüntü result bundle'a girer; `xcrun xcresulttool export attachments` ile dosya olarak çıkar.
+- **Varyantlar:** `XCUIDevice.shared.appearance` ile açık/koyu mod, `-UIPreferredContentSizeCategoryName` launch argümanı ile Dynamic Type (AX5 = en büyük erişilebilirlik boyutu). Tek ekran × 3 varyant.
+- **`performAccessibilityAudit()` (iOS 17+):** Apple'ın deterministik erişilebilirlik denetimi: kontrast, eksik etiket, dokunma alanı, Dynamic Type, kırpılan metin. İlk koşuda gerçek bir bulgu verdi: açık modda gri `v0.1.0` yazısının kontrastı sınırda ("Contrast nearly passed").
+- **İki katman:** Denetim kural tabanlı sorunları bulur; agent ise kuralın göremediklerini (yanlış veri, garip boşluk, koyu modda kaybolan öğe) görür.
+- **Maliyet:** Simülatör koşusu ~2 dk; bu yüzden UI kontrol sadece diff UI'a dokunuyorsa çalışır.
