@@ -10,7 +10,7 @@ This repository is also an experiment in **developing with an AI agent team**. A
 
 ## Status
 
-🚧 Phase 10 — Home screen is next. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, and the `PaymentRepository` storage contract. Persistence (Phase 9) is done: payments are stored on device with SwiftData, not yet shown on any screen.
+🚧 Phase 10 — in progress. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, and the `PaymentRepository` storage contract. Persistence (Phase 9) is done: payments are stored on device with SwiftData. The design system (theme, card faces, amounts) is in; its card text contrast and navigation bar fixes ([#36](https://github.com/alicankurt1/Vadem-iOS/issues/36)) come next, then the home screen.
 
 ## The pipeline
 
@@ -73,7 +73,8 @@ One row per pipeline run, from [`metrics/runs.jsonl`](metrics/runs.jsonl) (`scri
 | #23 | #24 | 5 | 4 (0) | 0 | 0 / 0 / 0 / 2 | — |
 | #26 | #27 | 11 | 8 (0) | 1 | 0 / 0 / 3 / 1 | — |
 | #30 | #31 | 15 | 7 (0) | 1 | 0 / 0 / 1 / 2 | — |
-| **8 runs** | | **107** | **52 (0)** | **7** | **0 / 1 / 10 / 16** | **0 / 5 / 1 / 2** |
+| #33 | #38 | 131 | 12 (0) | 3 | 0 / 2 / 3 / 5 | 1 / 9 / 4 / 2 |
+| **9 runs** | | **238** | **64 (0)** | **10** | **0 / 3 / 13 / 21** | **1 / 14 / 5 / 4** |
 <!-- metrics:end -->
 
 ## Using it
@@ -97,7 +98,7 @@ Write issues with the [task template](.github/ISSUE_TEMPLATE/task.md). Its accep
 ## The app
 
 - SwiftUI, Observation, MVVM. Swift 6 with strict concurrency, iOS 18+, newer APIs behind `@available`.
-- Local Swift package [`Packages/VademKit`](Packages/VademKit). `VademCore` is the pure domain, tested with `swift test`, and has no UI imports. `VademPersistence` is the only module that imports SwiftData (versioned schema, App Group store). `VademFeatures` holds the screens.
+- Local Swift package [`Packages/VademKit`](Packages/VademKit). `VademCore` is the pure domain, tested with `swift test`, and has no UI imports. `VademPersistence` is the only module that imports SwiftData (versioned schema, App Group store). `VademFeatures` holds the screens and the design system (theme "Ink and Vade": color tokens for light and dark, mesh card faces, Turkish lira amounts).
 - Money is `Decimal`, never `Double`. Installment rounding is decided in ADR-0001 ([#15](https://github.com/alicankurt1/Vadem-iOS/issues/15)).
 - Swift Testing for unit tests, XCUITest for UI capture. No third-party dependencies.
 - Roadmap: [PLAN.md](PLAN.md) · Changes: [CHANGELOG.md](CHANGELOG.md).
