@@ -9,6 +9,8 @@ public struct DesignGalleryView: View {
     @State private var animatedAmount = Money(Decimal(123_456) / 100)
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.self) private var environment
 
     public init() {}
 
@@ -44,6 +46,8 @@ public struct DesignGalleryView: View {
                         Button("Add ₺100") {
                             animatedAmount = animatedAmount + Money(100)
                         }
+                        // VoiceOver ve denetim "₺" sembolü yerine okunabilir tutarı alır.
+                        .accessibilityLabel("Add " + AmountText.spokenLabel(Money(100)))
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.vademTextPrimary)
                         .padding(.horizontal, 18)
@@ -66,7 +70,10 @@ public struct DesignGalleryView: View {
             .navigationTitle("Design gallery")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.vademBackground, for: .navigationBar)
+            // iOS 26 çubuğu altından geçen koyu kartlara uyum sağlamasın: renk şeması ve arka plan
+            // ekranın şemasına sabitlenir (açıkta açık zemin + mürekkep başlık, koyuda koyu token'lar).
+            .toolbarColorScheme(colorScheme, for: .navigationBar)
+            .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             #endif
         }

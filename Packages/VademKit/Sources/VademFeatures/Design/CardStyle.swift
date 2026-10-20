@@ -61,6 +61,25 @@ public enum CardStyle: String, CaseIterable, Sendable {
 
     /// ``foreground`` as `0xRRGGBB`, for contrast checks against ``meshHexes``.
     var foregroundHex: UInt32 { 0xFFFFFF }
+
+    /// The solid color behind the card's title and subtitle.
+    var textBackground: Color { Color(hex: textBackgroundHex) }
+
+    /// ``textBackground`` as `0xRRGGBB`: the exact color the text is drawn on.
+    ///
+    /// ``CardFaceView`` paints it opaque under the text block, so the mesh and the scrim
+    /// do not change it; contrast with ``foregroundHex`` is the rendered contrast.
+    var textBackgroundHex: UInt32 {
+        // Her stilin sol alt mesh tonu: alttaki şerit mesh'le aynı renkte birleşir.
+        switch self {
+        case .night: 0x0B1120
+        case .ocean: 0x172554
+        case .emerald: 0x022C22
+        case .sunset: 0x4C0519
+        case .lavender: 0x3B0764
+        case .graphite: 0x111827
+        }
+    }
 }
 
 extension Color {

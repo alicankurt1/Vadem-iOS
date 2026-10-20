@@ -18,30 +18,56 @@ public struct CardFaceView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 0) {
             Image(systemName: "creditcard.fill")
                 .font(.title3)
                 .accessibilityHidden(true)
+                .padding([.top, .horizontal], 20)
             Spacer(minLength: 24)
-            Text(title)
-                .font(.title3.weight(.semibold))
-            Text(subtitle)
-                .font(.subheadline)
+            textBlock
         }
         .foregroundStyle(style.foreground)
         // Sabit en-boy oranı yerine minimum yükseklik: büyük yazı boyutunda kart uzar, metin kırpılmaz.
-        .frame(maxWidth: .infinity, minHeight: 168, alignment: .leading)
-        .padding(20)
+        .frame(maxWidth: .infinity, minHeight: 208, alignment: .leading)
         .background {
-            // Hafif karartma: büyük yazı boyutunda metin mesh'in açık bölgelerine taşsa da
-            // beyaz metnin kontrastı yalnızca artar, hiçbir stilde azalmaz.
+            // Hafif karartma: mesh'in açık bölgelerinde simge de okunur kalır.
             mesh.overlay(Self.scrim)
         }
         .clipShape(.rect(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
-    // Üstte hafif, metnin durduğu altta daha koyu.
+    // Başlık ve alt başlık düz, opak bir şeridin üstünde: arkalarındaki renk her yazı boyutunda
+    // ve her stilde tam olarak `textBackground` olur; kontrast hesaplanan değerle aynıdır.
+    private var textBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.title3.weight(.semibold))
+            Text(subtitle)
+                .font(.subheadline)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding([.bottom, .horizontal], 20)
+        .padding(.top, 8)
+        .background(alignment: .top) {
+            // Şeridin üstünde mesh'ten şeride yumuşak geçiş; metin her zaman opak kısımda kalır.
+            VStack(spacing: 0) {
+                LinearGradient(
+                    colors: [style.textBackground.opacity(0), style.textBackground],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: Self.fadeHeight)
+                style.textBackground
+            }
+            .padding(.top, -Self.fadeHeight)
+        }
+    }
+
+    // Mesh'ten opak şeride geçişin yüksekliği.
+    private static let fadeHeight: CGFloat = 32
+
+    // Üstte hafif, alta doğru daha koyu.
     private static let scrim = LinearGradient(
         colors: [.black.opacity(0.15), .black.opacity(0.4)],
         startPoint: .top,
