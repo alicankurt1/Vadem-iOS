@@ -163,3 +163,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Tek satırla yeni uygulama:** Her test hedefi `@Test(arguments: factories, PaymentRepositoryContract.scenarios)` ile tüm sözleşmeyi koşar. Swift Testing iki argüman listesinin kartezyen çarpımını alır: "uygulama × senaryo".
 - **Swift 6 detayı:** Senaryolar `@MainActor` bir enum içinde; `@Test(arguments:)` listeyi actor dışından okuduğu için liste `nonisolated` olmalı.
 - **Aleti ölçtük:** Bellek içi uygulamanın sıralamasını bilerek bozunca 29 senaryodan 6'sı kırmızıya döndü. Taşıma sırasında sözleşme gücünü kaybetmedi.
+
+### Koşu #30 — SwiftData deposu (`SwiftDataPaymentRepository`)
+
+- **Ne yapıldı:** `VademPersistence`'a `VademSchemaV1` (`1.0.0`, üç düz `@Model` kayıt, ilişki yok; kalemler `cardID` tutar), `VademMigrationPlan` ve `SwiftDataPaymentRepository` eklendi. Tutar `Double` değil tam ondalık metin olarak, ay yıl + ay sayısı olarak saklanıyor; bozuk kayıt okunurken çökmez, hata fırlatır (PR #31).
+- **Sözleşme ilk denemede geçti:** 29 ortak senaryonun hepsi SwiftData'da ilk koşuda yeşildi. Sebep önceki iki adım: sözleşme #26'da (sıralama API'si adıyla, eşitlikte `id`) netleştirildi, sonra ortak `VademTestSupport` hedefine taşındı. İkinci uygulama, kuralı tahmin etmek yerine aynı testlerden geçti.
+- **Review kapısı:** Bozuk kart ve taksit kayıtları test ediliyordu, bozuk abonelik kaydı (bilinmeyen periyot, yarım girilmiş son ay, 13. ay, okunamayan tutar) edilmiyordu; 13 bozuk durum eklendi, hepsi hata fırlatıyor. Açık bırakılan nit: sıralama yardımcısı bellek içi depodan kopyalandı (sapmayı zaten ortak sözleşme yakalar). `.appGroup` yolu paket testlerinde koşmuyor (entitlement yok); Phase 10'da uygulama açtığında gerçekten çalışacak.
+- **Metrikler:** ~15 dk, 7 verify koşusu (0 kırmızı), 1 düzeltme turu; review 0 blocker / 0 major / 1 minor / 2 nit, UI check atlandı (ekran yok).
+- **Ders:** Sözleşme testleri yalnızca ortak davranışı sınar; depolamaya özgü riskler (bozuk veri, yeniden açma, tam yuvarlama) uygulamanın kendi testlerinde kalmalı. Review'in bulduğu eksik tam da bu sınırdaydı.
