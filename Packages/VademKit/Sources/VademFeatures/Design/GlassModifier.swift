@@ -1,6 +1,7 @@
 import SwiftUI
 
 // Sadece yüzen kontroller için: iOS 26+'da Liquid Glass, daha eskide materyal.
+@MainActor
 struct GlassModifier<S: Shape>: ViewModifier {
     let shape: S
 

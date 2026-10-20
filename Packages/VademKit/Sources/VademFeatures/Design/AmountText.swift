@@ -3,7 +3,7 @@ import VademCore
 
 /// An amount in Turkish lira, in a rounded font with monospaced digits.
 ///
-/// Changes animate with the numeric-text transition (off under Reduce Motion).
+/// Changes animate with the numeric-text transition (off under Reduce Motion or `-ui-static-motion`).
 /// The size comes from the environment font.
 @MainActor
 public struct AmountText: View {
@@ -51,7 +51,7 @@ public struct AmountText: View {
 
 #Preview {
     VStack(alignment: .leading) {
-        AmountText(Money(1234.56)).font(.largeTitle)
+        AmountText(Money(Decimal(123_456) / 100)).font(.largeTitle)
         AmountText(Money(-5))
     }
 }

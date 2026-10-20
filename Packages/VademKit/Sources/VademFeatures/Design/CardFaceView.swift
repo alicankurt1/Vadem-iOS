@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A card face: the style's mesh gradient with a title and a subtitle.
 ///
-/// The mesh drifts slowly; the drift stops when Reduce Motion is on.
+/// The mesh drifts slowly; the drift stops under Reduce Motion or `-ui-static-motion`.
 @MainActor
 public struct CardFaceView: View {
     private let title: String
@@ -39,7 +39,8 @@ public struct CardFaceView: View {
 
     @ViewBuilder
     private var mesh: some View {
-        if reduceMotion {
+        // Reduce Motion veya UI kontrolünün -ui-static-motion argümanı: mesh sabit kalır.
+        if !Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested) {
             MeshGradient(width: 3, height: 3, points: Self.points(at: 0), colors: style.meshColors)
         } else {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in

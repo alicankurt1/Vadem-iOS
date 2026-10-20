@@ -25,7 +25,7 @@ let package = Package(
         .target(name: "VademTestSupport", dependencies: ["VademCore"], path: "Sources/VademTestSupport"),
         .testTarget(name: "VademCoreTests", dependencies: ["VademCore", "VademTestSupport"]),
         .testTarget(name: "VademPersistenceTests", dependencies: ["VademPersistence", "VademTestSupport"]),
-        .testTarget(name: "VademFeaturesTests", dependencies: ["VademFeatures"]),
+        .testTarget(name: "VademFeaturesTests", dependencies: ["VademFeatures", "VademCore"]),
     ],
     swiftLanguageModes: [.v6]
 )

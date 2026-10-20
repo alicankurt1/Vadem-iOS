@@ -32,12 +32,18 @@ public enum CardStyle: String, CaseIterable, Sendable {
     }
 
     /// Text and icon color on this face. Every mesh color has at least 4.5:1 contrast with it.
-    public var foreground: Color { .white }
+    public var foreground: Color { Color(hex: foregroundHex) }
 
     /// The nine mesh colors, row by row (top-left to bottom-right).
     public var meshColors: [Color] {
+        meshHexes.map(Color.init(hex:))
+    }
+
+    /// The nine mesh colors as `0xRRGGBB`, row by row; the data behind ``meshColors``.
+    /// Text on the face is ``foreground`` (white), so ``foregroundHex`` is its value.
+    var meshHexes: [UInt32] {
         // Tüm tonların beyazla kontrastı ≥ 4.5:1 (WCAG AA, normal metin) olacak şekilde seçildi.
-        let hexes: [UInt32] = switch self {
+        switch self {
         case .night:
             [0x0F172A, 0x1E1B4B, 0x172554, 0x312E81, 0x1E3A8A, 0x3730A3, 0x0B1120, 0x1E1B4B, 0x4338CA]
         case .ocean:
@@ -51,8 +57,10 @@ public enum CardStyle: String, CaseIterable, Sendable {
         case .graphite:
             [0x18181B, 0x27272A, 0x1F2937, 0x3F3F46, 0x374151, 0x52525B, 0x111827, 0x27272A, 0x334155]
         }
-        return hexes.map(Color.init(hex:))
     }
+
+    /// ``foreground`` as `0xRRGGBB`, for contrast checks against ``meshHexes``.
+    var foregroundHex: UInt32 { 0xFFFFFF }
 }
 
 extension Color {

@@ -5,7 +5,8 @@ import VademCore
 /// so the UI check can verify contrast and layout. Opened with the `-ui-gallery` launch argument.
 @MainActor
 public struct DesignGalleryView: View {
-    @State private var animatedAmount = Money(1234.56)
+    // Tutarlar Double'dan değil, tam Decimal'den kurulur.
+    @State private var animatedAmount = Money(Decimal(123_456) / 100)
 
     public init() {}
 
@@ -17,7 +18,7 @@ public struct DesignGalleryView: View {
                     .foregroundStyle(Color.vademTextPrimary)
                     .accessibilityAddTraits(.isHeader)
 
-                section("Colors") {
+                section("Colors", id: "gallery.colors") {
                     ForEach(ColorToken.allCases, id: \.self) { token in
                         HStack(spacing: 12) {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -35,7 +36,7 @@ public struct DesignGalleryView: View {
                     }
                 }
 
-                section("Chips") {
+                section("Chips", id: "gallery.chips") {
                     DueChip("Today", kind: .today)
                     DueChip("In 3 days", kind: .soon)
                     DueChip("Later", kind: .later)
@@ -44,8 +45,8 @@ public struct DesignGalleryView: View {
                         .foregroundStyle(Color.vademPaid)
                 }
 
-                section("Amounts") {
-                    ForEach([Decimal(0), 1234.56, -5, 1_000_000], id: \.self) { amount in
+                section("Amounts", id: "gallery.amounts") {
+                    ForEach([Decimal(0), Decimal(123_456) / 100, -5, 1_000_000], id: \.self) { amount in
                         AmountText(Money(amount))
                             .font(.title2)
                             .foregroundStyle(Color.vademTextPrimary)
@@ -63,7 +64,7 @@ public struct DesignGalleryView: View {
                     .vademGlass()
                 }
 
-                section("Cards") {
+                section("Cards", id: "gallery.cards") {
                     ForEach(CardStyle.allCases, id: \.self) { style in
                         CardFaceView(title: style.name, subtitle: "Due on the 15th", style: style)
                     }
@@ -76,12 +77,14 @@ public struct DesignGalleryView: View {
     }
 
     // Bölüm başlığı + içerik; başlık VoiceOver'da başlık olarak okunur.
-    private func section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+    // Kimlik başlıkta: UI testi bölüme bu sabit kimlikle kaydırır.
+    private func section(_ title: String, id: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
                 .foregroundStyle(Color.vademTextSecondary)
                 .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier(id)
             content()
         }
     }

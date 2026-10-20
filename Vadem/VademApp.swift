@@ -4,16 +4,18 @@ import VademFeatures
 // Uygulama giriş noktası; ekranlar VademFeatures modülünden gelir.
 @main
 struct VademApp: App {
-    // UI kontrolü `-ui-gallery` ile açınca kök ekran yerine tasarım galerisi gösterilir.
-    private let showsDesignGallery = ProcessInfo.processInfo.arguments.contains("-ui-gallery")
-
     var body: some Scene {
         WindowGroup {
-            if showsDesignGallery {
+            #if DEBUG
+            // UI kontrolü `-ui-gallery` ile açınca kök ekran yerine tasarım galerisi gösterilir.
+            if ProcessInfo.processInfo.arguments.contains("-ui-gallery") {
                 DesignGalleryView()
             } else {
                 RootView()
             }
+            #else
+            RootView()
+            #endif
         }
     }
 }
