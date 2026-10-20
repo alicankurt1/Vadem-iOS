@@ -10,7 +10,7 @@ This repository is also an experiment in **developing with an AI agent team**. A
 
 ## Status
 
-🚧 Phase 9 — Persistence (SwiftData). The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, and the `PaymentRepository` storage contract (in-memory for now).
+🚧 Phase 10 — Home screen is next. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, and the `PaymentRepository` storage contract. Persistence (Phase 9) is done: payments are stored on device with SwiftData, not yet shown on any screen.
 
 ## The pipeline
 
@@ -72,7 +72,8 @@ One row per pipeline run, from [`metrics/runs.jsonl`](metrics/runs.jsonl) (`scri
 | #19 | #20 | 5 | 4 (0) | 0 | 0 / 0 / 0 / 2 | — |
 | #23 | #24 | 5 | 4 (0) | 0 | 0 / 0 / 0 / 2 | — |
 | #26 | #27 | 11 | 8 (0) | 1 | 0 / 0 / 3 / 1 | — |
-| **7 runs** | | **92** | **45 (0)** | **6** | **0 / 1 / 9 / 14** | **0 / 5 / 1 / 2** |
+| #30 | #31 | 15 | 7 (0) | 1 | 0 / 0 / 1 / 2 | — |
+| **8 runs** | | **107** | **52 (0)** | **7** | **0 / 1 / 10 / 16** | **0 / 5 / 1 / 2** |
 <!-- metrics:end -->
 
 ## Using it
@@ -96,7 +97,7 @@ Write issues with the [task template](.github/ISSUE_TEMPLATE/task.md). Its accep
 ## The app
 
 - SwiftUI, Observation, MVVM. Swift 6 with strict concurrency, iOS 18+, newer APIs behind `@available`.
-- Local Swift package [`Packages/VademKit`](Packages/VademKit). `VademCore` is the pure domain, tested with `swift test`, and has no UI imports. `VademFeatures` holds the screens.
+- Local Swift package [`Packages/VademKit`](Packages/VademKit). `VademCore` is the pure domain, tested with `swift test`, and has no UI imports. `VademPersistence` is the only module that imports SwiftData (versioned schema, App Group store). `VademFeatures` holds the screens.
 - Money is `Decimal`, never `Double`. Installment rounding is decided in ADR-0001 ([#15](https://github.com/alicankurt1/Vadem-iOS/issues/15)).
 - Swift Testing for unit tests, XCUITest for UI capture. No third-party dependencies.
 - Roadmap: [PLAN.md](PLAN.md) · Changes: [CHANGELOG.md](CHANGELOG.md).
