@@ -38,6 +38,18 @@ struct CardContrastTests {
         }
     }
 
+    // Bant boş olursa yukarıdaki döngü hiçbir şey ölçmeden geçer. Bant, metnin oturduğu
+    // alt mesh satırından (3 renk, soldan sağa) boyanır; kart yüzüyle uyumu da buna bağlı.
+    @Test("Text band uses the mesh's bottom row, left to right", arguments: CardStyle.allCases)
+    func textBandIsBottomRow(style: CardStyle) throws {
+        try #require(style.meshHexes.count == 9, "\(style): expected a 3×3 mesh")
+        #expect(style.textBackgroundHexes.count == 3, "\(style): expected 3 band colors")
+        #expect(
+            style.textBackgroundHexes == [style.meshHexes[6], style.meshHexes[7], style.meshHexes[8]],
+            "\(style): band colors are not the mesh's bottom row"
+        )
+    }
+
     // Değer `0xRRGGBB` aralığında olmalı; fazladan bit (ör. alfa) hesabı sessizce bozar.
     @Test("Text background is a plain 24-bit RGB value", arguments: CardStyle.allCases)
     func textBackgroundRange(style: CardStyle) {
