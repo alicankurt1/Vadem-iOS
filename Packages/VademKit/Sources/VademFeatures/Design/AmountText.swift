@@ -19,6 +19,11 @@ public struct AmountText: View {
         Text(Self.format(money))
             .fontDesign(.rounded)
             .monospacedDigit()
+            // Sayı asla ortadan bölünmez; yer yetmezse yazı küçülür.
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            // VoiceOver "₺" sembolü yerine okunabilir metni duyar.
+            .accessibilityLabel(Self.spokenLabel(money))
             // Double sadece geçiş animasyonunun yönü için; gösterilen metin Decimal'den gelir.
             .contentTransition(.numericText(value: NSDecimalNumber(decimal: money.amount).doubleValue))
             .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: money)
@@ -28,6 +33,19 @@ public struct AmountText: View {
     ///
     /// Pure and locale-independent: the result does not depend on the device's settings.
     public nonisolated static func format(_ money: Money) -> String {
+        (money.isNegative ? "-" : "") + "₺" + formattedMagnitude(money)
+    }
+
+    /// The spoken (VoiceOver) form of `money`, without symbols:
+    /// `1234.56 → "1.234,56 Türk lirası"`, `-5 → "eksi 5,00 Türk lirası"`.
+    ///
+    /// Pure and locale-independent, like ``format(_:)``.
+    public nonisolated static func spokenLabel(_ money: Money) -> String {
+        (money.isNegative ? "eksi " : "") + formattedMagnitude(money) + " Türk lirası"
+    }
+
+    // Mutlak değer, tr_TR biçiminde: "1.234,56".
+    private nonisolated static func formattedMagnitude(_ money: Money) -> String {
         // NumberFormatter/ICU sürüme göre işaret ve boşluk değiştirebilir; biçim elle kurulur.
         let magnitude = money.isNegative ? -money.amount : money.amount
         let plain = NSDecimalNumber(decimal: magnitude)
@@ -45,7 +63,7 @@ public struct AmountText: View {
             }
             grouped.append(digit)
         }
-        return (money.isNegative ? "-" : "") + "₺" + grouped + "," + paddedFraction
+        return grouped + "," + paddedFraction
     }
 }
 

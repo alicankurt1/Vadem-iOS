@@ -32,10 +32,21 @@ public struct CardFaceView: View {
         // Sabit en-boy oranı yerine minimum yükseklik: büyük yazı boyutunda kart uzar, metin kırpılmaz.
         .frame(maxWidth: .infinity, minHeight: 168, alignment: .leading)
         .padding(20)
-        .background { mesh }
+        .background {
+            // Hafif karartma: büyük yazı boyutunda metin mesh'in açık bölgelerine taşsa da
+            // beyaz metnin kontrastı yalnızca artar, hiçbir stilde azalmaz.
+            mesh.overlay(Self.scrim)
+        }
         .clipShape(.rect(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)
     }
+
+    // Üstte hafif, metnin durduğu altta daha koyu.
+    private static let scrim = LinearGradient(
+        colors: [.black.opacity(0.15), .black.opacity(0.4)],
+        startPoint: .top,
+        endPoint: .bottom
+    )
 
     @ViewBuilder
     private var mesh: some View {
