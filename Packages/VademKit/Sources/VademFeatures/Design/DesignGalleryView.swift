@@ -14,6 +14,14 @@ public struct DesignGalleryView: View {
 
     public init() {}
 
+    // "Ekle" düğmesinin eklediği tutar.
+    nonisolated static let addedAmount = Money(100)
+
+    /// The "Add ₺100" button's accessibility label, without the `₺` symbol: "Add 100,00 Türk lirası".
+    nonisolated static var addButtonAccessibilityLabel: String {
+        "Add " + AmountText.spokenLabel(addedAmount)
+    }
+
     public var body: some View {
         // NavigationStack üst kenarı verir: kaydırılan içerik saatin altına girmez.
         NavigationStack {
@@ -44,10 +52,10 @@ public struct DesignGalleryView: View {
                             .font(.largeTitle.weight(.semibold))
                             .foregroundStyle(Color.vademBrand)
                         Button("Add ₺100") {
-                            animatedAmount = animatedAmount + Money(100)
+                            animatedAmount = animatedAmount + Self.addedAmount
                         }
                         // VoiceOver ve denetim "₺" sembolü yerine okunabilir tutarı alır.
-                        .accessibilityLabel("Add " + AmountText.spokenLabel(Money(100)))
+                        .accessibilityLabel(Self.addButtonAccessibilityLabel)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.vademTextPrimary)
                         .padding(.horizontal, 18)

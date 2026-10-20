@@ -62,24 +62,15 @@ public enum CardStyle: String, CaseIterable, Sendable {
     /// ``foreground`` as `0xRRGGBB`, for contrast checks against ``meshHexes``.
     var foregroundHex: UInt32 { 0xFFFFFF }
 
-    /// The solid color behind the card's title and subtitle.
-    var textBackground: Color { Color(hex: textBackgroundHex) }
+    /// The colors of the band behind the card's title and subtitle, left to right.
+    var textBackground: [Color] { textBackgroundHexes.map(Color.init(hex:)) }
 
-    /// ``textBackground`` as `0xRRGGBB`: the exact color the text is drawn on.
+    /// ``textBackground`` as `0xRRGGBB`: the mesh's bottom row (``meshHexes`` 6...8).
     ///
-    /// ``CardFaceView`` paints it opaque under the text block, so the mesh and the scrim
-    /// do not change it; contrast with ``foregroundHex`` is the rendered contrast.
-    var textBackgroundHex: UInt32 {
-        // Her stilin sol alt mesh tonu: alttaki şerit mesh'le aynı renkte birleşir.
-        switch self {
-        case .night: 0x0B1120
-        case .ocean: 0x172554
-        case .emerald: 0x022C22
-        case .sunset: 0x4C0519
-        case .lavender: 0x3B0764
-        case .graphite: 0x111827
-        }
-    }
+    /// ``CardFaceView`` paints them opaque under the text as a horizontal gradient, so the mesh
+    /// and the scrim do not change them. A blend is never lighter than its lightest color, so if
+    /// each one passes against ``foregroundHex``, the rendered text does too.
+    var textBackgroundHexes: [UInt32] { Array(meshHexes[6...8]) }
 }
 
 extension Color {

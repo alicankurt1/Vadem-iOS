@@ -23,7 +23,8 @@ public struct CardFaceView: View {
                 .font(.title3)
                 .accessibilityHidden(true)
                 .padding([.top, .horizontal], 20)
-            Spacer(minLength: 24)
+            // Geçiş bölgesi simgenin altında başlar; en büyük yazı boyutunda da üstüne binmez.
+            Spacer(minLength: Self.fadeHeight)
             textBlock
         }
         .foregroundStyle(style.foreground)
@@ -38,7 +39,7 @@ public struct CardFaceView: View {
     }
 
     // Başlık ve alt başlık düz, opak bir şeridin üstünde: arkalarındaki renk her yazı boyutunda
-    // ve her stilde tam olarak `textBackground` olur; kontrast hesaplanan değerle aynıdır.
+    // ve her stilde mesh'in alt satırının bir karışımıdır; kontrast hesaplanan değerlerden düşük olamaz.
     private var textBlock: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -52,16 +53,19 @@ public struct CardFaceView: View {
         .background(alignment: .top) {
             // Şeridin üstünde mesh'ten şeride yumuşak geçiş; metin her zaman opak kısımda kalır.
             VStack(spacing: 0) {
-                LinearGradient(
-                    colors: [style.textBackground.opacity(0), style.textBackground],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                band.mask {
+                    LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                }
                 .frame(height: Self.fadeHeight)
-                style.textBackground
+                band
             }
             .padding(.top, -Self.fadeHeight)
         }
+    }
+
+    // Şerit, mesh'in alt satırının yatay gradyanı: kartın altı renk geçişini korur.
+    private var band: LinearGradient {
+        LinearGradient(colors: style.textBackground, startPoint: .leading, endPoint: .trailing)
     }
 
     // Mesh'ten opak şeride geçişin yüksekliği.
