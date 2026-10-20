@@ -49,7 +49,8 @@ public struct CardFaceView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding([.bottom, .horizontal], 20)
-        .padding(.top, 8)
+        // Geçiş, başlığın üst kenarından bu kadar yukarıda biter: metin asla geçişe ya da mesh'e değmez.
+        .padding(.top, Self.opaqueMarginAboveText)
         .background(alignment: .top) {
             // Şeridin üstünde mesh'ten şeride yumuşak geçiş; metin her zaman opak kısımda kalır.
             VStack(spacing: 0) {
@@ -70,6 +71,9 @@ public struct CardFaceView: View {
 
     // Mesh'ten opak şeride geçişin yüksekliği.
     private static let fadeHeight: CGFloat = 32
+
+    // Başlığın üstünde, geçişten önce kalan opak şerit payı.
+    private static let opaqueMarginAboveText: CGFloat = 16
 
     // Üstte hafif, alta doğru daha koyu.
     private static let scrim = LinearGradient(
