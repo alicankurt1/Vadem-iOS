@@ -87,36 +87,83 @@ final class UICheckTests: XCTestCase {
 
     // MARK: - Helpers
 
-    /// Uygulamayı her varyantta açar, `navigate` ile (uygulama, varyant) ekrana gider, görüntü alır ve denetler.
-    @MainActor
-    private func capture(screen: String, navigate: (XCUIApplication, Variant) -> Void) throws {
-        for variant in Self.variants {
-            let name = "\(screen)__\(variant.name)"
+    /// Her yakalamada gönderilen açılış argümanları. `-ui-static-motion`: uygulama sürekli
+    /// animasyonları (ör. kart mesh kayması) durdurur; yoksa uygulama boşa düşmez ve
+    /// erişilebilirlik denetimi zaman aşımına uğrar (#33).
+    static let commonLaunchArguments = ["-ui-static-motion"]
 
+    /// Ekranın görüntüsü alınacak bir bölümü. Uzun ekranlar birden fazla bölümle yakalanır.
+    struct Section {
+        let name: String
+        let show: @MainActor (XCUIApplication) -> Bool
+
+        /// Açılışta görünen kısım.
+        static var top: Section { Section(name: "") { _ in true } }
+
+        /// Kimliği (accessibilityIdentifier) ya da etiketi `marker` olan öğe görünene kadar kaydırır.
+        static func scrolled(to marker: String, named name: String) -> Section {
+            Section(name: name) { app in
+                let element = app.descendants(matching: .any)
+                    .matching(NSPredicate(format: "identifier == %@ OR label == %@", marker, marker))
+                    .firstMatch
+                for _ in 0..<15 where !(element.exists && element.isHittable) {
+                    app.swipeUp()
+                }
+                return element.exists && element.isHittable
+            }
+        }
+    }
+
+    /// Uygulamayı her varyantta açar; `navigate` ile (uygulama, varyant) ekrana gider; her bölüm için
+    /// görüntü alır, görünümü doğrular ve erişilebilirlik denetimini koşar.
+    /// Bir varyantta denetim hata verse bile sonraki bölüm ve varyantlara devam eder.
+    @MainActor
+    private func capture(
+        screen: String,
+        launchArguments: [String] = [],
+        sections: [Section] = [.top],
+        navigate: (XCUIApplication, Variant) -> Void = { _, _ in }
+    ) throws {
+        for variant in Self.variants {
             let app = XCUIApplication()
+            app.launchArguments += Self.commonLaunchArguments + launchArguments
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", variant.contentSize]
             app.launch()
+            defer { app.terminate() }
             navigate(app, variant)
 
-            let screenshot = app.screenshot()
-            let attachment = XCTAttachment(screenshot: screenshot)
-            attachment.name = name
-            attachment.lifetime = .keepAlways
-            add(attachment)
+            for section in sections {
+                let shot = section.name.isEmpty ? screen : "\(screen)-\(section.name)"
+                let name = "\(shot)__\(variant.name)"
 
-            // Görünüm gerçekten uygulandı mı? Script görünüm verdiyse arka plan parlaklığına bakılır.
-            if let expected = Self.activeAppearance {
-                assertAppearance(of: screenshot, is: expected, name: name)
+                guard section.show(app) else {
+                    XCTFail("[ui-check] \(name): section '\(section.name)' could not be scrolled into view")
+                    continue
+                }
+
+                let screenshot = app.screenshot()
+                let attachment = XCTAttachment(screenshot: screenshot)
+                attachment.name = name
+                attachment.lifetime = .keepAlways
+                add(attachment)
+
+                // Görünüm gerçekten uygulandı mı? Script görünüm verdiyse arka plan parlaklığına bakılır.
+                if let expected = Self.activeAppearance {
+                    assertAppearance(of: screenshot, is: expected, name: name)
+                }
+
+                // Her sorun ayrı bir test hatası olur. Denetimin kendisi hata verirse (ör. zaman aşımı)
+                // raporlanır ve döngü devam eder; önceden bu durumda kalan varyantlar hiç yakalanmıyordu.
+                do {
+                    try app.performAccessibilityAudit { issue in
+                        let element = issue.element.map { "'\($0.label)'" } ?? "screen"
+                        XCTFail("[a11y] \(name): \(issue.compactDescription) — \(element)")
+                        return true
+                    }
+                } catch {
+                    XCTFail("[a11y] \(name): audit did not complete — \(error.localizedDescription)")
+                }
             }
-
-            // Her sorun ayrı bir test hatası olur; mesajında ekran ve varyant yazar.
-            try app.performAccessibilityAudit { issue in
-                let element = issue.element.map { "'\($0.label)'" } ?? "screen"
-                XCTFail("[a11y] \(name): \(issue.compactDescription) — \(element)")
-                return true
-            }
-
-            app.terminate()
         }
     }
 
