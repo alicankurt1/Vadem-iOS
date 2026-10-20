@@ -180,3 +180,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Uzun ekranlar:** Ekran görüntüsü sadece ilk görünen kısmı alıyordu; kartlar sayfanın altında kalmıştı. `sections: [.top, .scrolled(to:named:)]` ile bölüm bölüm yakalanıyor.
 - **Açılış argümanları:** `capture(screen:launchArguments:…)` ile ekran doğrudan açılıyor; test yazarının "kapat-yeniden aç" geçici çözümüne gerek kalmadı.
 - **Doğrulama:** Geçici bir test ile iki bölüm (6 görüntü) ve bilerek bulunamayan bir bölüm denendi; hata her varyant için raporlandı, döngü durmadı.
+
+### Phase 10 — Harness ikinci tur (fabrika)
+
+#33'ün 2. turunda UI check, ilk harness düzeltmesinin de yetmediğini gösterdi:
+- **"Görünür" ≠ "doğru yerde":** `scrolled(to:)` işaret görünür olunca duruyordu; tek kaydırma üç başlığı birden görünür yapınca üç bölüm aynı görüntüyü verdi (md5 aynı). Artık işaret ekranın üst %15'ine sürükleniyor.
+- **Denetim kaydırma bitmeden başlıyordu:** Koyu modda kaydırılmış bölümlerde denetim zaman aşımına uğruyordu; muhtemelen kaydırma göstergesinin sönme animasyonu. Artık iki ardışık görüntü aynı olana kadar (en fazla ~3 sn) bekleniyor.
+- **Yanlış örnek nokta:** Açık/koyu kontrolü ekran ortasından tek piksel alıyordu; büyük yazıda içerik denk geliyordu. Artık sol 4 pt kenar boşluğundan 5 pikselin medyanı.
+- **Doğrulama:** #33'ün geçici bir kopyasında: 6 bölümün hepsi farklı görüntü, zaman aşımı yok, yanlış alarm yok. Bonus: denetim artık daha fazla gerçek sorun görüyor (AX5'te kart üstünde kontrast, koyu modda bir etiket). Daha iyi alet → daha çok gerçek bulgu.
