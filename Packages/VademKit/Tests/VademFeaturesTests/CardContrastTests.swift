@@ -26,14 +26,18 @@ struct CardContrastTests {
     }
 
     // Denetim, metnin gerçekten çizildiği rengi ölçer (#36): başlık ve alt başlığın altındaki
-    // opak renk, her stilde metin rengine karşı 4,5:1'i geçmeli. Oran burada bağımsız hesaplanır.
-    @Test("Card title and subtitle meet WCAG AA (4.5:1) on their text background", arguments: CardStyle.allCases)
+    // bandın her durağı metin rengine karşı en az 5:1 olmalı. WCAG eşiği 4,5:1; 4,5'e yakın
+    // değerler denetimde parçadan parçaya geçip kalabildiği için 0,5 pay bırakılır.
+    // Ortalama değil, her durak tek tek ölçülür. Oran burada bağımsız hesaplanır.
+    static let textBandMinimumContrast = 5.0
+
+    @Test("Card title and subtitle have at least 5:1 contrast on every text band stop", arguments: CardStyle.allCases)
     func textBackgroundContrast(style: CardStyle) {
-        for hex in style.textBackgroundHexes {
+        for (index, hex) in style.textBackgroundHexes.enumerated() {
             let ratio = Self.contrast(hex, style.foregroundHex)
             #expect(
-                ratio >= 4.5,
-                "\(style) text background \(String(format: "%06X", hex)) vs foreground \(String(format: "%06X", style.foregroundHex)): contrast \(String(format: "%.2f", ratio)) < 4.5"
+                ratio >= Self.textBandMinimumContrast,
+                "\(style) band[\(index)] \(String(format: "%06X", hex)) vs foreground \(String(format: "%06X", style.foregroundHex)): contrast \(String(format: "%.2f", ratio)) < 5.0"
             )
         }
     }
