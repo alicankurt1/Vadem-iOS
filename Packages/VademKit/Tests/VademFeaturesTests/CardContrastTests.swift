@@ -25,6 +25,24 @@ struct CardContrastTests {
         }
     }
 
+    // Denetim, metnin gerçekten çizildiği rengi ölçer (#36): başlık ve alt başlığın altındaki
+    // opak renk, her stilde metin rengine karşı 4,5:1'i geçmeli. Oran burada bağımsız hesaplanır.
+    @Test("Card title and subtitle meet WCAG AA (4.5:1) on their text background", arguments: CardStyle.allCases)
+    func textBackgroundContrast(style: CardStyle) {
+        let ratio = Self.contrast(style.textBackgroundHex, style.foregroundHex)
+        #expect(
+            ratio >= 4.5,
+            "\(style) text background \(String(format: "%06X", style.textBackgroundHex)) vs foreground \(String(format: "%06X", style.foregroundHex)): contrast \(String(format: "%.2f", ratio)) < 4.5"
+        )
+    }
+
+    // Değer `0xRRGGBB` aralığında olmalı; fazladan bit (ör. alfa) hesabı sessizce bozar.
+    @Test("Text background is a plain 24-bit RGB value", arguments: CardStyle.allCases)
+    func textBackgroundRange(style: CardStyle) {
+        #expect(style.textBackgroundHex <= 0xFFFFFF, "\(style): text background has bits above 0xFFFFFF")
+        #expect(style.foregroundHex <= 0xFFFFFF, "\(style): foreground has bits above 0xFFFFFF")
+    }
+
     // Hesaplayıcının kendisi bilinen değerlerle doğrulanır; yanlış bir formül testi boşa düşürmesin.
     @Test("Contrast helper matches known WCAG values", arguments: [
         (UInt32(0x000000), UInt32(0xFFFFFF), 21.0),
