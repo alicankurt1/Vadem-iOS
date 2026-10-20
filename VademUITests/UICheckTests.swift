@@ -51,6 +51,21 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testGalleryScreen() throws {
+        try capture(screen: "gallery") { app, variant in
+            // `capture` ekran başına açılış argümanı almıyor; bu yüzden uygulama, varyantın
+            // argümanları korunarak `-ui-gallery` ile yeniden açılır (#33).
+            app.terminate()
+            app.launchArguments.append("-ui-gallery")
+            app.launch()
+            XCTAssertTrue(
+                app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
+                "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
+            )
+        }
+    }
+
     /// Sürüm etiketi görünür, "Version x.y.z" biçiminde, dokunulabilir ve başlığın altında,
     /// başlıktan daha küçük olmalı (ikincil bilgi hiyerarşisi).
     @MainActor
