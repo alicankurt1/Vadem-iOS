@@ -38,7 +38,9 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
 - The shared `Vadem` scheme lives in `Vadem.xcodeproj/xcshareddata/xcschemes/`.
 - **UI capture** (simulator, ~1–2 min): `scripts/ui-check.sh` builds once, then runs `VademUITests/UICheckTests` in two passes (light, dark), setting the appearance with `simctl ui … appearance` (not `XCUIDevice.appearance`, which does not apply). It writes screenshots (light / dark / AX5 text), **every** test failure (accessibility audit + appearance check) to `.build/ui-check/latest/`. Last line `UI-CHECK: PASS` / `UI-CHECK: FAIL`. Every new screen gets a `capture(screen:launchArguments:sections:navigate:)` test in `UICheckTests.swift` (written by the test writer):
   - `launchArguments` opens the screen directly (e.g. `["-ui-gallery"]`); never terminate and relaunch inside `navigate`.
-  - Long screens are captured in parts with `sections: [.top, .scrolled(to: "<accessibilityIdentifier or label>", named: "<part>")]`; screenshots are named `<screen>-<part>__<variant>`.
+  - Long screens are captured in parts with `sections: [.top, .scrolled(to: "<accessibilityIdentifier or label>", named: "<part>")]`; screenshots are named `<screen>-<part>__<variant>`. `.scrolled(to:)` brings the marker to the top ~15% of the screen, so each part shows the content below its marker; give long sections their own markers (e.g. one per card).
+  - Each screenshot is taken after the screen stops changing (two identical frames, up to ~3 s), then audited.
+  - The light/dark check samples the **left 4 pt gutter**: screens keep their background color there (no edge-to-edge content at the left edge).
   - Every capture launches with `-ui-static-motion`. **The app must honor it** by stopping continuous animations (e.g. drifting meshes, `TimelineView(.animation)`), otherwise the accessibility audit never sees an idle app and times out.
   - An audit that fails to complete is reported as `[a11y] … audit did not complete` and the run continues with the next part and variant.
 

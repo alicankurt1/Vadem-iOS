@@ -100,15 +100,31 @@ final class UICheckTests: XCTestCase {
         /// Açılışta görünen kısım.
         static var top: Section { Section(name: "") { _ in true } }
 
-        /// Kimliği (accessibilityIdentifier) ya da etiketi `marker` olan öğe görünene kadar kaydırır.
+        /// Kimliği (accessibilityIdentifier) ya da etiketi `marker` olan öğeyi ekranın üst kısmına
+        /// (yüksekliğin ~%15'i) getirir. Sadece "görünür" olunca durmak yetmiyordu: tek kaydırma birden
+        /// fazla başlığı görünür yapınca farklı bölümler aynı görüntüyü veriyordu (#33).
         static func scrolled(to marker: String, named name: String) -> Section {
             Section(name: name) { app in
                 let element = app.descendants(matching: .any)
                     .matching(NSPredicate(format: "identifier == %@ OR label == %@", marker, marker))
                     .firstMatch
-                for _ in 0..<15 where !(element.exists && element.isHittable) {
-                    app.swipeUp()
+                let window = app.windows.firstMatch.frame
+                let target = window.minY + window.height * 0.15
+
+                for _ in 0..<20 {
+                    guard element.exists else {
+                        app.swipeUp()
+                        continue
+                    }
+                    let distance = element.frame.minY - target
+                    if abs(distance) < window.height * 0.05 { break }
+                    // Öğeyi parmakla tutup hedef yüksekliğe sürükle; tek seferde ekranın en fazla yarısı.
+                    let step = max(-window.height * 0.5, min(window.height * 0.5, distance))
+                    let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                    let to = from.withOffset(CGVector(dx: 0, dy: -step))
+                    from.press(forDuration: 0.05, thenDragTo: to)
                 }
+                // İçerik sonuna gelindiyse öğe hedefe çıkamayabilir; görünür olması yeter.
                 return element.exists && element.isHittable
             }
         }
@@ -141,7 +157,8 @@ final class UICheckTests: XCTestCase {
                     continue
                 }
 
-                let screenshot = app.screenshot()
+                // Kaydırma göstergesi gibi kısa animasyonlar bitmeden denetim zaman aşımına uğruyordu (#33).
+                let screenshot = Self.settledScreenshot(of: app)
                 let attachment = XCTAttachment(screenshot: screenshot)
                 attachment.name = name
                 attachment.lifetime = .keepAlways
@@ -167,16 +184,36 @@ final class UICheckTests: XCTestCase {
         }
     }
 
-    /// Ekranın alt kısmından, durum çubuğu ve içerikten uzak bir pikselin parlaklığıyla
-    /// açık/koyu modu doğrular. Saat gibi değişen öğelerden etkilenmez.
+    /// Ekran durana kadar (art arda iki görüntü aynı olana kadar, en fazla ~3 sn) bekler ve son görüntüyü döner.
+    @MainActor
+    private static func settledScreenshot(of app: XCUIApplication) -> XCUIScreenshot {
+        var previous = app.screenshot()
+        for _ in 0..<10 {
+            Thread.sleep(forTimeInterval: 0.3)
+            let current = app.screenshot()
+            if current.pngRepresentation == previous.pngRepresentation { return current }
+            previous = current
+        }
+        return previous
+    }
+
+    /// Sol kenar boşluğundaki (4 pt) birkaç pikselin medyan parlaklığıyla açık/koyu modu doğrular.
+    /// Önceden ekranın ortasından tek piksel örnekleniyordu; büyük yazıda bu nokta içeriğe denk geliyordu (#33).
     @MainActor
     private func assertAppearance(of screenshot: XCUIScreenshot, is expected: Appearance, name: String) {
-        guard let image = screenshot.image.cgImage,
-              let brightness = Self.brightness(of: image, x: image.width / 2, y: image.height * 9 / 10)
-        else {
+        guard let image = screenshot.image.cgImage else {
             XCTFail("[ui-check] \(name): screenshot could not be read")
             return
         }
+        let x = Int(4 * screenshot.image.scale)
+        let samples = [0.25, 0.4, 0.55, 0.7, 0.85].compactMap {
+            Self.brightness(of: image, x: x, y: Int(Double(image.height) * $0))
+        }
+        guard !samples.isEmpty else {
+            XCTFail("[ui-check] \(name): screenshot could not be read")
+            return
+        }
+        let brightness = samples.sorted()[samples.count / 2]
         let actual: Appearance = brightness < 0.5 ? .dark : .light
         XCTAssertEqual(
             actual, expected,
