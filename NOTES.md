@@ -171,3 +171,12 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Review kapısı:** Bozuk kart ve taksit kayıtları test ediliyordu, bozuk abonelik kaydı (bilinmeyen periyot, yarım girilmiş son ay, 13. ay, okunamayan tutar) edilmiyordu; 13 bozuk durum eklendi, hepsi hata fırlatıyor. Açık bırakılan nit: sıralama yardımcısı bellek içi depodan kopyalandı (sapmayı zaten ortak sözleşme yakalar). `.appGroup` yolu paket testlerinde koşmuyor (entitlement yok); Phase 10'da uygulama açtığında gerçekten çalışacak.
 - **Metrikler:** ~15 dk, 7 verify koşusu (0 kırmızı), 1 düzeltme turu; review 0 blocker / 0 major / 1 minor / 2 nit, UI check atlandı (ekran yok).
 - **Ders:** Sözleşme testleri yalnızca ortak davranışı sınar; depolamaya özgü riskler (bozuk veri, yeniden açma, tam yuvarlama) uygulamanın kendi testlerinde kalmalı. Review'in bulduğu eksik tam da bu sınırdaydı.
+
+### Phase 10 — UI check harness güncellemesi (fabrika)
+
+#33'te (design system) UI check ve reviewer, harness'ın uzun ve animasyonlu ekranlara hazır olmadığını gösterdi:
+- **Sonsuz animasyon = bitmeyen denetim:** Kartlardaki sürekli mesh kayması uygulamayı hiç boşta bırakmıyor, `performAccessibilityAudit` zaman aşımına uğruyordu. Artık her yakalama `-ui-static-motion` ile açılıyor; uygulama bu bayrağı görünce sürekli animasyonları durdurmak zorunda (Reduce Motion ile aynı yol).
+- **Bir hata, kalan her şeyi siliyordu:** Denetim `try` ile hata fırlatınca döngü kırılıyor, AX5 varyantı hiç yakalanmıyordu. Artık hata `[a11y] … audit did not complete` olarak raporlanıp devam ediliyor.
+- **Uzun ekranlar:** Ekran görüntüsü sadece ilk görünen kısmı alıyordu; kartlar sayfanın altında kalmıştı. `sections: [.top, .scrolled(to:named:)]` ile bölüm bölüm yakalanıyor.
+- **Açılış argümanları:** `capture(screen:launchArguments:…)` ile ekran doğrudan açılıyor; test yazarının "kapat-yeniden aç" geçici çözümüne gerek kalmadı.
+- **Doğrulama:** Geçici bir test ile iki bölüm (6 görüntü) ve bilerek bulunamayan bir bölüm denendi; hata her varyant için raporlandı, döngü durmadı.
