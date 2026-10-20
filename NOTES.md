@@ -147,3 +147,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **İlk günden versiyonlu şema:** `VersionedSchema V1` + `SchemaMigrationPlan`. Yayınlanmış bir şema yerinde değiştirilmez, yeni versiyon eklenir; yoksa kullanıcı verisi güncellemede kaybolabilir.
 - **App Group:** Veri baştan `group.com.alicankurt.Vadem` container'ında. Widget ve Siri (Phase 13) aynı veriyi okuyacak; sonradan taşımak migration demek.
 - **Hedefe özel xcconfig:** Entitlements sadece uygulama hedefinde olmalı (test bundle'larında değil). `App.xcconfig`, `Shared.xcconfig`'i include edip sadece uygulamaya `CODE_SIGN_ENTITLEMENTS` ekliyor.
+
+### Koşu #26 — Depolama sözleşmesi (`PaymentRepository`)
+
+- **Ne yapıldı:** `VademCore`'a `InstallmentItem`, `SubscriptionItem`, `PaymentRepository` protokolü ve referans uygulama `InMemoryPaymentRepository` eklendi. SwiftData yok; testler protokol üzerinden (`any PaymentRepository`) **sözleşme testi** olarak yazıldı, sonraki issue'da SwiftData uygulaması aynı senaryolardan geçecek (PR #27).
+- **Review kapısı:** Sıralama kuralı sadece "büyük/küçük harfe duyarsız" diyordu, hangi karşılaştırma olduğunu söylemiyordu. `caseInsensitiveCompare` ile `localizedStandardCompare` Türkçe noktasız ı'lı "ılık" kelimesini farklı sıralar; SwiftData uygulaması ikisinden birini seçebilirdi. Kural dokümanda adıyla yazıldı ve bir sözleşme senaryosu eklendi. Taksit ve abonelikte başlık eşitliğinde `id` ile ayırma da test edilmemişti; sözlük tabanlı bir depo bu hatayı gizlerdi.
+- **Metrikler:** ~11 dk, 8 verify koşusu (0 kırmızı), 1 düzeltme turu; review 0 blocker / 0 major / 3 minor / 1 nit, UI check atlandı (sadece domain).
+- **Ders:** Bir sözleşmeyi ikinci uygulama yazılmadan **önce** sıkılaştırmak ucuz; sonra yapılırsa iki uygulamadan biri "yanlış" olur. Sözleşmede "bir şekilde sırala" yetmez, kullanılan API adıyla yazılmalı ve belirsiz durumu (eşitlik, yerel ayar) bir test sabitlemeli.
+- **Sonraki adım için not:** Sözleşme testleri `VademCoreTests` içinde; test hedefleri birbirini import edemez, bu yüzden `VademPersistenceTests` bunları kullanabilsin diye ortak bir test-destek hedefi gerekecek.
