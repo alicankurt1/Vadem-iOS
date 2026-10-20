@@ -62,6 +62,11 @@ final class UICheckTests: XCTestCase {
                 .scrolled(to: "gallery.chips", named: "chips"),
                 .scrolled(to: "gallery.amounts", named: "amounts"),
                 .scrolled(to: "gallery.cards", named: "cards"),
+                // Bir ekrana ~3 kart sığar; altı kart yüzünün hepsi en az bir görüntüde olmalı.
+                // Graphite son kart; AX5'te iri metinle de görünsün diye ayrıca yakalanır.
+                .scrolled(to: "gallery.card.night", named: "cards-2"),
+                .scrolled(to: "gallery.card.sunset", named: "cards-3"),
+                .scrolled(to: "gallery.card.graphite", named: "cards-4"),
             ]
         ) { app, variant in
             XCTAssertTrue(
