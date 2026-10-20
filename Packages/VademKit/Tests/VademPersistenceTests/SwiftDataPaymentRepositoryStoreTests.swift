@@ -370,4 +370,61 @@ struct SwiftDataPaymentRepositoryStoreTests {
         ))
         expectInvalidRecord(id: id) { _ = try repository.installments() }
     }
+
+    // Geçerli bir abonelik kaydından tek bir alanı bozan durumlar.
+    struct SubscriptionRecordCase: Sendable, CustomTestStringConvertible {
+        let name: String
+        var title = "Müzik"
+        var amount = "99"
+        var period = "monthly"
+        var renewalDay = 5
+        var firstYear = 2026
+        var firstMonth = 1
+        var lastYear: Int?
+        var lastMonth: Int?
+
+        var testDescription: String { name }
+
+        func record(id: UUID) -> VademSchemaV1.SubscriptionRecord {
+            VademSchemaV1.SubscriptionRecord(
+                id: id, title: title, cardID: nil, amount: amount, period: period, renewalDay: renewalDay,
+                firstYear: firstYear, firstMonth: firstMonth, lastYear: lastYear, lastMonth: lastMonth
+            )
+        }
+    }
+
+    nonisolated static let corruptSubscriptions: [SubscriptionRecordCase] = [
+        SubscriptionRecordCase(name: "unknown period", period: "weekly"),
+        SubscriptionRecordCase(name: "empty period", period: ""),
+        SubscriptionRecordCase(name: "last year without last month", lastYear: 2026, lastMonth: nil),
+        SubscriptionRecordCase(name: "last month without last year", lastYear: nil, lastMonth: 6),
+        SubscriptionRecordCase(name: "last month 13", lastYear: 2026, lastMonth: 13),
+        SubscriptionRecordCase(name: "last month 0", lastYear: 2026, lastMonth: 0),
+        SubscriptionRecordCase(name: "last month before first month", lastYear: 2025, lastMonth: 12),
+        SubscriptionRecordCase(name: "unreadable amount", amount: "12abc"),
+        SubscriptionRecordCase(name: "empty amount", amount: ""),
+        SubscriptionRecordCase(name: "zero amount", amount: "0"),
+        SubscriptionRecordCase(name: "first month 13", firstMonth: 13),
+        SubscriptionRecordCase(name: "renewal day 32", renewalDay: 32),
+        SubscriptionRecordCase(name: "empty title", title: "  "),
+    ]
+
+    @Test("A corrupt stored subscription throws instead of crashing", arguments: corruptSubscriptions)
+    func invalidSubscriptionThrows(value: SubscriptionRecordCase) throws {
+        let id = Fixture.id(3)
+        let repository = try repository(withStored: value.record(id: id))
+        expectInvalidRecord(id: id) { _ = try repository.subscriptions() }
+    }
+
+    // Kontrol: bozulmamış temel kayıt sorunsuz okunur; yani hatayı yalnızca bozulan alan doğurur.
+    @Test("An intact stored subscription record reads back", arguments: [
+        SubscriptionRecordCase(name: "active"),
+        SubscriptionRecordCase(name: "cancelled", lastYear: 2026, lastMonth: 6),
+    ])
+    func intactSubscriptionReads(value: SubscriptionRecordCase) throws {
+        let repository = try repository(withStored: value.record(id: Fixture.id(3)))
+        let loaded = try repository.subscriptions()
+        #expect(loaded.map(\.id) == [Fixture.id(3)])
+        #expect(loaded.first?.subscription.lastMonth == value.lastYear.flatMap { YearMonth(year: $0, month: value.lastMonth ?? 0) })
+    }
 }
