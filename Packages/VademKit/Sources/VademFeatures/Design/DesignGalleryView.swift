@@ -9,8 +9,18 @@ public struct DesignGalleryView: View {
     @State private var animatedAmount = Money(Decimal(123_456) / 100)
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.self) private var environment
 
     public init() {}
+
+    // "Ekle" düğmesinin eklediği tutar.
+    nonisolated static let addedAmount = Money(100)
+
+    /// The "Add ₺100" button's accessibility label, without the `₺` symbol: "Add 100,00 Türk lirası".
+    nonisolated static var addButtonAccessibilityLabel: String {
+        "Add " + AmountText.spokenLabel(addedAmount)
+    }
 
     public var body: some View {
         // NavigationStack üst kenarı verir: kaydırılan içerik saatin altına girmez.
@@ -42,8 +52,10 @@ public struct DesignGalleryView: View {
                             .font(.largeTitle.weight(.semibold))
                             .foregroundStyle(Color.vademBrand)
                         Button("Add ₺100") {
-                            animatedAmount = animatedAmount + Money(100)
+                            animatedAmount = animatedAmount + Self.addedAmount
                         }
+                        // VoiceOver ve denetim "₺" sembolü yerine okunabilir tutarı alır.
+                        .accessibilityLabel(Self.addButtonAccessibilityLabel)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.vademTextPrimary)
                         .padding(.horizontal, 18)
@@ -66,7 +78,10 @@ public struct DesignGalleryView: View {
             .navigationTitle("Design gallery")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.vademBackground, for: .navigationBar)
+            // iOS 26 çubuğu altından geçen koyu kartlara uyum sağlamasın: renk şeması ve arka plan
+            // ekranın şemasına sabitlenir (açıkta açık zemin + mürekkep başlık, koyuda koyu token'lar).
+            .toolbarColorScheme(colorScheme, for: .navigationBar)
+            .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             #endif
         }

@@ -54,6 +54,10 @@ final class UICheckTests: XCTestCase {
     @MainActor
     func testGalleryScreen() throws {
         // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
+        // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
+        let cardParts: [Section] = ["night", "ocean", "emerald", "sunset", "lavender", "graphite"].map {
+            .scrolled(to: "gallery.card.\($0)", named: "card-\($0)")
+        }
         try capture(
             screen: "gallery",
             launchArguments: ["-ui-gallery"],
@@ -61,13 +65,7 @@ final class UICheckTests: XCTestCase {
                 .top,
                 .scrolled(to: "gallery.chips", named: "chips"),
                 .scrolled(to: "gallery.amounts", named: "amounts"),
-                .scrolled(to: "gallery.cards", named: "cards"),
-                // Bir ekrana ~3 kart sığar; altı kart yüzünün hepsi en az bir görüntüde olmalı.
-                // Graphite son kart; AX5'te iri metinle de görünsün diye ayrıca yakalanır.
-                .scrolled(to: "gallery.card.night", named: "cards-2"),
-                .scrolled(to: "gallery.card.sunset", named: "cards-3"),
-                .scrolled(to: "gallery.card.graphite", named: "cards-4"),
-            ]
+            ] + cardParts
         ) { app, variant in
             XCTAssertTrue(
                 app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
