@@ -74,6 +74,7 @@ Rules:
   - `VademCore` — pure domain. Must not import UIKit, SwiftUI or SwiftData. Builds on macOS so `swift test` works. Defines **repository protocols** (what the app needs to save and load), never their storage.
   - `VademPersistence` — the **only** module that imports SwiftData. `@Model` record classes, mapping to/from `VademCore` value types, and SwiftData implementations of the repository protocols. Schema is versioned from day one (`VersionedSchema` + `SchemaMigrationPlan`); never change a shipped schema version in place, add a new one. The store lives in the App Group container (`VademPersistence.appGroupIdentifier`), tests use an in-memory container.
   - `VademFeatures` — SwiftUI screens and view models. Depends on repository protocols, not on SwiftData.
+  - `VademTestSupport` — test-only helpers used by every test target: `Fixture` (valid test values) and `PaymentRepositoryContract` (the repository behaviour every implementation must have). Each implementation runs the whole contract with one parameterized test: `@Test(arguments: <factories>, PaymentRepositoryContract.scenarios)`. A new repository rule = a new scenario here, never a test that only one implementation runs.
 - Swift 6 language mode, strict concurrency. **Default actor isolation is off**; write `@MainActor` explicitly.
 - Deployment target iOS 18. Newer APIs (e.g. FoundationModels, iOS 26) behind `@available`.
 - Money is `Decimal`, never `Double`.
