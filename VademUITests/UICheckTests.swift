@@ -51,6 +51,31 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testGalleryScreen() throws {
+        // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
+        try capture(
+            screen: "gallery",
+            launchArguments: ["-ui-gallery"],
+            sections: [
+                .top,
+                .scrolled(to: "gallery.chips", named: "chips"),
+                .scrolled(to: "gallery.amounts", named: "amounts"),
+                .scrolled(to: "gallery.cards", named: "cards"),
+                // Bir ekrana ~3 kart sığar; altı kart yüzünün hepsi en az bir görüntüde olmalı.
+                // Graphite son kart; AX5'te iri metinle de görünsün diye ayrıca yakalanır.
+                .scrolled(to: "gallery.card.night", named: "cards-2"),
+                .scrolled(to: "gallery.card.sunset", named: "cards-3"),
+                .scrolled(to: "gallery.card.graphite", named: "cards-4"),
+            ]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
+                "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
+            )
+        }
+    }
+
     /// Sürüm etiketi görünür, "Version x.y.z" biçiminde, dokunulabilir ve başlığın altında,
     /// başlıktan daha küçük olmalı (ikincil bilgi hiyerarşisi).
     @MainActor

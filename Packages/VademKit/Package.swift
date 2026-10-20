@@ -16,11 +16,16 @@ let package = Package(
         .target(name: "VademCore"),
         // The only module that imports SwiftData; implements VademCore's repository protocols.
         .target(name: "VademPersistence", dependencies: ["VademCore"]),
-        .target(name: "VademFeatures", dependencies: ["VademCore", "VademPersistence"]),
+        .target(
+            name: "VademFeatures",
+            dependencies: ["VademCore", "VademPersistence"],
+            resources: [.process("Resources")]
+        ),
         // Shared test helpers and the PaymentRepository contract; used only by test targets.
         .target(name: "VademTestSupport", dependencies: ["VademCore"], path: "Sources/VademTestSupport"),
         .testTarget(name: "VademCoreTests", dependencies: ["VademCore", "VademTestSupport"]),
         .testTarget(name: "VademPersistenceTests", dependencies: ["VademPersistence", "VademTestSupport"]),
+        .testTarget(name: "VademFeaturesTests", dependencies: ["VademFeatures", "VademCore"]),
     ],
     swiftLanguageModes: [.v6]
 )
