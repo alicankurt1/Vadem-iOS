@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 import VademCore
+import VademTestSupport
 
 @Suite("SubscriptionItem")
 struct SubscriptionItemTests {

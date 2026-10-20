@@ -155,3 +155,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Metrikler:** ~11 dk, 8 verify koşusu (0 kırmızı), 1 düzeltme turu; review 0 blocker / 0 major / 3 minor / 1 nit, UI check atlandı (sadece domain).
 - **Ders:** Bir sözleşmeyi ikinci uygulama yazılmadan **önce** sıkılaştırmak ucuz; sonra yapılırsa iki uygulamadan biri "yanlış" olur. Sözleşmede "bir şekilde sırala" yetmez, kullanılan API adıyla yazılmalı ve belirsiz durumu (eşitlik, yerel ayar) bir test sabitlemeli.
 - **Sonraki adım için not:** Sözleşme testleri `VademCoreTests` içinde; test hedefleri birbirini import edemez, bu yüzden `VademPersistenceTests` bunları kullanabilsin diye ortak bir test-destek hedefi gerekecek.
+
+### Phase 9 — Ortak sözleşme testleri (fabrika)
+
+- **Sorun:** Test hedefleri birbirini import edemez. #26'daki sözleşme `VademCoreTests` içindeydi, SwiftData testleri (`VademPersistenceTests`) onu kullanamazdı.
+- **Çözüm:** `VademTestSupport` adlı normal bir hedef (sadece test hedefleri bağımlı). İçinde `Fixture` ve `PaymentRepositoryContract.scenarios` (29 senaryo).
+- **Tek satırla yeni uygulama:** Her test hedefi `@Test(arguments: factories, PaymentRepositoryContract.scenarios)` ile tüm sözleşmeyi koşar. Swift Testing iki argüman listesinin kartezyen çarpımını alır: "uygulama × senaryo".
+- **Swift 6 detayı:** Senaryolar `@MainActor` bir enum içinde; `@Test(arguments:)` listeyi actor dışından okuduğu için liste `nonisolated` olmalı.
+- **Aleti ölçtük:** Bellek içi uygulamanın sıralamasını bilerek bozunca 29 senaryodan 6'sı kırmızıya döndü. Taşıma sırasında sözleşme gücünü kaybetmedi.
