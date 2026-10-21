@@ -6,7 +6,7 @@ Guidance for Claude Code (and its subagents) working in this repository.
 
 **Vadem**: an iOS app that tracks credit card installments and subscriptions and answers "how much do I pay this month?". No bank connection; data is user-entered and stays on device.
 
-The repo also hosts an **AI agent pipeline** that develops the app: issue → code → tests → verify → review → fix → UI check → PR → (human merge) → docs. See `PLAN.md`.
+The repo also hosts an **AI agent pipeline** that develops the app: issue → code → tests → verify → review + UI capture → fix → PR → (human merge) → docs. See `PLAN.md`.
 
 ## Language
 
@@ -27,7 +27,7 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
 
 ## Build & test
 
-- Do **not** launch the simulator or run UI tests unless asked (exception: the UI check agent in the pipeline, via `scripts/ui-check.sh`).
+- Do **not** launch the simulator or run UI tests unless asked (exception: the orchestrator during `/ship`, via `scripts/ui-check.sh` in the background).
 - **Verification gate** (single source of truth for pass/fail; also available as `/verify`):
   ```
   scripts/verify.sh            # package tests + app build-for-testing
@@ -36,10 +36,10 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
   Last line is `VERIFY: PASS` / `VERIFY: FAIL`. Logs in `.build/verify/`, summary in `.build/verify/last-run.json`.
 - Never claim tests pass without a `VERIFY: PASS` on the current tree. Never weaken tests to get green.
 - The shared `Vadem` scheme lives in `Vadem.xcodeproj/xcshareddata/xcschemes/`.
-- **UI capture** (simulator, ~1–2 min): `scripts/ui-check.sh` builds once, then runs `VademUITests/UICheckTests` in two passes (light, dark), setting the appearance with `simctl ui … appearance` (not `XCUIDevice.appearance`, which does not apply). It writes screenshots (light / dark / AX5 text), **every** test failure (accessibility audit + appearance check) to `.build/ui-check/latest/`. Last line `UI-CHECK: PASS` / `UI-CHECK: FAIL`. Every new screen gets a `capture(screen:launchArguments:sections:navigate:)` test in `UICheckTests.swift` (written by the test writer):
+- **UI capture** (simulator, budget ≤ 4 min for the full gallery on iPhone 17): `scripts/ui-check.sh` builds once, then runs `VademUITests/UICheckTests` in two passes (light, dark), setting the appearance with `simctl ui … appearance` (not `XCUIDevice.appearance`, which does not apply). `UI_CHECK_ONLY=gallery,root` captures only those screens (`testGalleryScreen`, `testRootScreen`). It writes screenshots (light / dark / AX5 text, plus 600 px copies in `screenshots/small/`), **every** test failure (accessibility audit + appearance check) and non-failing notes (`notes.txt`) to `.build/ui-check/latest/`. Last line `UI-CHECK: PASS` / `UI-CHECK: FAIL`. Every new screen gets a `capture(screen:launchArguments:sections:navigate:)` test in `UICheckTests.swift` (written by the test writer):
   - `launchArguments` opens the screen directly (e.g. `["-ui-gallery"]`); never terminate and relaunch inside `navigate`.
-  - Long screens are captured in parts with `sections: [.top, .scrolled(to: "<accessibilityIdentifier or label>", named: "<part>")]`; screenshots are named `<screen>-<part>__<variant>`. `.scrolled(to:)` brings the marker to the top ~15% of the screen, so each part shows the content below its marker; give long sections their own markers (e.g. one per card).
-  - Each screenshot is taken after the screen stops changing (two identical frames, up to ~3 s), then audited.
+  - Long screens are captured in parts with `sections: [.top, .scrolled(to: "<accessibilityIdentifier or label>", named: "<part>")]`; screenshots are named `<screen>-<part>__<variant>`. `.scrolled(to:)` brings the marker to the top ~15% of the screen (always below the navigation bar), so each part shows the content below its marker; give long sections their own markers (e.g. one per card). An unreachable marker fails with its frame, the bar bottom and the attempt count; a part identical to the previous one is a `[ui-note]` (end of content).
+  - Each screenshot is taken after the screen stops changing (two identical frames, up to ~1.5 s), then audited. Audit issues on elements not fully visible (under the navigation bar or off screen) are notes (`[a11y-hidden]`), not failures.
   - The light/dark check samples the **left 4 pt gutter**: screens keep their background color there (no edge-to-edge content at the left edge).
   - Every capture launches with `-ui-static-motion`. **The app must honor it** by stopping continuous animations (e.g. drifting meshes, `TimelineView(.animation)`), otherwise the accessibility audit never sees an idle app and times out.
   - An audit that fails to complete is reported as `[a11y] … audit did not complete` and the run continues with the next part and variant.
@@ -54,11 +54,11 @@ Agents live in `.claude/agents/`. The main session is the **orchestrator**: it p
 | Test writer | `.claude/agents/test-writer.md` | Tests only, from acceptance criteria |
 | Verify | `scripts/verify.sh` (not an agent) | Pass/fail verdict |
 | Reviewer | `.claude/agents/reviewer.md` | Nothing (read-only tools); returns findings |
-| UI check | `.claude/agents/ui-checker.md` + `scripts/ui-check.sh` | Nothing; returns visual / a11y findings |
+| UI capture | `scripts/ui-check.sh`, run by the orchestrator (the `ui-checker` agent is off) | Nothing; summary lines, screenshots on demand |
 | Writer | `.claude/agents/writer.md` | Docs only (`CHANGELOG.md`, `README.md`, `NOTES.md`), after merge |
 
 **Commands** (skills in `.claude/skills/`):
-- `/ship #N` — the whole pipeline for issue N: plan (waits for "ok") → coder → test writer → verify → reviewer → UI check (if UI is touched) → fix loop (max 2 review rounds) → push + PR → metrics. The procedure lives in `.claude/skills/ship/SKILL.md`; "do #N" means the same.
+- `/ship #N` — the whole pipeline for issue N: plan (waits for "ok") → coder → test writer → verify → reviewer + background UI capture (if UI is touched) → fix loop (max 2 review rounds) → push + PR → metrics. The procedure lives in `.claude/skills/ship/SKILL.md`; "do #N" means the same.
 - `/after-merge #P` — after the human merges PR P: writer agent updates docs on `docs/pr-P` and opens a docs PR.
 - `/verify` — the gate on its own.
 

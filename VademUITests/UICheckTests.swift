@@ -118,44 +118,74 @@ final class UICheckTests: XCTestCase {
     /// Ekranın görüntüsü alınacak bir bölümü. Uzun ekranlar birden fazla bölümle yakalanır.
     struct Section {
         let name: String
-        let show: @MainActor (XCUIApplication) -> Bool
+        /// Bölümü ekrana getirir; başarılıysa `nil`, değilse nedenini döner.
+        let reach: @MainActor (XCUIApplication) -> String?
 
         /// Açılışta görünen kısım.
-        static var top: Section { Section(name: "") { _ in true } }
+        static var top: Section { Section(name: "") { _ in nil } }
 
         /// Kimliği (accessibilityIdentifier) ya da etiketi `marker` olan öğeyi ekranın üst kısmına
-        /// (yüksekliğin ~%15'i) getirir. Sadece "görünür" olunca durmak yetmiyordu: tek kaydırma birden
-        /// fazla başlığı görünür yapınca farklı bölümler aynı görüntüyü veriyordu (#33).
+        /// (yüksekliğin ~%15'i, ama her zaman navigasyon çubuğunun altına) getirir. Sadece "görünür" olunca
+        /// durmak yetmiyordu: tek kaydırma birden fazla başlığı görünür yapınca bölümler aynı görüntüyü
+        /// veriyordu (#33). Hedef büyük başlıklı çubuğun altında kalınca öğe dokunulamaz sayılıyordu (#37).
         static func scrolled(to marker: String, named name: String) -> Section {
             Section(name: name) { app in
                 let element = app.descendants(matching: .any)
                     .matching(NSPredicate(format: "identifier == %@ OR label == %@", marker, marker))
                     .firstMatch
                 let window = app.windows.firstMatch.frame
-                let target = window.minY + window.height * 0.15
+                var target = window.minY
+                var previousMinY: CGFloat?
+                var attempts = 0
 
-                for _ in 0..<20 {
+                for _ in 0..<12 {
+                    attempts += 1
                     guard element.exists else {
-                        app.swipeUp()
+                        app.swipeUp(velocity: .fast)
                         continue
                     }
-                    let distance = element.frame.minY - target
-                    if abs(distance) < window.height * 0.05 { break }
-                    // Öğeyi parmakla tutup hedef yüksekliğe sürükle; tek seferde ekranın en fazla yarısı.
-                    let step = max(-window.height * 0.5, min(window.height * 0.5, distance))
-                    let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                    // Büyük başlık kaydırınca küçülür; çubuğun alt kenarı her adımda yeniden okunur.
+                    target = max(window.minY + window.height * 0.15, barBottom(in: app) + 8)
+                    let minY = element.frame.minY
+                    let distance = minY - target
+                    // Hedef bir bant: çubuğun hemen altından ekranın yarısına kadar. Dar tolerans (%5)
+                    // sürüklemeyi ileri geri salındırıyordu; her sürükleme ~3 sn sürüyor (#37).
+                    if minY >= target - 8, minY <= target + window.height * 0.35 { break }
+                    // İçerik sonu: öğe artık yer değiştirmiyor, daha fazla sürüklemek boşa zaman.
+                    if let previousMinY, abs(previousMinY - minY) < 1 { break }
+                    previousMinY = minY
+                    // Öğeyi parmakla tutup hedef bandın ortasına sürükle; tek seferde ekranın en fazla yarısı.
+                    // İçerik sürüklenenden fazla kayıyor (büyük başlık daralıp genişliyor, az da olsa
+                    // momentum); bu yüzden adım kısaltılır ve sonda beklenir (#37).
+                    let wanted = (distance - window.height * 0.15) * 0.75
+                    let step = max(-window.height * 0.5, min(window.height * 0.5, wanted))
+                    let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: step > 0 ? 0.8 : 0.3))
                     let to = from.withOffset(CGVector(dx: 0, dy: -step))
-                    from.press(forDuration: 0.05, thenDragTo: to)
+                    from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .default, thenHoldForDuration: 0.2)
                 }
-                // İçerik sonuna gelindiyse öğe hedefe çıkamayabilir; görünür olması yeter.
-                return element.exists && element.isHittable
+
+                // İçerik sonuna gelindiyse öğe hedefe çıkamayabilir; çubuğun altında görünür olması yeter.
+                let bar = barBottom(in: app)
+                let frame = element.exists ? element.frame : .zero
+                if element.exists, element.isHittable, frame.midY > bar, frame.minY < window.maxY { return nil }
+                return "marker '\(marker)' not reached after \(attempts) attempts — exists: \(element.exists), "
+                    + "hittable: \(element.exists && element.isHittable), marker frame: \(frame), "
+                    + "bar bottom: \(bar), target y: \(target)"
             }
         }
+    }
+
+    /// Navigasyon çubuğunun alt kenarı (durum çubuğu bunun üstünde kalır); çubuk yoksa pencerenin üstü.
+    @MainActor
+    static func barBottom(in app: XCUIApplication) -> CGFloat {
+        let bar = app.navigationBars.firstMatch
+        return bar.exists ? bar.frame.maxY : app.windows.firstMatch.frame.minY
     }
 
     /// Uygulamayı her varyantta açar; `navigate` ile (uygulama, varyant) ekrana gider; her bölüm için
     /// görüntü alır, görünümü doğrular ve erişilebilirlik denetimini koşar.
     /// Bir varyantta denetim hata verse bile sonraki bölüm ve varyantlara devam eder.
+    /// Hata sayılmayan gözlemler (`notes` eki) script tarafından ayrıca listelenir.
     @MainActor
     private func capture(
         screen: String,
@@ -171,12 +201,15 @@ final class UICheckTests: XCTestCase {
             defer { app.terminate() }
             navigate(app, variant)
 
+            var notes: [String] = []
+            var previous: (name: String, png: Data)?
+
             for section in sections {
                 let shot = section.name.isEmpty ? screen : "\(screen)-\(section.name)"
                 let name = "\(shot)__\(variant.name)"
 
-                guard section.show(app) else {
-                    XCTFail("[ui-check] \(name): section '\(section.name)' could not be scrolled into view")
+                if let reason = section.reach(app) {
+                    XCTFail("[ui-check] \(name): section '\(section.name)' could not be scrolled into view — \(reason)")
                     continue
                 }
 
@@ -187,32 +220,58 @@ final class UICheckTests: XCTestCase {
                 attachment.lifetime = .keepAlways
                 add(attachment)
 
+                // Aynı görüntü: kaydırma içerik sonuna takıldı, bu bölüm yeni bir şey göstermiyor (#37).
+                let png = screenshot.pngRepresentation
+                if let previous, previous.png == png {
+                    notes.append("[ui-note] \(name) equals \(previous.name) — marker not reached (end of content?)")
+                }
+                previous = (name, png)
+
                 // Görünüm gerçekten uygulandı mı? Script görünüm verdiyse arka plan parlaklığına bakılır.
                 if let expected = Self.activeAppearance {
                     assertAppearance(of: screenshot, is: expected, name: name)
                 }
+
+                // Çubuğun altında ya da ekran dışında kalan öğeler çubuğa karşı ölçülüyor; bunlar
+                // hata değil, "tam görünmüyor" notu olarak ayrı raporlanır (#37).
+                let window = app.windows.firstMatch.frame
+                let bar = Self.barBottom(in: app)
+                let visible = CGRect(x: window.minX, y: bar, width: window.width, height: window.maxY - bar)
+                    .insetBy(dx: -1, dy: -1)
 
                 // Her sorun ayrı bir test hatası olur. Denetimin kendisi hata verirse (ör. zaman aşımı)
                 // raporlanır ve döngü devam eder; önceden bu durumda kalan varyantlar hiç yakalanmıyordu.
                 do {
                     try app.performAccessibilityAudit { issue in
                         let element = issue.element.map { "'\($0.label)'" } ?? "screen"
-                        XCTFail("[a11y] \(name): \(issue.compactDescription) — \(element)")
+                        if let frame = issue.element?.frame, !frame.isEmpty, !visible.contains(frame) {
+                            notes.append("[a11y-hidden] \(name): \(issue.compactDescription) — \(element) (not fully visible)")
+                        } else {
+                            XCTFail("[a11y] \(name): \(issue.compactDescription) — \(element)")
+                        }
                         return true
                     }
                 } catch {
                     XCTFail("[a11y] \(name): audit did not complete — \(error.localizedDescription)")
                 }
             }
+
+            if !notes.isEmpty {
+                let attachment = XCTAttachment(string: notes.joined(separator: "\n"))
+                attachment.name = "notes-\(screen)__\(variant.name)"
+                attachment.lifetime = .keepAlways
+                add(attachment)
+            }
         }
     }
 
-    /// Ekran durana kadar (art arda iki görüntü aynı olana kadar, en fazla ~3 sn) bekler ve son görüntüyü döner.
+    /// Ekran durana kadar (art arda iki görüntü aynı olana kadar, en fazla ~1,5 sn) bekler ve son görüntüyü döner.
+    /// Önceki 0,3 sn × 10 adım koşuyu uzatıyordu (#37).
     @MainActor
     private static func settledScreenshot(of app: XCUIApplication) -> XCUIScreenshot {
         var previous = app.screenshot()
         for _ in 0..<10 {
-            Thread.sleep(forTimeInterval: 0.3)
+            Thread.sleep(forTimeInterval: 0.15)
             let current = app.screenshot()
             if current.pngRepresentation == previous.pngRepresentation { return current }
             previous = current

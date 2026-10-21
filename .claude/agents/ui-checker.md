@@ -1,6 +1,6 @@
 ---
 name: ui-checker
-description: Runs the deterministic UI capture (simulator screenshots in light/dark/large text + Apple accessibility audit) for an issue branch in Vadem-iOS, looks at every screenshot, and returns severity-ranked visual and accessibility findings. Never edits files. Use after review, when the change touches UI.
+description: Runs the deterministic UI capture (simulator screenshots in light/dark/large text + Apple accessibility audit) for an issue branch in Vadem-iOS, looks at every screenshot, and returns severity-ranked visual and accessibility findings. Never edits files. Currently off (not used by /ship; the orchestrator reads the capture summary itself). Use only when the user asks for a full visual review.
 tools: Read, Bash, Glob, Grep
 model: inherit
 ---
