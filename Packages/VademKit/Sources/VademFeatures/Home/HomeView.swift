@@ -40,15 +40,6 @@ public struct HomeView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(Color.vademBackground.ignoresSafeArea())
-        .safeAreaInset(edge: .top, spacing: 0) {
-            // Durum çubuğunun arkası opak: kaydırılan içerik (ör. takvim satırları) saat ve
-            // pil simgelerinin altına girip kontrastı bozmaz. Sıfır yükseklikli şerit,
-            // arka planını yalnızca üst güvenli alana taşır.
-            Color.clear
-                .frame(height: 0)
-                .background(Color.vademBackground.ignoresSafeArea(edges: .top))
-                .accessibilityHidden(true)
-        }
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
