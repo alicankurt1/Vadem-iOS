@@ -15,6 +15,7 @@ Invoking `/ship #N` authorizes, for this issue only: agents committing on `issue
 - Parse `N` from `$ARGUMENTS` (accept `#12` or `12`). If missing, ask.
 - Record the start time: `date +%s > .build/ship-N.start` (create `.build/` if needed).
 - Working tree must be clean (`git status --short` empty). If not, stop and ask.
+- One issue per chat: if this conversation already ran `/ship` or `/after-merge`, or other long work, stop and ask the user to start a new chat (every turn re-reads the whole conversation; a fresh chat is the cheapest way to run).
 
 ## 1. Plan (human gate)
 
