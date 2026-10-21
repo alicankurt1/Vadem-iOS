@@ -204,7 +204,8 @@ final class UICheckTests: XCTestCase {
         let bar = app.navigationBars.firstMatch
         if bar.exists { return bar.frame.maxY }
         let windowTop = app.windows.firstMatch.frame.minY
-        let statusBar = app.statusBars.firstMatch
+        // Durum çubuğu uygulamanın ağacında yok; springboard'un ağacında.
+        let statusBar = XCUIApplication(bundleIdentifier: "com.apple.springboard").statusBars.firstMatch
         return statusBar.exists ? max(windowTop, statusBar.frame.maxY) : windowTop
     }
 
