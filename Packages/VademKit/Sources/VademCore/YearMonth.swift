@@ -69,6 +69,17 @@ public struct YearMonth: Sendable, Hashable {
         }
     }
 
+    /// The weekday of this month's first day, numbered like `Calendar`'s `.weekday`:
+    /// `1` = Sunday … `7` = Saturday. Proleptic Gregorian for every supported year.
+    public var weekdayOfFirstDay: Int {
+        // Sakamoto yöntemi: Ocak/Şubat önceki yılın sonu sayılır; sonuç 0 = Pazar.
+        // Foundation takvimi 1582 öncesini Jülyen sayar; burada her yıl Gregoryen (numberOfDays ile tutarlı).
+        let offsets = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
+        let y = month < 3 ? year - 1 : year
+        let weekday = (y + y / 4 - y / 100 + y / 400 + offsets[month - 1] + 1) % 7
+        return weekday + 1
+    }
+
     // 4'e bölünen yıllar artık; 100'e bölünenler değil; 400'e bölünenler yine artık.
     private var isLeapYear: Bool {
         (year % 4 == 0 && year % 100 != 0) || year % 400 == 0

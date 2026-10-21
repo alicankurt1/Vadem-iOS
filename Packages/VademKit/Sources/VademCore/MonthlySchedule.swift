@@ -118,6 +118,41 @@ public struct MonthlySchedule: Sendable, Hashable {
         self.total = MonthlySchedule.sum(entries)
     }
 
+    /// The payments due on one day of ``MonthlySchedule/month``.
+    public struct Day: Sendable, Hashable {
+        /// The day of the month, `1...month.numberOfDays`.
+        public let day: Int
+        /// The day's entries, in schedule order; never empty.
+        public let entries: [Entry]
+        /// The exact sum of ``entries``.
+        public let total: Money
+    }
+
+    /// The entries grouped by due day: one ``Day`` per day with at least one payment, ordered by day.
+    public var days: [Day] {
+        // Girdiler zaten vade gününe göre sıralı; ardışık gruplama sırayı korur.
+        var result: [Day] = []
+        var index = entries.startIndex
+        while index < entries.endIndex {
+            let day = entries[index].dueDate.day
+            let end = entries[index...].firstIndex { $0.dueDate.day != day } ?? entries.endIndex
+            let group = Array(entries[index..<end])
+            result.append(Day(day: day, entries: group, total: MonthlySchedule.sum(group)))
+            index = end
+        }
+        return result
+    }
+
+    /// The entries due on `day`, in schedule order; empty when nothing is due that day.
+    public func entries(onDay day: Int) -> [Entry] {
+        entries.filter { $0.dueDate.day == day }
+    }
+
+    /// The exact sum of the entries due on `day`; zero when nothing is due that day.
+    public func total(onDay day: Int) -> Money {
+        MonthlySchedule.sum(entries(onDay: day))
+    }
+
     /// The exact sum of the entries charged to `cardID`.
     public func total(for cardID: Card.ID) -> Money {
         MonthlySchedule.sum(entries.filter { $0.cardID == cardID })
