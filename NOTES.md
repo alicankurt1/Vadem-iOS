@@ -255,3 +255,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ayrım:** 3'er koşu: `gallery` eski gürültü (#53'ten önce de 9-12 satır, her koşuda farklı); `home` #53'ten beri deterministik (5, 5, 5), takvimin durum çubuğunun altından geçmesi.
 - **Kapılar:** Sadece yeniden denemek yetmedi (`gallery` hâlâ 8, 8, 7 hata, ~245 sn). Notlara çevirdikten sonra 0 hata. Gerçek kontrast sorununu `dueSoon` açık rengini `B8A06A` yapan commit'siz deneme yakaladı: `TokenContrastTests` kırıldı.
 - **Ders:** Kararsız bir ölçümü kapı yapma; deterministik olan kısmı (token oranları) birim teste taşı, kararsız olanı not olarak tut. Metrikler: 118 dk, 2 verify, 0 düzeltme turu.
+
+### Koşu #62 — Taksit ekleme formu
+
+- **Ne yapıldı:** `InstallmentDraft` (VademCore, saf doğrulama: başlık, kart, tutar, 1–36 taksit, ilk ay), `AddInstallmentViewModel` ve `AddInstallmentView` sheet'i, Home'da "+" butonu; kayıt `PaymentRepository` üzerinden, iki yeni `PaymentRepositoryContract` senaryosu (PR #63).
+- **UI capture yakaladı:** İlk turda 28 adet `Text clipped` ve "Dynamic Type partially unsupported" (2 major). Sistem `Menu`/`Picker` etiketleri kırpılıyordu; kart ve ay seçimi özel satır + liste ekranına (`OptionList`) çevrildi. Sonraki tur a11y bulgusu yok.
+- **Reviewer yakaladı:** `parseAmount` sınırsız hane/NaN (minor), 2. turda yeni `OptionList` ekranları için capture testi yok (major) ve sınırsız kesir hanesi. Hepsi düzeltildi; 3 düzeltme turu, 12 verify (1 kırmızı), 90 dk.
+- **Açık noktalar:** Kart ekleme yok, taze depoda Kaydet kapalı kalır. `UI_CHECK_ONLY` adı `testFooScreen` kalıbına bağlı, yeni capture testleri sadece tam script ile koşuyor (harness için ayrı PR adayı).
+- **Ders:** Sistem kontrolü her zaman erişilebilir değildir; audit kırılınca bileşeni değiştirmek, audit'i gevşetmekten doğru yol. Yeni ekranın (liste) kendi capture testi olmazsa kapı onu görmez.
