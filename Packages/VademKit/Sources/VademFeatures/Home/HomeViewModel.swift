@@ -70,6 +70,27 @@ public final class HomeViewModel {
         public let accessibilityLabel: String
     }
 
+    /// One cell of the month grid: a leading blank (``day`` is `nil`) or a day of the month.
+    public struct CalendarDay: Sendable, Hashable, Identifiable {
+        /// The cell's position in the grid, from 0; unique within ``HomeViewModel/calendarDays``.
+        public let id: Int
+        /// The day of the month, or `nil` for a blank before the 1st.
+        public let day: Int?
+        /// The exact sum of the day's payments; zero for a blank or a day without payments.
+        public let total: Money
+        /// The number of payments due that day.
+        public let paymentCount: Int
+        /// `true` when at least one payment is due that day.
+        public var hasPayments: Bool { paymentCount > 0 }
+        /// `true` for the injected today.
+        public let isToday: Bool
+        /// `true` for ``HomeViewModel/selectedDay``.
+        public let isSelected: Bool
+        /// VoiceOver label: `"12 October, 2 payments, 4.900,00 Türk lirası"`,
+        /// or the date only (`"13 October"`) when nothing is due; empty for a blank.
+        public let accessibilityLabel: String
+    }
+
     /// The text shown for a payment that is not charged to a card.
     public nonisolated static let noCardText = "No card"
     /// The message of the ``State/error(message:)`` state.
@@ -87,8 +108,14 @@ public final class HomeViewModel {
     public private(set) var total: Money = .zero
     /// Subtotals of the cards with payments in ``month``, in the repository's card order.
     public private(set) var cardSubtotals: [CardSubtotal] = []
-    /// The payments of ``month``, in schedule order.
+    /// The payments of ``month``, in schedule order; only those due on ``selectedDay`` when a day is selected.
     public private(set) var rows: [Row] = []
+    /// The day of ``month`` whose payments ``rows`` shows, or `nil` for the whole month.
+    /// Cleared when the month changes.
+    public private(set) var selectedDay: Int?
+    /// The month grid: blanks up to the 1st's weekday (the week starts on the injected
+    /// calendar's `firstWeekday`), then one cell per day. Empty after a repository error.
+    public private(set) var calendarDays: [CalendarDay] = []
     /// ``UpcomingMonths/defaultCount`` consecutive months with their totals.
     ///
     /// Starts at the current month while the selected month is one of them, otherwise at the
@@ -100,6 +127,10 @@ public final class HomeViewModel {
     @ObservationIgnored private var todayMonth: YearMonth
     @ObservationIgnored private var todayDay: Int
     @ObservationIgnored private let calendar: Calendar
+    // Haftanın ilk günü kullanıcının yerel ayarından (enjekte edilen takvim) gelir: 1 = Pazar.
+    @ObservationIgnored private let firstWeekday: Int
+    // Seçili gün yokken de tüm satırlar burada tutulur; `rows` bunun süzülmüş halidir.
+    @ObservationIgnored private var allRows: [Row] = []
 
     /// Creates the view model for the month that contains `today` in `calendar`'s time zone, and loads it.
     public init(repository: any PaymentRepository, today: Date, calendar: Calendar) {
@@ -108,6 +139,7 @@ public final class HomeViewModel {
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
         self.calendar = gregorian
+        self.firstWeekday = calendar.firstWeekday
         let month = YearMonth(date: today, calendar: calendar)
         self.month = month
         self.todayMonth = month
@@ -120,21 +152,51 @@ public final class HomeViewModel {
         Self.title(of: month)
     }
 
-    /// Selects `month` (e.g. a tapped chip of ``upcoming``) and reloads.
+    /// Short weekday names for the grid's header, starting at the calendar's first weekday (e.g. `"Mon"`).
+    public var calendarWeekdaySymbols: [String] {
+        (0..<7).map { Self.weekdaySymbols[(firstWeekday - 1 + $0) % 7] }
+    }
+
+    /// The selected day as `"12 October"`, or `nil` when no day is selected.
+    public var selectedDayText: String? {
+        selectedDay.map { Self.dayText(day: $0, of: month) }
+    }
+
+    /// Selects `month` (e.g. a tapped chip of ``upcoming``) and reloads; clears ``selectedDay``.
     public func select(month: YearMonth) {
-        self.month = month
-        reload()
+        change(to: month)
     }
 
-    /// Selects the previous month and reloads.
+    /// Selects the previous month and reloads; clears ``selectedDay``.
     public func showPreviousMonth() {
-        month = month.adding(months: -1)
-        reload()
+        change(to: month.adding(months: -1))
     }
 
-    /// Selects the next month and reloads.
+    /// Selects the next month and reloads; clears ``selectedDay``.
     public func showNextMonth() {
-        month = month.adding(months: 1)
+        change(to: month.adding(months: 1))
+    }
+
+    /// Shows only the payments due on `day` of ``month``; selecting the selected day again clears it.
+    ///
+    /// Days without payments can be selected too (``rows`` is then empty). Days outside the month are ignored.
+    public func select(day: Int) {
+        guard (1...month.numberOfDays).contains(day) else { return }
+        selectedDay = selectedDay == day ? nil : day
+        applySelection()
+    }
+
+    /// Clears ``selectedDay``, so ``rows`` shows the whole month again.
+    public func clearSelectedDay() {
+        guard selectedDay != nil else { return }
+        selectedDay = nil
+        applySelection()
+    }
+
+    // Ay değişince gün seçimi temizlenir (başka ayın günü anlamsız).
+    private func change(to newMonth: YearMonth) {
+        if newMonth != month { selectedDay = nil }
+        month = newMonth
         reload()
     }
 
@@ -145,8 +207,9 @@ public final class HomeViewModel {
     public func updateToday(_ date: Date) {
         let newMonth = YearMonth(date: date, calendar: calendar)
         // Kullanıcı başka aya geçmediyse seçim yeni "bu ay"ı izler.
-        if month == todayMonth {
+        if month == todayMonth, newMonth != month {
             month = newMonth
+            selectedDay = nil
         }
         todayMonth = newMonth
         todayDay = calendar.component(.day, from: date)
@@ -172,7 +235,9 @@ public final class HomeViewModel {
             schedule = nil
             total = .zero
             cardSubtotals = []
+            allRows = []
             rows = []
+            calendarDays = []
             upcoming = []
             state = .error(message: Self.loadErrorMessage)
         }
@@ -196,12 +261,53 @@ public final class HomeViewModel {
             guard usedCardIDs.contains(card.id), seen.insert(card.id).inserted else { return nil }
             return CardSubtotal(id: card.id, name: card.name, amount: schedule.total(for: card.id))
         }
-        rows = schedule.entries.enumerated().map { index, entry in
+        allRows = schedule.entries.enumerated().map { index, entry in
             makeRow(entry, index: index, cardName: entry.cardID.flatMap { namesByID[$0] })
         }
         self.schedule = schedule
         total = schedule.total
+        // Durum ayın tamamına göre: seçili günün boş olması ayı "boş" yapmaz.
         state = schedule.entries.isEmpty ? .empty : .loaded
+        applySelection()
+    }
+
+    // Satırları seçili güne süzer ve takvimi (seçim vurgusu dahil) yeniden kurar.
+    private func applySelection() {
+        if let selectedDay {
+            rows = allRows.filter { $0.entry.dueDate.day == selectedDay }
+        } else {
+            rows = allRows
+        }
+        calendarDays = schedule.map(makeCalendarDays) ?? []
+    }
+
+    private func makeCalendarDays(_ schedule: MonthlySchedule) -> [CalendarDay] {
+        let daysByNumber = Dictionary(schedule.days.map { ($0.day, $0) }, uniquingKeysWith: { first, _ in first })
+        // 1'inin haftanın ilk gününden kaç gün sonra geldiği = baştaki boş hücre sayısı.
+        let blanks = (schedule.month.weekdayOfFirstDay - firstWeekday + 7) % 7
+        var cells = (0..<blanks).map { index in
+            CalendarDay(
+                id: index, day: nil, total: .zero, paymentCount: 0,
+                isToday: false, isSelected: false, accessibilityLabel: ""
+            )
+        }
+        for day in 1...schedule.month.numberOfDays {
+            let group = daysByNumber[day]
+            let count = group?.entries.count ?? 0
+            let total = group?.total ?? .zero
+            let date = Self.dayText(day: day, of: schedule.month)
+            // Ödemesiz gün sadece tarihi okur.
+            let label = count == 0
+                ? date
+                : "\(date), \(count) \(count == 1 ? "payment" : "payments"), \(AmountText.spokenLabel(total))"
+            cells.append(CalendarDay(
+                id: blanks + day - 1, day: day, total: total, paymentCount: count,
+                isToday: schedule.month == todayMonth && day == todayDay,
+                isSelected: day == selectedDay,
+                accessibilityLabel: label
+            ))
+        }
+        return cells
     }
 
     // Şerit bu ayın penceresindeyse bu aydan, değilse seçili aydan başlar; seçili ay hep görünür.
@@ -236,7 +342,7 @@ public final class HomeViewModel {
         }
         let kind = chipKind(for: entry.dueDate)
         let chipText = chipText(for: kind, dueDate: entry.dueDate)
-        let dueText = "\(entry.dueDate.day) \(Self.monthNames[entry.dueDate.month.month - 1])"
+        let dueText = Self.dayText(day: entry.dueDate.day, of: entry.dueDate.month)
         // VoiceOver satırı tek öğe olarak okur; "₺" yerine okunabilir tutar kullanılır.
         let parts = [entry.title, spokenInstallment, AmountText.spokenLabel(entry.amount),
                      "due \(dueText)", cardText, chipText].compactMap { $0 }
@@ -276,6 +382,11 @@ public final class HomeViewModel {
         calendar.date(from: DateComponents(year: month.year, month: month.month, day: day, hour: 12))
     }
 
+    // "12 October" biçimi; satırlar, takvim ve seçili gün aynı metni kullanır.
+    private nonisolated static func dayText(day: Int, of month: YearMonth) -> String {
+        "\(day) \(monthNames[month.month - 1])"
+    }
+
     private nonisolated static func title(of month: YearMonth) -> String {
         "\(monthNames[month.month - 1]) \(month.year)"
     }
@@ -285,4 +396,7 @@ public final class HomeViewModel {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December",
     ]
+
+    // Calendar.weekday sırası: indeks 0 = Pazar (weekday 1).
+    private nonisolated static let weekdaySymbols = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 }

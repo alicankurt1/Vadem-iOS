@@ -27,6 +27,12 @@ public struct HomeView: View {
                         model.select(month: month)
                     }
                 }
+                // Ay takvimi şeridin altında; bir güne dokunmak listeyi o güne süzer.
+                if !model.calendarDays.isEmpty {
+                    MonthCalendar(days: model.calendarDays, weekdaySymbols: model.calendarWeekdaySymbols) { day in
+                        model.select(day: day)
+                    }
+                }
                 content
             }
             // 20 pt yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
@@ -34,6 +40,15 @@ public struct HomeView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(Color.vademBackground.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) {
+            // Durum çubuğunun arkası opak: kaydırılan içerik (ör. takvim satırları) saat ve
+            // pil simgelerinin altına girip kontrastı bozmaz. Sıfır yükseklikli şerit,
+            // arka planını yalnızca üst güvenli alana taşır.
+            Color.clear
+                .frame(height: 0)
+                .background(Color.vademBackground.ignoresSafeArea(edges: .top))
+                .accessibilityHidden(true)
+        }
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
@@ -85,8 +100,30 @@ public struct HomeView: View {
             if !model.cardSubtotals.isEmpty {
                 subtotalsSection
             }
-            listSection
+            if model.rows.isEmpty, let dayText = model.selectedDayText {
+                // Seçili günde ödeme yok; ayın geri kalanı dolu olduğundan "bu ay boş" denmez.
+                messageView(title: "Nothing due on \(dayText)", detail: nil, systemImage: "calendar")
+                    .accessibilityIdentifier("home.dayEmpty")
+                showAllButton
+            } else {
+                listSection
+            }
         }
+    }
+
+    // Gün süzgecini kaldırır; tüm ayın ödemeleri yeniden listelenir.
+    private var showAllButton: some View {
+        Button {
+            model.clearSelectedDay()
+        } label: {
+            Text("Show all payments")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.vademTextPrimary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("home.showAll")
     }
 
     // Ayın toplamı; VoiceOver'da tek öğe ve başlık.
@@ -126,8 +163,12 @@ public struct HomeView: View {
 
     private var listSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle("Payments", identifier: "home.list")
+            sectionTitle(model.selectedDayText.map { "Payments on \($0)" } ?? "Payments", identifier: "home.list")
                 .padding(.bottom, 8)
+            if model.selectedDay != nil {
+                showAllButton
+                    .padding(.bottom, 8)
+            }
             ForEach(model.rows) { row in
                 HomeRowView(row: row)
                     .padding(.vertical, 12)
@@ -264,6 +305,115 @@ struct UpcomingStrip: View {
     // "2026-11" biçiminde, UI testlerinde kararlı kimlik.
     private static func identifier(of month: YearMonth) -> String {
         "\(month.year)-\(month.month < 10 ? "0" : "")\(month.month)"
+    }
+}
+
+/// The selected month as a grid; days with payments carry a dot, the selected day is filled
+/// and today is outlined. Tapping a day (with or without payments) calls `select`.
+///
+/// Weeks start on the first weekday the view model was given. At accessibility text sizes the
+/// days flow in wider cells that also name the weekday. No animations. Identifier `home.calendar`;
+/// days are `home.calendar.day.<n>`.
+@MainActor
+struct MonthCalendar: View {
+    let days: [HomeViewModel.CalendarDay]
+    let weekdaySymbols: [String]
+    let select: (Int) -> Void
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Calendar")
+                .font(.headline)
+                .foregroundStyle(Color.vademTextPrimary)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("home.calendar")
+            if dynamicTypeSize.isAccessibilitySize {
+                accessibleGrid
+            } else {
+                weekGrid
+            }
+        }
+    }
+
+    // Yedi sütunlu klasik ay görünümü; gün başlıkları VoiceOver'da gizli (her gün kendi tarihini okur).
+    private var weekGrid: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+            ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
+                Text(symbol)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .accessibilityHidden(true)
+            }
+            ForEach(days) { cell in
+                if let day = cell.day {
+                    dayButton(cell, day: day, showsWeekday: false)
+                } else {
+                    Color.clear
+                        .frame(minHeight: 44)
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+    }
+
+    // Büyük yazıda yedi sütun sığmaz: boşluklar atlanır, her hücre gün adını da gösterir.
+    private var accessibleGrid: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 8) {
+            ForEach(days) { cell in
+                // Boş hücreler (ay öncesi dolgu) bu görünümde atlanır.
+                if let day = cell.day {
+                    dayButton(cell, day: day, showsWeekday: true)
+                }
+            }
+        }
+    }
+
+    private func dayButton(_ cell: HomeViewModel.CalendarDay, day: Int, showsWeekday: Bool) -> some View {
+        // Seçili gün ters renkli (dolgu birincil metin rengi), böylece iki temada da kontrast korunur.
+        let foreground = cell.isSelected ? Color.vademBackground : Color.vademTextPrimary
+        return Button {
+            select(day)
+        } label: {
+            VStack(spacing: 2) {
+                if showsWeekday {
+                    Text(weekdaySymbols[cell.id % 7])
+                        .font(.caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+                Text("\(day)")
+                    .font(.body.weight(cell.hasPayments ? .bold : .regular))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                // Ödeme işareti nokta: renk tek başına anlam taşımaz (rakam da kalın).
+                Circle()
+                    .fill(cell.hasPayments ? (cell.isSelected ? Color.vademBackground : Color.vademBrand) : Color.clear)
+                    .frame(width: 6, height: 6)
+            }
+            .foregroundStyle(foreground)
+            .padding(.vertical, 4)
+            // En az 44 pt dokunma alanı.
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(cell.isSelected ? Color.vademTextPrimary : Color.clear, in: .rect(cornerRadius: 10))
+            .overlay {
+                // Bugün çerçeveyle belirtilir.
+                if cell.isToday {
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.vademBrand, lineWidth: 2)
+                }
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(cell.accessibilityLabel)
+        .accessibilityAddTraits(cell.isSelected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier("home.calendar.day.\(day)")
     }
 }
 
