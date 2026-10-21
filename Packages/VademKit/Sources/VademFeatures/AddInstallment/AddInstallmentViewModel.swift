@@ -110,12 +110,16 @@ public final class AddInstallmentViewModel: Identifiable {
         HomeViewModel.title(of: month)
     }
 
+    /// The most digits ``parseAmount(_:locale:)`` accepts before the decimal separator.
+    public nonisolated static let maxIntegerDigits = 12
+
     /// Parses `text` as a decimal number written with `locale`'s separators.
     ///
     /// Only ASCII digits, the locale's decimal separator (at most once) and a leading minus
     /// sign are accepted; surrounding whitespace is ignored. Returns `nil` for empty text or
-    /// anything else, including grouping separators (`"1.499,90"` in Turkish) and a `.` when
-    /// the locale uses `,`.
+    /// anything else, including grouping separators (`"1.499,90"` in Turkish), a `.` when
+    /// the locale uses `,`, more than ``maxIntegerDigits`` digits before the separator
+    /// (leading zeros count) and a result that is NaN.
     public nonisolated static func parseAmount(_ text: String, locale: Locale) -> Decimal? {
         let decimalSeparator = locale.decimalSeparator ?? "."
         // Gruplama ayracı kabul edilmez: Türkçede "1499.90" sessizce 149990 olmasın, hata gösterilsin.
@@ -125,12 +129,19 @@ public final class AddInstallmentViewModel: Identifiable {
         let parts = body.components(separatedBy: decimalSeparator)
         guard (1...2).contains(parts.count),
               parts.allSatisfy({ $0.allSatisfy { $0.isASCII && $0.isNumber } }),
-              parts.contains(where: { !$0.isEmpty }) else {
+              parts.contains(where: { !$0.isEmpty }),
+              // Çok uzun tam kısım reddedilir; Decimal'in sınırına yaklaşmadan hata gösterilir.
+              parts[0].count <= maxIntegerDigits else {
             return nil
         }
         // Locale'den bağımsız biçime çevrilip Decimal'e dönüştürülür; Double hiç kullanılmaz.
         let normalized = (isNegative ? "-" : "") + parts.map { $0.isEmpty ? "0" : $0 }.joined(separator: ".")
-        return Decimal(string: normalized, locale: Locale(identifier: "en_US_POSIX"))
+        // NaN doğrulamadan geçerdi (NaN <= 0 yanlış), bu yüzden burada elenir.
+        guard let value = Decimal(string: normalized, locale: Locale(identifier: "en_US_POSIX")),
+              !value.isNaN else {
+            return nil
+        }
+        return value
     }
 
     private func message(for error: InstallmentDraft.ValidationError) -> String {

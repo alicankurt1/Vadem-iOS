@@ -46,21 +46,26 @@ public struct AddInstallmentView: View {
                         .accessibilityIdentifier("addInstallment.title")
                 }
                 field(.card) {
-                    Picker("Card", selection: $model.cardID) {
-                        Text("Choose a card").tag(Card.ID?.none)
-                        ForEach(model.cards) { card in
-                            Text(card.name).tag(Card.ID?.some(card.id))
+                    Menu {
+                        Picker("Card", selection: $model.cardID) {
+                            Text(Self.noCardTitle).tag(Card.ID?.none)
+                            ForEach(model.cards) { card in
+                                Text(card.name).tag(Card.ID?.some(card.id))
+                            }
                         }
+                    } label: {
+                        menuRow(title: "Card", value: cardTitle)
                     }
                     .accessibilityIdentifier("addInstallment.card")
                 }
                 field(.amount) {
                     // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
-                    TextField("Total amount", text: $model.amountText, prompt: Text("Total amount (₺)"))
+                    // Etiket görünen metinle aynı kalır; farklı etiket denetimde "Text clipped" sayılıyor.
+                    TextField("Total amount (₺)", text: $model.amountText, prompt: Text("Total amount (₺)"))
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif
-                        .accessibilityLabel("Total amount in Turkish lira")
+                        .accessibilityHint("In Turkish lira")
                         .accessibilityIdentifier("addInstallment.amount")
                 }
                 field(.count) {
@@ -71,10 +76,14 @@ public struct AddInstallmentView: View {
                     .accessibilityIdentifier("addInstallment.count")
                 }
                 field(.firstMonth) {
-                    Picker("First due month", selection: $model.firstMonth) {
-                        ForEach(model.firstMonthOptions, id: \.self) { month in
-                            Text(model.title(of: month)).tag(month)
+                    Menu {
+                        Picker("First due month", selection: $model.firstMonth) {
+                            ForEach(model.firstMonthOptions, id: \.self) { month in
+                                Text(model.title(of: month)).tag(month)
+                            }
                         }
+                    } label: {
+                        menuRow(title: "First due month", value: model.title(of: model.firstMonth))
                     }
                     .accessibilityIdentifier("addInstallment.firstMonth")
                 }
@@ -108,6 +117,35 @@ public struct AddInstallmentView: View {
                 }
             }
         }
+    }
+
+    private static let noCardTitle = "Choose a card"
+
+    private var cardTitle: String {
+        model.cards.first { $0.id == model.cardID }?.name ?? Self.noCardTitle
+    }
+
+    // Sistem menü seçicisinin değer metni sabit genişlikte kırpılıyor (denetim "Text clipped" diyor).
+    // Kendi satırımız: yan yana sığmazsa alt alta dizilir, metinler satır sınırı olmadan sarılır.
+    private func menuRow(title: String, value: String) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                Text(title)
+                    .foregroundStyle(Color.vademTextPrimary)
+                Spacer(minLength: 8)
+                Text(value)
+                    .foregroundStyle(Color.vademTextSecondary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .foregroundStyle(Color.vademTextPrimary)
+                Text(value)
+                    .foregroundStyle(Color.vademTextSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .multilineTextAlignment(.leading)
+        .contentShape(Rectangle())
     }
 
     // Alan ve (varsa) altındaki hata metni aynı bölümde durur.
