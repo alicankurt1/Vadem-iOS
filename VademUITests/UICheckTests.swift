@@ -52,6 +52,25 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testHomeScreen() throws {
+        // Ana ekran sabit örnek veriyle açılır (bugün: 12 Ekim 2026); toplam, kart alt toplamları ve liste ayrı parçalarda.
+        try capture(
+            screen: "home",
+            launchArguments: ["-ui-sample-data"],
+            sections: [
+                .top,
+                .scrolled(to: "home.cards", named: "cards"),
+                .scrolled(to: "home.list", named: "list"),
+            ]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["home.month"].waitForExistence(timeout: 5),
+                "[ui-check] home__\(variant.name): month title not found"
+            )
+        }
+    }
+
+    @MainActor
     func testGalleryScreen() throws {
         // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
         // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
