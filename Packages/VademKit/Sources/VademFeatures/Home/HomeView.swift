@@ -21,6 +21,12 @@ public struct HomeView: View {
             VStack(alignment: .leading, spacing: 24) {
                 AppHeader()
                 monthBar
+                // Ay şeridi seçili ayın altında, listenin üstünde.
+                if !model.upcoming.isEmpty {
+                    UpcomingStrip(months: model.upcoming) { month in
+                        model.select(month: month)
+                    }
+                }
                 content
             }
             // 20 pt yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
@@ -172,6 +178,92 @@ public struct HomeView: View {
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
             : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 8))
         return layout(content)
+    }
+}
+
+/// The upcoming months as a horizontal row of chips (month + total); tapping a chip selects it.
+///
+/// The selected chip is highlighted and scrolled into view (without animation under
+/// Reduce Motion or `-ui-static-motion`). Identifier `home.upcoming`; chips are `home.upcoming.YYYY-MM`.
+@MainActor
+struct UpcomingStrip: View {
+    let months: [HomeViewModel.MonthSummary]
+    let select: (YearMonth) -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Upcoming")
+                .font(.headline)
+                .foregroundStyle(Color.vademTextPrimary)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("home.upcoming")
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(months) { summary in
+                            chip(summary)
+                                .id(summary.month)
+                        }
+                    }
+                    // Seçili çipin çerçevesi kırpılmasın diye dikey pay.
+                    .padding(.vertical, 2)
+                }
+                .onAppear { scrollToSelected(proxy, animated: false) }
+                .onChange(of: selectedMonth) { scrollToSelected(proxy, animated: true) }
+            }
+        }
+    }
+
+    private var selectedMonth: YearMonth? {
+        months.first(where: \.isSelected)?.month
+    }
+
+    private func chip(_ summary: HomeViewModel.MonthSummary) -> some View {
+        Button {
+            select(summary.month)
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(summary.title)
+                    .font(.subheadline.weight(summary.isSelected ? .bold : .regular))
+                AmountText(summary.total)
+                    .font(.body.weight(.semibold))
+            }
+            .foregroundStyle(Color.vademTextPrimary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            // En az 44 pt dokunma alanı.
+            .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+            .background(Color.vademSurface, in: .rect(cornerRadius: 12))
+            .overlay {
+                // Seçili ay kalın çerçeveyle ayrılır; renk tek başına anlam taşımaz (yazı da kalın).
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(
+                        summary.isSelected ? Color.vademTextPrimary : Color.vademSeparator,
+                        lineWidth: summary.isSelected ? 2 : 1
+                    )
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(summary.accessibilityLabel)
+        .accessibilityAddTraits(summary.isSelected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier("home.upcoming.\(Self.identifier(of: summary.month))")
+    }
+
+    private func scrollToSelected(_ proxy: ScrollViewProxy, animated: Bool) {
+        guard let selectedMonth else { return }
+        let animation = animated ? Motion.animation(Motion.quick, reduceMotion: reduceMotion) : nil
+        withAnimation(animation) {
+            proxy.scrollTo(selectedMonth, anchor: .center)
+        }
+    }
+
+    // "2026-11" biçiminde, UI testlerinde kararlı kimlik.
+    private static func identifier(of month: YearMonth) -> String {
+        "\(month.year)-\(month.month < 10 ? "0" : "")\(month.month)"
     }
 }
 
