@@ -258,11 +258,18 @@ private struct OptionList<Value: Hashable>: View {
             }
             if let onAdd {
                 Section {
+                    // Seçenek satırları gibi düz metin + gizli simge: Label'ın sabit simge sütunu
+                    // denetimde metni "kırpılmış" gösteriyordu; düz metin Dynamic Type ile sarılır.
                     Button(action: onAdd) {
-                        Label("Add a card", systemImage: "plus.circle")
-                            .foregroundStyle(Color.vademTextPrimary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
+                        HStack(spacing: 8) {
+                            Text("Add a card")
+                                .foregroundStyle(Color.vademTextPrimary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Image(systemName: "plus")
+                                .foregroundStyle(Color.vademBrand)
+                                .accessibilityHidden(true)
+                        }
+                        .contentShape(Rectangle())
                     }
                     .accessibilityIdentifier("addInstallment.addCard")
                     .listRowBackground(Color.vademSurface)

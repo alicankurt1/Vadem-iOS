@@ -40,24 +40,25 @@ public struct AddCardView: View {
                     }
                     .listRowBackground(Color.vademSurface)
                 }
-                field(.name) {
-                    TextField("Card name", text: $model.name, prompt: Text("e.g. Everyday card"))
+                // Alan adı bölüm başlığında (sarılabilen düz metin); yer tutucular AX5'te de
+                // sığacak kadar kısa. Dikey eksen: yazılan metin kırpılmaz, sarılır.
+                field(.name, title: "Card name") {
+                    TextField("Card name", text: nameBinding, prompt: Text("e.g. Everyday"), axis: .vertical)
                         #if os(iOS)
                         .textInputAutocapitalization(.words)
                         #endif
                         .accessibilityIdentifier("addCard.name")
                 }
-                field(.statementDay) {
-                    // Dikey eksen: büyük yazı boyutlarında yer tutucu kırpılmaz, sarılır.
-                    TextField("Statement day", text: $model.statementDayText, prompt: Text("Statement day (1–31)"), axis: .vertical)
+                field(.statementDay, title: "Statement day") {
+                    TextField("Statement day", text: $model.statementDayText, prompt: Text("1–31"), axis: .vertical)
                         #if os(iOS)
                         .keyboardType(.numberPad)
                         #endif
                         .accessibilityHint("The day of the month the statement is cut")
                         .accessibilityIdentifier("addCard.statementDay")
                 }
-                field(.dueDay) {
-                    TextField("Due day", text: $model.dueDayText, prompt: Text("Due day (1–31)"), axis: .vertical)
+                field(.dueDay, title: "Due day") {
+                    TextField("Due day", text: $model.dueDayText, prompt: Text("1–31"), axis: .vertical)
                         #if os(iOS)
                         .keyboardType(.numberPad)
                         #endif
@@ -96,8 +97,16 @@ public struct AddCardView: View {
         }
     }
 
-    // Alan ve (varsa) altındaki hata metni aynı bölümde durur.
-    private func field(_ field: CardDraft.Field, @ViewBuilder content: () -> some View) -> some View {
+    // Dikey alanda Return yeni satır ekler; kart adı tek satırlık olduğundan satır sonları atılır.
+    private var nameBinding: Binding<String> {
+        Binding(
+            get: { model.name },
+            set: { model.name = $0.replacingOccurrences(of: "\n", with: "") }
+        )
+    }
+
+    // Alan, başlığı ve (varsa) altındaki hata metni aynı bölümde durur.
+    private func field(_ field: CardDraft.Field, title: String, @ViewBuilder content: () -> some View) -> some View {
         Section {
             content()
             if let message = model.errorMessage(for: field) {
@@ -107,6 +116,11 @@ public struct AddCardView: View {
                     .foregroundStyle(Color.vademTextPrimary)
                     .accessibilityIdentifier("addCard.\(Self.identifier(of: field)).error")
             }
+        } header: {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(Color.vademTextSecondary)
+                .textCase(nil)
         }
         .listRowBackground(Color.vademSurface)
     }
