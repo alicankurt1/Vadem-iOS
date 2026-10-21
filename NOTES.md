@@ -248,3 +248,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **UI check FAIL kaldı:** `UI_CHECK_ONLY=home` 2 major kontrast bulgusu verdi (7 a11y sorunu: `Fri`, `Mon` ve öğesiz `screen` kayıtları). Muhtemel neden takvim satırlarının durum çubuğunun arkasına kaydırılması; doğrulanmadı. Öğesiz bulgular çerçeveyle sınıflanamıyor, bu yüzden harness takibi ayrı bir `phase-N/...` PR'ına kaldı. Sıfır yükseklikli `safeAreaInset` bulguyu gidermedi, kaldırılabilir.
 - **Harness:** PR #54 çubuğu olmayan ekranlarda `barBottom` hesabını düzeltti; bu koşu rebase ile onu aldı. Fabrika ayrımı yine korundu.
 - **Ders:** Kapı kırmızı kaldığında PR bunu açıkça yazıp ("open") merge edildi; karar insanda. Metrikler: 116 dk, 6 verify, 1 düzeltme turu.
+
+### Koşu #59 — UI check kontrast gürültüsü
+
+- **Ne yapıldı:** Harness PR'ı, agent yok. Kontrast bulguları `[a11y-contrast]` (ikinci ölçümde tekrarlandı) ve `[a11y-flaky]` (tekrarlanmadı) notu oldu; diğer audit türleri hâlâ hata. Token çiftleri için `TokenContrastTests` (11 çift, açık/koyu, ≥ 4.5:1) eklendi.
+- **Ayrım:** 3'er koşu: `gallery` eski gürültü (#53'ten önce de 9-12 satır, her koşuda farklı); `home` #53'ten beri deterministik (5, 5, 5), takvimin durum çubuğunun altından geçmesi.
+- **Kapılar:** Sadece yeniden denemek yetmedi (`gallery` hâlâ 8, 8, 7 hata, ~245 sn). Notlara çevirdikten sonra 0 hata. Gerçek kontrast sorununu `dueSoon` açık rengini `B8A06A` yapan commit'siz deneme yakaladı: `TokenContrastTests` kırıldı.
+- **Ders:** Kararsız bir ölçümü kapı yapma; deterministik olan kısmı (token oranları) birim teste taşı, kararsız olanı not olarak tut. Metrikler: 118 dk, 2 verify, 0 düzeltme turu.
