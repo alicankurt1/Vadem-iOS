@@ -206,6 +206,13 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Süre:** Tam galeri yakalaması ~10 dk'dan 237 sn'ye indi (30 bölümün 30'u ulaşıldı, 30 görüntü). Bir koşuda XCTest "Find the Target Application" adımında 17 dk takıldığı için test başına 180 sn sınır kondu.
 - **Ders:** Bir kapının maliyeti de kalitesinin parçası. Deterministik kısım (denetim, script) her zaman koşar; pahalı kısım (görüntüye bakmak) sadece bir sinyal gerektirdiğinde devreye girer.
 
+### Koşu #42 — Aylık program (`MonthlySchedule`, ADR-0002)
+
+- **Ne yapıldı:** "Bu ay ne ödenir?" kuralı önce ADR-0002'de (vade tarihine göre gruplama) kararlaştırıldı, sonra `MonthlySchedule` ve tablo testleri yazıldı. Ekstre günü / vade günü ay sınırlarını aşabildiği için bir kalem aynı gün iki kez vadeli olabiliyor; sıralamaya taksit numarası bu yüzden eklendi.
+- **Kapılar:** Verify 7 koşu, 0 kırmızı. Reviewer 1. turda 0 blocker / 0 major / 2 minor / 4 nit buldu; hepsi test tarafındaydı (parayı `Double` literal ile yazan `combined()`, hiçbir şey doğrulamayan `extremes()`, iki yorum uyuşmazlığı, yıllık abonelik testi eksikliği). Kod ilk turda onaylandı.
+- **Metrikler:** 9 dk, 1 düzeltme turu. İlk "hafif" koşu: UI agent'ı yok, test writer ve reviewer `sonnet`; alan saf domain olduğu için UI yakalama atlandı.
+- **Ders:** Kural ADR'de yazıldığında reviewer beklenen değerleri koddan değil karardan yeniden hesaplayabiliyor; hata kodda değil testte çıktı.
+
 ### Mülakat sorusu: Bir iş kuralını neden kodda değil önce bir ADR'de kararlaştırırsın, ADR'ye neyi yazarsın?
 
 **Cevap:**
