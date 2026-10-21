@@ -218,6 +218,40 @@ public enum PaymentRepositoryContract {
         #expect(try repo.installments() == [item])
     }
 
+    public static func draftItemIsStoredAndReadBack(_ repo: any PaymentRepository) throws {
+        // Formdan gelen (kırpılmış başlık, kuruşa yuvarlanmış tutar) kalem aynen geri okunur.
+        let card = try Fixture.card()
+        try repo.save(card)
+        let draft = InstallmentDraft(
+            title: "  Telefon  ", cardID: card.id, total: Decimal(string: "1499.90")!,
+            count: 6, firstMonth: try Fixture.month(2026, 11)
+        )
+        let item = try #require(draft.makeItem(id: Fixture.id(1)))
+        try repo.save(item)
+        let stored = try #require(try repo.installments().first)
+        #expect(try repo.installments().count == 1)
+        #expect(stored == item)
+        #expect(stored.title == "Telefon")
+        #expect(stored.plan.total == Money(Decimal(string: "1499.90")!))
+        #expect(stored.plan.firstMonth == (try Fixture.month(2026, 11)))
+    }
+
+    public static func newInstallmentAppearsInItsMonths(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        let before = try repo.installments()
+        let item = try Fixture.installment(
+            "Koltuk", card: card.id, plan: Fixture.plan(total: 900, count: 3, first: Fixture.month(2026, 12))
+        )
+        try repo.save(item)
+        let after = try repo.installments()
+        #expect(before.isEmpty)
+        #expect(after.map(\.id) == [item.id])
+        #expect(after.first?.plan.amount(in: try Fixture.month(2026, 12)) == Money(300))
+        #expect(after.first?.plan.amount(in: try Fixture.month(2027, 2)) == Money(300))
+        #expect(after.first?.plan.amount(in: try Fixture.month(2027, 3)) == .zero)
+    }
+
     // MARK: Abonelikler
 
     public static func subscriptionsSortedByTitle(_ repo: any PaymentRepository) throws {
@@ -361,6 +395,8 @@ public enum PaymentRepositoryContract {
         Scenario(name: "A subscription without a card is saved without any cards", run: subscriptionWithoutCardNeedsNoCard),
         Scenario(name: "A subscription can be deleted", run: deletesSubscription),
         Scenario(name: "Deleting an unknown subscription id is a no-op", run: deletingUnknownSubscriptionIsNoOp),
+        Scenario(name: "An installment made from a draft is stored and read back", run: draftItemIsStoredAndReadBack),
+        Scenario(name: "A new installment is charged in its months only", run: newInstallmentAppearsInItsMonths),
         Scenario(name: "Values come back exactly as saved", run: valuesComeBackExactlyAsSaved),
     ]
 }

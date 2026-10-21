@@ -162,6 +162,13 @@ public final class HomeViewModel {
         selectedDay.map { Self.dayText(day: $0, of: month) }
     }
 
+    /// A new add-installment form on the same repository, starting at the selected ``month``.
+    ///
+    /// Call ``reload()`` after it saves, so the new payment shows.
+    public func makeAddInstallmentModel(locale: Locale = .current) -> AddInstallmentViewModel {
+        AddInstallmentViewModel(repository: repository, initialMonth: month, locale: locale)
+    }
+
     /// Selects `month` (e.g. a tapped chip of ``upcoming``) and reloads; clears ``selectedDay``.
     public func select(month: YearMonth) {
         change(to: month)
@@ -387,7 +394,8 @@ public final class HomeViewModel {
         "\(day) \(monthNames[month.month - 1])"
     }
 
-    private nonisolated static func title(of month: YearMonth) -> String {
+    // Ekleme formu da aynı ay başlığını kullanır.
+    nonisolated static func title(of month: YearMonth) -> String {
         "\(monthNames[month.month - 1]) \(month.year)"
     }
 

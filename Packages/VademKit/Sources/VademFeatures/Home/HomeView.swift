@@ -8,15 +8,63 @@ import VademCore
 @MainActor
 public struct HomeView: View {
     @State private var model: HomeViewModel
+    // Açık ekleme formunun modeli; nil iken sayfa kapalı.
+    @State private var addModel: AddInstallmentViewModel?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.self) private var environment
 
     /// Creates the screen for `model`.
+    ///
+    /// In debug builds, ``AddInstallmentView/launchArgument`` opens the add form right away
+    /// (with every error shown under ``AddInstallmentView/errorsLaunchArgument``), for the UI check.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
+        var initialAddModel: AddInstallmentViewModel?
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains(AddInstallmentView.launchArgument) {
+            let addModel = model.makeAddInstallmentModel()
+            if arguments.contains(AddInstallmentView.errorsLaunchArgument) {
+                addModel.showAllErrors()
+            }
+            initialAddModel = addModel
+        }
+        #endif
+        _addModel = State(initialValue: initialAddModel)
     }
 
     public var body: some View {
+        // NavigationStack "+" düğmesinin çubuğunu verir; içerik saatin altına da girmez.
+        NavigationStack {
+            scrollContent
+                #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+                // Galeri gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
+                .toolbarColorScheme(colorScheme, for: .navigationBar)
+                .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                #endif
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            addModel = model.makeAddInstallmentModel()
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                        .accessibilityLabel("Add installment")
+                        .accessibilityIdentifier("home.add")
+                    }
+                }
+        }
+        // Form kapanınca (kaydedilse de iptal edilse de) Home yeniden yüklenir; yeni ödeme hemen görünür.
+        .sheet(item: $addModel, onDismiss: { model.reload() }) { addModel in
+            AddInstallmentView(model: addModel)
+        }
+    }
+
+    private var scrollContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 AppHeader()

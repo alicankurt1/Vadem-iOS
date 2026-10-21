@@ -73,6 +73,93 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testAddInstallmentForm() throws {
+        // Boş ekleme formu (#62): örnek veriyle açılır, kartlar listelenir.
+        try capture(
+            screen: "add-installment",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top, .scrolled(to: "addInstallment.firstMonth", named: "first-month")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addInstallment.title"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment__\(variant.name): title field not found"
+            )
+            XCTAssertTrue(
+                app.buttons["addInstallment.save"].exists,
+                "[ui-check] add-installment__\(variant.name): save button not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addInstallment.save"].isEnabled,
+                "[ui-check] add-installment__\(variant.name): save must be disabled while the form is empty"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddInstallmentCardList() throws {
+        // Kart seçim listesi (itme ekranı): formdaki kart satırına dokunarak açılır.
+        try capture(
+            screen: "add-installment-card-list",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addInstallment.card"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-installment-card-list__\(variant.name): card row not found"
+            )
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallment.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-card-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddInstallmentMonthList() throws {
+        // İlk ay seçim listesi (itme ekranı).
+        try capture(
+            screen: "add-installment-month-list",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addInstallment.firstMonth"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-installment-month-list__\(variant.name): first month row not found"
+            )
+            if !row.isHittable {
+                app.swipeUp()
+            }
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallment.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-month-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddInstallmentFormErrors() throws {
+        // Tüm hataları gösteren form: her geçersiz alanın altında hata metni olmalı.
+        try capture(
+            screen: "add-installment-errors",
+            launchArguments: ["-ui-sample-data", "-ui-add-form", "-ui-add-form-errors"],
+            sections: [.top, .scrolled(to: "addInstallment.amount", named: "amount")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["addInstallment.title.error"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-errors__\(variant.name): title error not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addInstallment.save"].isEnabled,
+                "[ui-check] add-installment-errors__\(variant.name): save must be disabled"
+            )
+        }
+    }
+
+    @MainActor
     func testGalleryScreen() throws {
         // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
         // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
