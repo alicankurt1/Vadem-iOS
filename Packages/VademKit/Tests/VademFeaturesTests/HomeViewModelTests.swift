@@ -338,3 +338,125 @@ struct HomeViewModelTests {
         #expect(model.rows.first { $0.title == "C" }?.chipText == "In 3 days")
     }
 }
+
+// MARK: Yaklaşan aylar şeridi (#50)
+
+@MainActor
+@Suite("HomeViewModel upcoming strip")
+struct HomeViewModelUpcomingTests {
+    private struct FailingRepository: PaymentRepository {
+        struct Failure: Error {}
+        func cards() throws -> [Card] { throw Failure() }
+        func save(_ card: Card) throws { throw Failure() }
+        func deleteCard(id: Card.ID) throws { throw Failure() }
+        func installments() throws -> [InstallmentItem] { throw Failure() }
+        func save(_ item: InstallmentItem) throws { throw Failure() }
+        func deleteInstallment(id: InstallmentItem.ID) throws { throw Failure() }
+        func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
+        func save(_ item: SubscriptionItem) throws { throw Failure() }
+        func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+    }
+
+    private static func ym(_ year: Int, _ month: Int) -> YearMonth {
+        YearMonth(year: year, month: month)!
+    }
+
+    @Test("Strip has 6 months starting at the current month, only it is selected")
+    func startsAtCurrentMonth() {
+        let model = HomeSampleData.makeViewModel()
+        #expect(model.upcoming.map(\.month) == [
+            Self.ym(2026, 10), Self.ym(2026, 11), Self.ym(2026, 12),
+            Self.ym(2027, 1), Self.ym(2027, 2), Self.ym(2027, 3),
+        ])
+        #expect(model.upcoming.map(\.title) == [
+            "October 2026", "November 2026", "December 2026", "January 2027", "February 2027", "March 2027",
+        ])
+        #expect(model.upcoming.map(\.isSelected) == [true, false, false, false, false, false])
+        #expect(Set(model.upcoming.map(\.id)).count == 6)
+    }
+
+    @Test("Totals equal MonthlySchedule.total of each month")
+    func totalsMatchSchedule() throws {
+        let repository = HomeSampleData.makeRepository()
+        let model = HomeViewModel(repository: repository, today: HomeSampleData.today, calendar: HomeSampleData.calendar)
+        for summary in model.upcoming {
+            let schedule = MonthlySchedule(
+                month: summary.month, cards: try repository.cards(),
+                installments: try repository.installments(), subscriptions: try repository.subscriptions()
+            )
+            #expect(summary.total == schedule.total)
+        }
+        // Elle: 4000 + 900 + 249,99 + 25000 = 30149,99 (Ekim); sonraki aylarda da aynı.
+        #expect(model.upcoming.first?.total == Money(Decimal(3_014_999) / 100))
+        #expect(model.upcoming.first?.total == model.total)
+    }
+
+    @Test("Empty months are shown with zero")
+    func emptyMonthsShowZero() {
+        let model = HomeViewModel(
+            repository: InMemoryPaymentRepository(), today: HomeSampleData.today, calendar: HomeSampleData.calendar
+        )
+        #expect(model.upcoming.count == 6)
+        #expect(model.upcoming.allSatisfy { $0.total == .zero })
+    }
+
+    @Test("VoiceOver label reads month and amount")
+    func accessibilityLabel() {
+        let model = HomeSampleData.makeViewModel()
+        #expect(model.upcoming.first?.accessibilityLabel == "October 2026, 30.149,99 Türk lirası")
+        #expect(model.upcoming.allSatisfy { $0.accessibilityLabel.hasPrefix($0.title + ", ") })
+    }
+
+    @Test("select(month:) changes the month, list and selection; strip keeps its start")
+    func selectWithinStrip() {
+        let model = HomeSampleData.makeViewModel()
+        model.select(month: Self.ym(2026, 12))
+        #expect(model.month == Self.ym(2026, 12))
+        #expect(model.monthTitle == "December 2026")
+        #expect(model.upcoming.first?.month == Self.ym(2026, 10))
+        #expect(model.upcoming.filter(\.isSelected).map(\.month) == [Self.ym(2026, 12)])
+        #expect(model.upcoming.first { $0.isSelected }?.total == model.total)
+    }
+
+    @Test("Previous and next stay in sync with the strip", arguments: [
+        (1, 2026, 11), (-1, 2026, 9), (6, 2027, 4), (-3, 2026, 7),
+    ])
+    func navigationInSync(step: Int, year: Int, month: Int) {
+        let model = HomeSampleData.makeViewModel()
+        for _ in 0..<abs(step) {
+            if step > 0 { model.showNextMonth() } else { model.showPreviousMonth() }
+        }
+        #expect(model.month == Self.ym(year, month))
+        #expect(model.upcoming.count == 6)
+        // Seçili ay şeritte tam bir kez ve seçili olarak bulunur.
+        #expect(model.upcoming.filter(\.isSelected).map(\.month) == [Self.ym(year, month)])
+    }
+
+    @Test("Selecting a month beyond the window starts the strip at that month")
+    func selectBeyondWindow() {
+        let model = HomeSampleData.makeViewModel()
+        model.select(month: Self.ym(2027, 4))
+        #expect(model.upcoming.first?.month == Self.ym(2027, 4))
+        #expect(model.upcoming.first?.isSelected == true)
+        // Penceredeki son ay (Mart 2027) hâlâ şeritte, başlangıç değişmez.
+        model.select(month: Self.ym(2027, 3))
+        #expect(model.upcoming.first?.month == Self.ym(2026, 10))
+        #expect(model.upcoming.last?.month == Self.ym(2027, 3))
+    }
+
+    @Test("Selecting a past month starts the strip at that month")
+    func selectPast() {
+        let model = HomeSampleData.makeViewModel()
+        model.select(month: Self.ym(2026, 9))
+        #expect(model.upcoming.first?.month == Self.ym(2026, 9))
+        #expect(model.upcoming.first?.isSelected == true)
+        #expect(model.upcoming.count == 6)
+    }
+
+    @Test("Repository error empties the strip")
+    func errorEmptiesStrip() {
+        let model = HomeViewModel(repository: FailingRepository(), today: HomeSampleData.today, calendar: HomeSampleData.calendar)
+        #expect(model.upcoming.isEmpty)
+        if case .error = model.state {} else { Issue.record("expected error state") }
+    }
+}
