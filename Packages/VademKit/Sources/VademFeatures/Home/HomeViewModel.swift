@@ -76,8 +76,8 @@ public final class HomeViewModel {
 
     @ObservationIgnored private let repository: any PaymentRepository
     // Enjekte edilen bugün: ay ve gün (Card.DueDate dışarıdan kurulamaz).
-    @ObservationIgnored private let todayMonth: YearMonth
-    @ObservationIgnored private let todayDay: Int
+    @ObservationIgnored private var todayMonth: YearMonth
+    @ObservationIgnored private var todayDay: Int
     @ObservationIgnored private let calendar: Calendar
 
     /// Creates the view model for the month that contains `today` in `calendar`'s time zone, and loads it.
@@ -108,6 +108,21 @@ public final class HomeViewModel {
     /// Selects the next month and reloads.
     public func showNextMonth() {
         month = month.adding(months: 1)
+        reload()
+    }
+
+    /// Moves "today" to `date` (e.g. when the app becomes active after midnight) and reloads.
+    ///
+    /// If the selected month was the old current month, the new current month is selected;
+    /// a month the user navigated to is kept.
+    public func updateToday(_ date: Date) {
+        let newMonth = YearMonth(date: date, calendar: calendar)
+        // Kullanıcı başka aya geçmediyse seçim yeni "bu ay"ı izler.
+        if month == todayMonth {
+            month = newMonth
+        }
+        todayMonth = newMonth
+        todayDay = calendar.component(.day, from: date)
         reload()
     }
 

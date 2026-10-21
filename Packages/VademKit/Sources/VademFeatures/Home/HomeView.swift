@@ -86,9 +86,11 @@ public struct HomeView: View {
     // Ayın toplamı; VoiceOver'da tek öğe ve başlık.
     private var totalSection: some View {
         VStack(alignment: .leading, spacing: 4) {
+            // Bölüm etiketleri koyu temada da kontrast denetimini geçsin diye birincil renkte;
+            // hiyerarşi yazı boyutu ve ağırlığıyla kurulur.
             Text("Total due")
                 .font(.headline)
-                .foregroundStyle(Color.vademTextSecondary)
+                .foregroundStyle(Color.vademTextPrimary)
             AmountText(model.total)
                 .font(.largeTitle.weight(.bold))
                 .foregroundStyle(Color.vademTextPrimary)
@@ -137,7 +139,7 @@ public struct HomeView: View {
     private func sectionTitle(_ title: String, identifier: String) -> some View {
         Text(title)
             .font(.headline)
-            .foregroundStyle(Color.vademTextSecondary)
+            .foregroundStyle(Color.vademTextPrimary)
             .accessibilityAddTraits(.isHeader)
             .accessibilityIdentifier(identifier)
     }
