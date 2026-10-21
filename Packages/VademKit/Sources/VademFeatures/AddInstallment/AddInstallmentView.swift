@@ -16,6 +16,8 @@ public struct AddInstallmentView: View {
 
     @State private var model: AddInstallmentViewModel
     @State private var choice: Choice?
+    // Kart listesinden açılan kart formunun modeli; nil iken sayfa kapalı.
+    @State private var addCardModel: AddCardViewModel?
     private let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -82,7 +84,9 @@ public struct AddInstallmentView: View {
             .navigationDestination(item: $choice) { choice in
                 switch choice {
                 case .card:
-                    OptionList(title: "Card", options: cardOptions, selection: $model.cardID)
+                    OptionList(title: "Card", options: cardOptions, selection: $model.cardID) {
+                        addCardModel = model.makeAddCardModel()
+                    }
                 case .firstMonth:
                     OptionList(title: "First due month", options: monthOptions, selection: $model.firstMonth)
                 }
@@ -110,6 +114,14 @@ public struct AddInstallmentView: View {
                     .disabled(!model.canSave)
                     .accessibilityIdentifier("addInstallment.save")
                 }
+            }
+        }
+        // Sayfa yığının dışında: kart listesi itilmişken de açılır. Yeni kart kaydedilince
+        // kartlar yenilenir, kart seçilir ve forma geri dönülür.
+        .sheet(item: $addCardModel) { addCardModel in
+            AddCardView(model: addCardModel) { card in
+                model.selectAddedCard(card)
+                choice = nil
             }
         }
     }
@@ -203,7 +215,9 @@ public struct AddInstallmentView: View {
 
 /// Seçenekleri tek sütunlu bir listede gösterir; seçilen satır işaretlenir, dokununca geri dönülür.
 /// Satırlar düz metin olduğundan Dynamic Type ile büyür ve satır sınırı olmadan sarılır.
-/// Kimlikler: liste `addInstallment.options`, satırlar `addInstallment.option.<sıra>` (0'dan başlar).
+/// `onAdd` verilirse listenin sonunda "Add a card" satırı çıkar (yalnızca kart listesinde).
+/// Kimlikler: liste `addInstallment.options`, satırlar `addInstallment.option.<sıra>` (0'dan başlar),
+/// ekleme satırı `addInstallment.addCard`.
 @MainActor
 private struct OptionList<Value: Hashable>: View {
     struct Option {
@@ -214,6 +228,7 @@ private struct OptionList<Value: Hashable>: View {
     let title: String
     let options: [Option]
     @Binding var selection: Value
+    var onAdd: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -240,6 +255,18 @@ private struct OptionList<Value: Hashable>: View {
                 .accessibilityAddTraits(option.value == selection ? .isSelected : [])
                 .accessibilityIdentifier("addInstallment.option.\(index)")
                 .listRowBackground(Color.vademSurface)
+            }
+            if let onAdd {
+                Section {
+                    Button(action: onAdd) {
+                        Label("Add a card", systemImage: "plus.circle")
+                            .foregroundStyle(Color.vademTextPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityIdentifier("addInstallment.addCard")
+                    .listRowBackground(Color.vademSurface)
+                }
             }
         }
         .scrollContentBackground(.hidden)

@@ -10,6 +10,8 @@ public struct HomeView: View {
     @State private var model: HomeViewModel
     // Açık ekleme formunun modeli; nil iken sayfa kapalı.
     @State private var addModel: AddInstallmentViewModel?
+    // Açık kart formunun modeli; nil iken sayfa kapalı.
+    @State private var addCardModel: AddCardViewModel?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -19,9 +21,12 @@ public struct HomeView: View {
     ///
     /// In debug builds, ``AddInstallmentView/launchArgument`` opens the add form right away
     /// (with every error shown under ``AddInstallmentView/errorsLaunchArgument``), for the UI check.
+    /// ``AddCardView/launchArgument`` does the same for the add-card form
+    /// (errors: ``AddCardView/errorsLaunchArgument``).
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddModel: AddInstallmentViewModel?
+        var initialAddCardModel: AddCardViewModel?
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AddInstallmentView.launchArgument) {
@@ -30,15 +35,27 @@ public struct HomeView: View {
                 addModel.showAllErrors()
             }
             initialAddModel = addModel
+        } else if arguments.contains(AddCardView.launchArgument) {
+            // İki sayfa aynı anda açılamaz; taksit formu önceliklidir.
+            let addCardModel = model.makeAddCardModel()
+            if arguments.contains(AddCardView.errorsLaunchArgument) {
+                addCardModel.showAllErrors()
+            }
+            initialAddCardModel = addCardModel
         }
         #endif
         _addModel = State(initialValue: initialAddModel)
+        _addCardModel = State(initialValue: initialAddCardModel)
     }
 
     public var body: some View {
         // NavigationStack "+" düğmesinin çubuğunu verir; içerik saatin altına da girmez.
         NavigationStack {
             scrollContent
+                // Kart formu kapanınca Home yeniden yüklenir; yeni kart ve "kart ekle" girişi güncellenir.
+                .sheet(item: $addCardModel, onDismiss: { model.reload() }) { addCardModel in
+                    AddCardView(model: addCardModel)
+                }
                 #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
                 // Galeri gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -131,10 +148,12 @@ public struct HomeView: View {
             messageView(title: "Something went wrong", detail: message, systemImage: "exclamationmark.triangle")
                 .accessibilityIdentifier("home.error")
         case .empty:
+            if !model.hasCards { addCardPrompt }
             totalSection
             messageView(title: "Nothing due this month", detail: nil, systemImage: "checkmark.circle")
                 .accessibilityIdentifier("home.empty")
         case .loaded:
+            if !model.hasCards { addCardPrompt }
             totalSection
             if !model.cardSubtotals.isEmpty {
                 subtotalsSection
@@ -148,6 +167,29 @@ public struct HomeView: View {
                 listSection
             }
         }
+    }
+
+    // Hiç kart yokken taksit eklenemez; önce kart eklemeye yönlendirir.
+    private var addCardPrompt: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Add a card to start tracking installments.")
+                .font(.body)
+                .foregroundStyle(Color.vademTextPrimary)
+            Button {
+                addCardModel = model.makeAddCardModel()
+            } label: {
+                Label("Add a card", systemImage: "plus.circle")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("home.addCard")
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vademSurface, in: .rect(cornerRadius: 12))
     }
 
     // Gün süzgecini kaldırır; tüm ayın ödemeleri yeniden listelenir.
