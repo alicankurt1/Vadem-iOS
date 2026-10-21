@@ -232,3 +232,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Savunma 3:** Verify kararı agent'ta değil script'te.
 - **Kalan risk:** Reviewer da aynı yanlış yorumu yaparsa; bu yüzden ADR'de sınır durumları açıkça yazılır.
 - **Ders:** "Test düzeltildi" cümlesi, "neye göre düzeltildi?" sorusunu gerektirir.
+
+### Koşu #50 — Home: gelecek aylar şeridi
+
+- **Ne yapıldı:** `UpcomingMonths` (VademCore, saf), `HomeViewModel.upcoming` / `select(month:)` ve yatay ay şeridi. Boş aylar sıfırla gösteriliyor; son desteklenen ayda sınırlanıyor.
+- **Kapılar:** Verify 3 koşu, 0 kırmızı; reviewer 1. turda onayladı (0 blocker / 0 major / 3 minor / 1 nit), UI capture (`UI_CHECK_ONLY=home`) 0 a11y bulgusu. Düzeltme turu olmadı.
+- **Metrikler:** 10 dk, 0 düzeltme turu. Önceki UI koşusunda (#45) kapıların yakaladığı kontrast ve test eksikleri bu kez çıkmadı.
+- **Açık nokta:** VoiceOver "Türk lirası" okuyor, issue örneğindeki "₺" değil; ödeme satırlarıyla tutarlı olduğu için kabul edildi. `.isSelected` özelliği için otomatik doğrulama yok, sadece model bayrağı testli.
+- **Ders:** `home-upcoming` ile `home` aynı görüntü çıktı (şerit zaten en üstte); `[ui-note]` mekanizması bunu hata saymadan gösterdi. Bu, gürültü/hata ayrımının (#37) işe yaradığını gösteriyor.
