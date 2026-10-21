@@ -96,6 +96,51 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testAddInstallmentCardList() throws {
+        // Kart seçim listesi (itme ekranı): formdaki kart satırına dokunarak açılır.
+        try capture(
+            screen: "add-installment-card-list",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addInstallment.card"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-installment-card-list__\(variant.name): card row not found"
+            )
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallment.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-card-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddInstallmentMonthList() throws {
+        // İlk ay seçim listesi (itme ekranı).
+        try capture(
+            screen: "add-installment-month-list",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addInstallment.firstMonth"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-installment-month-list__\(variant.name): first month row not found"
+            )
+            if !row.isHittable {
+                app.swipeUp()
+            }
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallment.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-month-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
     func testAddInstallmentFormErrors() throws {
         // Tüm hataları gösteren form: her geçersiz alanın altında hata metni olmalı.
         try capture(

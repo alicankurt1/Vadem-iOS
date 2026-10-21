@@ -204,6 +204,23 @@ struct AddInstallmentViewModelTests {
         #expect(result == expected.flatMap { Decimal(string: $0, locale: Locale(identifier: "en_US_POSIX")) })
     }
 
+    @Test("Fraction part is limited to 6 digits, trailing zeros counted", arguments: [
+        ("1,123456", "tr_TR", "1.123456" as String?),
+        ("1,1234567", "tr_TR", nil),
+        ("1,1000000", "tr_TR", nil),
+        ("1,100000", "tr_TR", "1.1"),
+        ("10,005", "tr_TR", "10.005"),
+        ("1.123456", "en_US", "1.123456"),
+        ("1.1234567", "en_US", nil),
+        ("1.0000000", "en_US", nil),
+        ("10.005", "en_US", "10.005"),
+    ])
+    func parseAmountFractionLimit(text: String, locale: String, expected: String?) {
+        #expect(AddInstallmentViewModel.maxFractionDigits == 6)
+        let result = AddInstallmentViewModel.parseAmount(text, locale: Locale(identifier: locale))
+        #expect(result == expected.flatMap { Decimal(string: $0, locale: Locale(identifier: "en_US_POSIX")) })
+    }
+
     @Test("Over-long amount shows the number error and blocks saving", arguments: [
         ("tr_TR", "1000000000000,50", "Enter a number like 1499,90."),
         ("en_US", "1000000000000.50", "Enter a number like 1499.90."),
