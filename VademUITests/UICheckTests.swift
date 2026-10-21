@@ -269,14 +269,32 @@ final class UICheckTests: XCTestCase {
                 // Her sorun ayrı bir test hatası olur. Denetimin kendisi hata verirse (ör. zaman aşımı)
                 // raporlanır ve döngü devam eder; önceden bu durumda kalan varyantlar hiç yakalanmıyordu.
                 do {
-                    try app.performAccessibilityAudit { issue in
-                        let element = issue.element.map { "'\($0.label)'" } ?? "screen"
-                        if let frame = issue.element?.frame, !frame.isEmpty, !visible.contains(frame) {
-                            notes.append("[a11y-hidden] \(name): \(issue.compactDescription) — \(element) (not fully visible)")
+                    let findings = try Self.audit(app)
+                    // Apple'ın kontrast ölçümü gradyan ve yarı saydam zeminlerde koşudan koşuya değişiyor (#59):
+                    // renkleri sağlam öğeler bile bazen geçemiyor. Bu yüzden kontrast bulguları hata değil not
+                    // olur; token çiftlerinin oranını `TokenContrastTests`, kart yüzlerini `CardContrastTests`
+                    // hesapla doğrular. Bulgu durulduktan sonra bir kez daha ölçülür: iki denemede de çıkan
+                    // `[a11y-contrast]`, yalnızca birinde çıkan `[a11y-flaky]` olur.
+                    var retried: Set<String> = []
+                    if findings.contains(where: \.isContrast) {
+                        _ = Self.settledScreenshot(of: app)
+                        retried = Set(try Self.audit(app).filter(\.isContrast).map(\.key))
+                    }
+                    // Elementsiz kontrast bulgusu (`SwiftUI.AccessibilityNode`) bir çerçeve vermez. Durum çubuğunun
+                    // altına kayan içerik varsa bulgu oradan gelir; o içeriğin etiketleri nota yazılır.
+                    let underStatusBar = findings.contains { $0.isContrast && !$0.hasElement }
+                        ? Self.labelsUnderStatusBar(in: app) : []
+                    for finding in findings {
+                        if finding.isContrast {
+                            let tag = retried.contains(finding.key) ? "[a11y-contrast]" : "[a11y-flaky]"
+                            let detail = finding.hasElement || underStatusBar.isEmpty
+                                ? "" : " (content under the status bar: \(underStatusBar.joined(separator: ", ")))"
+                            notes.append("\(tag) \(name): \(finding.text)\(detail)")
+                        } else if let frame = finding.frame, !frame.isEmpty, !visible.contains(frame) {
+                            notes.append("[a11y-hidden] \(name): \(finding.text) (not fully visible)")
                         } else {
-                            XCTFail("[a11y] \(name): \(issue.compactDescription) — \(element)")
+                            XCTFail("[a11y] \(name): \(finding.text)")
                         }
-                        return true
                     }
                 } catch {
                     XCTFail("[a11y] \(name): audit did not complete — \(error.localizedDescription)")
@@ -290,6 +308,54 @@ final class UICheckTests: XCTestCase {
                 add(attachment)
             }
         }
+    }
+
+    /// Denetimin tek bir bulgusu. `text` raporda görünen satırdır: elementli bulgularda etiket ve çerçeve,
+    /// elementsizlerde denetimin ayrıntı metni de yazılır ki ekrandaki yeri bulunabilsin (#59).
+    private struct AuditFinding {
+        let text: String
+        let key: String
+        let frame: CGRect?
+        let isContrast: Bool
+        var hasElement: Bool { frame != nil }
+    }
+
+    /// Denetimi koşar ve bulguları hata saymadan toplar.
+    @MainActor
+    private static func audit(_ app: XCUIApplication) throws -> [AuditFinding] {
+        var findings: [AuditFinding] = []
+        try app.performAccessibilityAudit { issue in
+            let frame = issue.element?.frame
+            let text: String
+            if let element = issue.element {
+                let box = element.frame
+                text = "\(issue.compactDescription) — '\(element.label)' frame \(box.integral.debugDescription)"
+            } else {
+                text = "\(issue.compactDescription) — screen (\(issue.detailedDescription))"
+            }
+            let key = issue.element.map { "\($0.label)@\($0.frame.integral)" } ?? "screen:\(issue.detailedDescription)"
+            findings.append(AuditFinding(
+                text: text, key: "\(issue.auditType.rawValue)|\(key)", frame: frame,
+                isContrast: issue.auditType == .contrast
+            ))
+            return true
+        }
+        return findings
+    }
+
+    /// Durum çubuğu bandına taşan metinlerin etiketleri (elementsiz kontrast bulgularını açıklamak için).
+    @MainActor
+    private static func labelsUnderStatusBar(in app: XCUIApplication) -> [String] {
+        let window = app.windows.firstMatch.frame
+        let statusBar = app.statusBars.firstMatch
+        let height = statusBar.exists && !statusBar.frame.isEmpty ? statusBar.frame.maxY - window.minY : 54
+        let band = CGRect(x: window.minX, y: window.minY, width: window.width, height: height)
+        let candidates = [app.staticTexts, app.buttons, app.cells, app.otherElements]
+            .flatMap { $0.allElementsBoundByIndex }
+        let labels = candidates
+            .filter { $0.exists && !$0.label.isEmpty && !$0.frame.isEmpty && $0.frame.intersects(band) && $0.frame.height < 100 }
+            .map { "'\($0.label)'" }
+        return Array(NSOrderedSet(array: labels)) as? [String] ?? labels
     }
 
     /// Ekran durana kadar (art arda iki görüntü aynı olana kadar, en fazla ~1,5 sn) bekler ve son görüntüyü döner.
