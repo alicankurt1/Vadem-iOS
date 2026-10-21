@@ -73,6 +73,48 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testAddInstallmentForm() throws {
+        // Boş ekleme formu (#62): örnek veriyle açılır, kartlar listelenir.
+        try capture(
+            screen: "add-installment",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top, .scrolled(to: "addInstallment.firstMonth", named: "first-month")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addInstallment.title"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment__\(variant.name): title field not found"
+            )
+            XCTAssertTrue(
+                app.buttons["addInstallment.save"].exists,
+                "[ui-check] add-installment__\(variant.name): save button not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addInstallment.save"].isEnabled,
+                "[ui-check] add-installment__\(variant.name): save must be disabled while the form is empty"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddInstallmentFormErrors() throws {
+        // Tüm hataları gösteren form: her geçersiz alanın altında hata metni olmalı.
+        try capture(
+            screen: "add-installment-errors",
+            launchArguments: ["-ui-sample-data", "-ui-add-form", "-ui-add-form-errors"],
+            sections: [.top, .scrolled(to: "addInstallment.amount", named: "amount")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["addInstallment.title.error"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-errors__\(variant.name): title error not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addInstallment.save"].isEnabled,
+                "[ui-check] add-installment-errors__\(variant.name): save must be disabled"
+            )
+        }
+    }
+
+    @MainActor
     func testGalleryScreen() throws {
         // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
         // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
