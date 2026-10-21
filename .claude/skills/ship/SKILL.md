@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Run the full Vadem-iOS agent pipeline for one GitHub issue — plan, coder, test writer, verify, reviewer, UI check, fix loop, PR and metrics — as the orchestrator. Use when the user types /ship #N or asks to ship / do issue #N.
+description: Run the full Vadem-iOS agent pipeline for one GitHub issue — plan, coder, test writer, verify, reviewer, UI capture, fix loop, PR and metrics — as the orchestrator. Use when the user types /ship #N or asks to ship / do issue #N.
 argument-hint: "#<issue-number>"
 ---
 
@@ -19,7 +19,7 @@ Invoking `/ship #N` authorizes, for this issue only: agents committing on `issue
 ## 1. Plan (human gate)
 
 - `gh issue view N --comments`. Stop if the issue is closed or has no acceptance criteria.
-- Show the user a plan in ≤ 8 bullets: files/modules, approach, risks, whether UI check will run (diff touches `Vadem/`, `VademFeatures`, `VademUITests/`), and the branch name `issue/N-<slug>`.
+- Show the user a plan in ≤ 8 bullets: files/modules, approach, risks, whether the UI capture will run (diff touches `Vadem/`, `VademFeatures`, `VademUITests/`) and for which screens, and the branch name `issue/N-<slug>`.
 - **Wait for "ok".** This is the only stop before the PR, apart from escalations below.
 
 ## 2. Branch
@@ -36,16 +36,20 @@ Invoking `/ship #N` authorizes, for this issue only: agents committing on `issue
 
 Tell the user one line after each agent returns (who, what, verify result).
 
-## 4. Review → UI check
+## 4. Review + UI capture
 
-1. Agent `reviewer`: issue N and branch only.
-2. If UI is touched: agent `ui-checker`: issue N and branch. Otherwise skip and note "UI check skipped (domain-only)".
-3. Collect findings. Classify each as **product** (coder / test writer) or **harness** (`scripts/`, `UICheckTests` plumbing, agent definitions).
+There is no UI check agent (off to save quota). You run the capture yourself, in parallel with the reviewer.
+
+1. If UI is touched: start `UI_CHECK_ONLY=<screens> scripts/ui-check.sh` **in the background** (`run_in_background`; omit `UI_CHECK_ONLY` only when shared UI changed). Otherwise note "UI capture skipped (domain-only)".
+2. Agent `reviewer`: issue N and branch only.
+3. When the capture finishes, read only its summary: `tail -40` of the output (counts, `[a11y]`, `[ui-check]`, `[ui-note]`, `[a11y-hidden]` lines, `UI-CHECK:`). Do not open `report.md` or screenshots by default.
+4. Look at a screenshot only when a line needs it to be judged, one at a time, from `screenshots/small/`. `[a11y-hidden]` and `[ui-note]` lines are not failures; mention them only if they hide a real problem.
+5. Collect findings. Classify each as **product** (coder / test writer) or **harness** (`scripts/`, `UICheckTests` plumbing, agent definitions).
 
 ## 5. Fix loop (max 2 rounds)
 
 - `blocker` / `major` / cheap `minor` product findings → coder; test gaps → test writer. Same independence rule: send findings, not the other agent's reasoning.
-- After fixes: verify, then re-review only `git diff <reviewed-head>..HEAD`, and re-run UI check only if UI changed.
+- After fixes: verify, then re-review only `git diff <reviewed-head>..HEAD`, and re-run the UI capture (same `UI_CHECK_ONLY`) only if UI changed.
 - **Harness findings are never fixed on the issue branch.** Stop and tell the user: the factory needs its own `phase-N/...` PR first (as in #10 / PR #11).
 - After 2 rounds, remaining `minor` / `nit` findings go to the PR as "accepted" or "open". Remaining `blocker` / `major` → escalate, no PR.
 
@@ -54,7 +58,7 @@ Tell the user one line after each agent returns (who, what, verify result).
 1. `git push -u origin issue/N-<slug>`.
 2. `gh pr create --base main` with title `<summary> (#N)` and a body containing:
    - `Closes #N`, a short summary of changes (from the diff, not from agent self-praise).
-   - **Review** and **UI check** tables: round, severity, finding, status (✅ fixed + sha / accepted + reason / open).
+   - **Review** and **UI capture** tables: round, severity, finding, status (✅ fixed + sha / accepted + reason / open).
    - **Verification:** last `VERIFY:` and `UI-CHECK:` lines.
    - **Metrics** line (see 7).
    - The PR attribution footer from the session's attribution instructions.
