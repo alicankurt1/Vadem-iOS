@@ -60,6 +60,7 @@ final class UICheckTests: XCTestCase {
             sections: [
                 .top,
                 .scrolled(to: "home.upcoming", named: "upcoming"),
+                .scrolled(to: "home.calendar", named: "calendar"),
                 .scrolled(to: "home.cards", named: "cards"),
                 .scrolled(to: "home.list", named: "list"),
             ]
