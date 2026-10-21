@@ -160,6 +160,48 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testAddCardForm() throws {
+        // Boş kart formu (#65): örnek veriyle açılır, Kaydet kapalı olmalı.
+        try capture(
+            screen: "add-card",
+            launchArguments: ["-ui-sample-data", "-ui-add-card-form"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addCard.name"].waitForExistence(timeout: 5),
+                "[ui-check] add-card__\(variant.name): name field not found"
+            )
+            XCTAssertTrue(
+                app.textFields["addCard.statementDay"].exists && app.textFields["addCard.dueDay"].exists,
+                "[ui-check] add-card__\(variant.name): day fields not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addCard.save"].isEnabled,
+                "[ui-check] add-card__\(variant.name): save must be disabled while the form is empty"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddCardFormErrors() throws {
+        // Tüm hataları gösteren kart formu: Kaydet kapalı kalmalı.
+        try capture(
+            screen: "add-card-errors",
+            launchArguments: ["-ui-sample-data", "-ui-add-card-form", "-ui-add-card-form-errors"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addCard.name"].waitForExistence(timeout: 5),
+                "[ui-check] add-card-errors__\(variant.name): name field not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addCard.save"].isEnabled,
+                "[ui-check] add-card-errors__\(variant.name): save must be disabled"
+            )
+        }
+    }
+
+    @MainActor
     func testGalleryScreen() throws {
         // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
         // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
