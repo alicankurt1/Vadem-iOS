@@ -195,11 +195,16 @@ final class UICheckTests: XCTestCase {
         }
     }
 
-    /// Navigasyon çubuğunun alt kenarı (durum çubuğu bunun üstünde kalır); çubuk yoksa pencerenin üstü.
+    /// Navigasyon çubuğunun alt kenarı (durum çubuğu bunun üstünde kalır); çubuk yoksa durum çubuğunun
+    /// alt kenarı, o da yoksa pencerenin üstü. Çubuksuz ekranlarda durum çubuğunun arkasına kayan
+    /// öğeler "görünür" sayılıp denetimde yanlış hata veriyordu.
     @MainActor
     static func barBottom(in app: XCUIApplication) -> CGFloat {
         let bar = app.navigationBars.firstMatch
-        return bar.exists ? bar.frame.maxY : app.windows.firstMatch.frame.minY
+        if bar.exists { return bar.frame.maxY }
+        let windowTop = app.windows.firstMatch.frame.minY
+        let statusBar = app.statusBars.firstMatch
+        return statusBar.exists ? max(windowTop, statusBar.frame.maxY) : windowTop
     }
 
     /// Uygulamayı her varyantta açar; `navigate` ile (uygulama, varyant) ekrana gider; her bölüm için
