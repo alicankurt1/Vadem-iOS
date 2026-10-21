@@ -15,10 +15,12 @@ public struct AddInstallmentView: View {
     public nonisolated static let errorsLaunchArgument = "-ui-add-form-errors"
 
     @State private var model: AddInstallmentViewModel
+    @State private var choice: Choice?
     private let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.self) private var environment
 
     /// Creates the form for `model`; `onSaved` runs after a successful save, before the sheet closes.
@@ -46,22 +48,15 @@ public struct AddInstallmentView: View {
                         .accessibilityIdentifier("addInstallment.title")
                 }
                 field(.card) {
-                    Menu {
-                        Picker("Card", selection: $model.cardID) {
-                            Text(Self.noCardTitle).tag(Card.ID?.none)
-                            ForEach(model.cards) { card in
-                                Text(card.name).tag(Card.ID?.some(card.id))
-                            }
-                        }
-                    } label: {
-                        menuRow(title: "Card", value: cardTitle)
-                    }
-                    .accessibilityIdentifier("addInstallment.card")
+                    // Menü etiketi ve gezinme bağlantısının oku denetimde "Dynamic Type desteklenmiyor"
+                    // sayılıyor; satır bizim çizdiğimiz bir düğme, seçim itilen listede yapılır.
+                    choiceRow(title: "Card", value: cardTitle, opens: .card)
+                        .accessibilityIdentifier("addInstallment.card")
                 }
                 field(.amount) {
                     // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
-                    // Etiket görünen metinle aynı kalır; farklı etiket denetimde "Text clipped" sayılıyor.
-                    TextField("Total amount (₺)", text: $model.amountText, prompt: Text("Total amount (₺)"))
+                    // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır; kısa yer tutucu AX5'te de sığar.
+                    TextField("Total amount", text: $model.amountText, prompt: Text("Amount (₺)"), axis: .vertical)
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif
@@ -76,22 +71,22 @@ public struct AddInstallmentView: View {
                     .accessibilityIdentifier("addInstallment.count")
                 }
                 field(.firstMonth) {
-                    Menu {
-                        Picker("First due month", selection: $model.firstMonth) {
-                            ForEach(model.firstMonthOptions, id: \.self) { month in
-                                Text(model.title(of: month)).tag(month)
-                            }
-                        }
-                    } label: {
-                        menuRow(title: "First due month", value: model.title(of: model.firstMonth))
-                    }
-                    .accessibilityIdentifier("addInstallment.firstMonth")
+                    choiceRow(title: "First due month", value: model.title(of: model.firstMonth), opens: .firstMonth)
+                        .accessibilityIdentifier("addInstallment.firstMonth")
                 }
             }
             .scrollContentBackground(.hidden)
             .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
+            .navigationDestination(item: $choice) { choice in
+                switch choice {
+                case .card:
+                    OptionList(title: "Card", options: cardOptions, selection: $model.cardID)
+                case .firstMonth:
+                    OptionList(title: "First due month", options: monthOptions, selection: $model.firstMonth)
+                }
+            }
             .navigationTitle("New installment")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -119,33 +114,64 @@ public struct AddInstallmentView: View {
         }
     }
 
+    // Seçim listesiyle açılan alanlar.
+    private enum Choice: Hashable {
+        case card
+        case firstMonth
+    }
+
     private static let noCardTitle = "Choose a card"
 
     private var cardTitle: String {
         model.cards.first { $0.id == model.cardID }?.name ?? Self.noCardTitle
     }
 
-    // Sistem menü seçicisinin değer metni sabit genişlikte kırpılıyor (denetim "Text clipped" diyor).
-    // Kendi satırımız: yan yana sığmazsa alt alta dizilir, metinler satır sınırı olmadan sarılır.
+    private var cardOptions: [OptionList<Card.ID?>.Option] {
+        [.init(value: nil, title: Self.noCardTitle)]
+            + model.cards.map { .init(value: $0.id, title: $0.name) }
+    }
+
+    private var monthOptions: [OptionList<YearMonth>.Option] {
+        model.firstMonthOptions.map { .init(value: $0, title: model.title(of: $0)) }
+    }
+
+    // Başlık ve değer normal boyutlarda yan yana, erişilebilirlik boyutlarında alt alta durur.
+    // ViewThatFits yerine AnyLayout: metinlerin kimliği boyut değişince korunur; aksi halde
+    // denetim yeni oluşan metni "Dynamic Type kısmen desteklenmiyor" sayıyor.
     private func menuRow(title: String, value: String) -> some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
-                Text(title)
-                    .foregroundStyle(Color.vademTextPrimary)
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 8))
+        return layout {
+            Text(title)
+                .foregroundStyle(Color.vademTextPrimary)
+                .frame(maxWidth: stacked ? .infinity : nil, alignment: .leading)
+            if !stacked {
                 Spacer(minLength: 8)
-                Text(value)
-                    .foregroundStyle(Color.vademTextSecondary)
             }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .foregroundStyle(Color.vademTextPrimary)
-                Text(value)
-                    .foregroundStyle(Color.vademTextSecondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(value)
+                .foregroundStyle(Color.vademTextSecondary)
+                .frame(maxWidth: stacked ? .infinity : nil, alignment: .leading)
         }
         .multilineTextAlignment(.leading)
         .contentShape(Rectangle())
+    }
+
+    // Dokununca seçim listesini iten satır; ok simgesi metin stiliyle Dynamic Type'a göre büyür.
+    private func choiceRow(title: String, value: String, opens choice: Choice) -> some View {
+        Button {
+            self.choice = choice
+        } label: {
+            HStack(spacing: 8) {
+                menuRow(title: title, value: value)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color.vademTextSecondary)
+                    .accessibilityHidden(true)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     // Alan ve (varsa) altındaki hata metni aynı bölümde durur.
@@ -171,6 +197,54 @@ public struct AddInstallmentView: View {
         case .count: return "count"
         case .firstMonth: return "firstMonth"
         }
+    }
+}
+
+/// Seçenekleri tek sütunlu bir listede gösterir; seçilen satır işaretlenir, dokununca geri dönülür.
+/// Satırlar düz metin olduğundan Dynamic Type ile büyür ve satır sınırı olmadan sarılır.
+@MainActor
+private struct OptionList<Value: Hashable>: View {
+    struct Option {
+        let value: Value
+        let title: String
+    }
+
+    let title: String
+    let options: [Option]
+    @Binding var selection: Value
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            ForEach(options.indices, id: \.self) { index in
+                let option = options[index]
+                Button {
+                    selection = option.value
+                    dismiss()
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(option.title)
+                            .foregroundStyle(Color.vademTextPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if option.value == selection {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color.vademBrand)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .accessibilityAddTraits(option.value == selection ? .isSelected : [])
+                .listRowBackground(Color.vademSurface)
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.vademBackground.ignoresSafeArea())
+        .navigationTitle(title)
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
