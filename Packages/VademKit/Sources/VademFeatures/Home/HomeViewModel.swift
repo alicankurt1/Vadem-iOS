@@ -54,6 +54,22 @@ public final class HomeViewModel {
         public let accessibilityLabel: String
     }
 
+    /// One month of the upcoming strip, ready to display.
+    public struct MonthSummary: Sendable, Hashable, Identifiable {
+        /// The month; unique within ``HomeViewModel/upcoming``.
+        public var id: YearMonth { month }
+        /// The month this summary covers.
+        public let month: YearMonth
+        /// The month as `"November 2026"`.
+        public let title: String
+        /// The month's ``MonthlySchedule/total``; zero when nothing is due.
+        public let total: Money
+        /// `true` for the selected month (``HomeViewModel/month``).
+        public let isSelected: Bool
+        /// The chip as one VoiceOver label: `"November 2026, 1.249,98 Türk lirası"`.
+        public let accessibilityLabel: String
+    }
+
     /// The text shown for a payment that is not charged to a card.
     public nonisolated static let noCardText = "No card"
     /// The message of the ``State/error(message:)`` state.
@@ -73,6 +89,11 @@ public final class HomeViewModel {
     public private(set) var cardSubtotals: [CardSubtotal] = []
     /// The payments of ``month``, in schedule order.
     public private(set) var rows: [Row] = []
+    /// ``UpcomingMonths/defaultCount`` consecutive months with their totals.
+    ///
+    /// Starts at the current month while the selected month is one of them, otherwise at the
+    /// selected month, so the selected month is always in the strip. Empty after a repository error.
+    public private(set) var upcoming: [MonthSummary] = []
 
     @ObservationIgnored private let repository: any PaymentRepository
     // Enjekte edilen bugün: ay ve gün (Card.DueDate dışarıdan kurulamaz).
@@ -96,7 +117,13 @@ public final class HomeViewModel {
 
     /// The selected month as `"October 2026"`.
     public var monthTitle: String {
-        "\(Self.monthNames[month.month - 1]) \(month.year)"
+        Self.title(of: month)
+    }
+
+    /// Selects `month` (e.g. a tapped chip of ``upcoming``) and reloads.
+    public func select(month: YearMonth) {
+        self.month = month
+        reload()
     }
 
     /// Selects the previous month and reloads.
@@ -130,19 +157,23 @@ public final class HomeViewModel {
     public func reload() {
         do {
             let cards = try repository.cards()
+            let installments = try repository.installments()
+            let subscriptions = try repository.subscriptions()
             let schedule = MonthlySchedule(
-                month: month,
-                cards: cards,
-                installments: try repository.installments(),
-                subscriptions: try repository.subscriptions()
+                month: month, cards: cards, installments: installments, subscriptions: subscriptions
+            )
+            let upcomingMonths = UpcomingMonths(
+                start: upcomingStart, cards: cards, installments: installments, subscriptions: subscriptions
             )
             apply(schedule, cards: cards)
+            upcoming = upcomingMonths.schedules.map(makeSummary)
         } catch {
             // Hata sessizce boş liste olmaz; ekranda hata durumu gösterilir.
             schedule = nil
             total = .zero
             cardSubtotals = []
             rows = []
+            upcoming = []
             state = .error(message: Self.loadErrorMessage)
         }
     }
@@ -171,6 +202,24 @@ public final class HomeViewModel {
         self.schedule = schedule
         total = schedule.total
         state = schedule.entries.isEmpty ? .empty : .loaded
+    }
+
+    // Şerit bu ayın penceresindeyse bu aydan, değilse seçili aydan başlar; seçili ay hep görünür.
+    private var upcomingStart: YearMonth {
+        let offset = todayMonth.months(until: month)
+        return (0..<UpcomingMonths.defaultCount).contains(offset) ? todayMonth : month
+    }
+
+    private func makeSummary(_ schedule: MonthlySchedule) -> MonthSummary {
+        let title = Self.title(of: schedule.month)
+        return MonthSummary(
+            month: schedule.month,
+            title: title,
+            total: schedule.total,
+            isSelected: schedule.month == month,
+            // Satırlarla aynı: "₺" yerine okunabilir tutar.
+            accessibilityLabel: "\(title), \(AmountText.spokenLabel(schedule.total))"
+        )
     }
 
     private func makeRow(_ entry: MonthlySchedule.Entry, index: Int, cardName: String?) -> Row {
@@ -225,6 +274,10 @@ public final class HomeViewModel {
 
     private func noon(of month: YearMonth, day: Int) -> Date? {
         calendar.date(from: DateComponents(year: month.year, month: month.month, day: day, hour: 12))
+    }
+
+    private nonisolated static func title(of month: YearMonth) -> String {
+        "\(monthNames[month.month - 1]) \(month.year)"
     }
 
     // Ay adları sabit (İngilizce); cihaz diline bağlı değil, ekran metinleriyle uyumlu.

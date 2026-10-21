@@ -59,6 +59,7 @@ final class UICheckTests: XCTestCase {
             launchArguments: ["-ui-sample-data"],
             sections: [
                 .top,
+                .scrolled(to: "home.upcoming", named: "upcoming"),
                 .scrolled(to: "home.cards", named: "cards"),
                 .scrolled(to: "home.list", named: "list"),
             ]
