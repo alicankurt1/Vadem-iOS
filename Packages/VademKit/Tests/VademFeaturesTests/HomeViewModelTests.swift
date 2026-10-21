@@ -288,4 +288,53 @@ struct HomeViewModelTests {
         #expect(model.cardSubtotals.first?.amount == Money(40))
         #expect(model.rows.first?.cardText == "First")
     }
+
+    // MARK: updateToday(_:)
+
+    @Test("updateToday follows the current month when it was selected, across a month rollover", arguments: [
+        ((2026, 10, 31), (2026, 11, 1), (2026, 11)),
+        ((2026, 12, 31), (2027, 1, 1), (2027, 1)),
+        ((2026, 10, 12), (2026, 10, 13), (2026, 10)),
+    ])
+    func updateTodayFollowsCurrentMonth(
+        old: (Int, Int, Int), new: (Int, Int, Int), expected: (Int, Int)
+    ) {
+        let model = HomeViewModel(
+            repository: InMemoryPaymentRepository(),
+            today: Self.date(old.0, old.1, old.2), calendar: Self.calendar
+        )
+        model.updateToday(Self.date(new.0, new.1, new.2))
+        #expect(model.month == YearMonth(year: expected.0, month: expected.1))
+    }
+
+    @Test("updateToday keeps a month the user navigated to")
+    func updateTodayKeepsNavigatedMonth() {
+        let model = HomeViewModel(
+            repository: InMemoryPaymentRepository(), today: Self.date(2026, 10, 31), calendar: Self.calendar
+        )
+        model.showPreviousMonth()
+        model.updateToday(Self.date(2026, 11, 1))
+        #expect(model.month == YearMonth(year: 2026, month: 9))
+    }
+
+    @Test("updateToday recomputes chip kinds from the new day")
+    func updateTodayRecomputesChips() throws {
+        let repository = InMemoryPaymentRepository()
+        let first = YearMonth(year: 2026, month: 9)!
+        try repository.save(Self.sub("A", day: 15, first: first))
+        try repository.save(Self.sub("B", day: 16, first: first))
+        try repository.save(Self.sub("C", day: 25, first: first))
+        let model = HomeViewModel(repository: repository, today: Self.date(2026, 10, 15), calendar: Self.calendar)
+        func kinds() -> [String: DueChip.Kind] {
+            Dictionary(uniqueKeysWithValues: model.rows.map { ($0.title, $0.chipKind) })
+        }
+        #expect(kinds() == ["A": .today, "B": .soon, "C": .later])
+        model.updateToday(Self.date(2026, 10, 16))
+        #expect(model.month == YearMonth(year: 2026, month: 10))
+        #expect(kinds() == ["A": .overdue, "B": .today, "C": .later])
+        // Chip metni de yeni güne göre: C artık 9 gün sonra, 22'sinde 3 gün.
+        model.updateToday(Self.date(2026, 10, 22))
+        #expect(kinds()["C"] == .soon)
+        #expect(model.rows.first { $0.title == "C" }?.chipText == "In 3 days")
+    }
 }
