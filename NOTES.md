@@ -225,3 +225,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Savunma 3:** Verify kararı agent'ta değil script'te.
 - **Kalan risk:** Reviewer da aynı yanlış yorumu yaparsa; bu yüzden ADR'de sınır durumları açıkça yazılır.
 - **Ders:** "Test düzeltildi" cümlesi, "neye göre düzeltildi?" sorusunu gerektirir.
+
+### Koşu #45 — Home ekranı
+
+- **Ne yapıldı:** `HomeViewModel` (`MonthlySchedule` üzerinden toplam, kart alt toplamları, satırlar, chip türü), `HomeView`, `DueChip.overdue`, DEBUG `-ui-sample-data` ve `RootView`/`VademApp` bağlantısı (PR #46). "Bugün" dışarıdan verildi (`Date()` yok), böylece testler ve UI yakalama deterministik.
+- **UI yakalama gerçek hatayı buldu:** Koyu modda "Total due" etiketi ikincil renkle kontrastı geçemedi (major); birincil token'a geçildi, hiyerarşi yazı tipiyle sağlandı. Hafif modda (`UI_CHECK_ONLY=home,root`) yakalama 99 sn sürdü.
+- **Reviewer bir boşluğu yakaladı:** `updateToday` testsizdi (major) ve "bugün" açılışta bir kez alınıyordu (minor); `scenePhase == .active` ile yenileme ve test eklendi.
+- **Ders:** Zamana bağlı davranış (ay devri, chip sınırları) enjekte edilen tarihle test edilir; yenileme yolu da ayrıca test edilmeli. Metrikler: 13 dk, 11 verify (0 kırmızı), 2 düzeltme turu; review 0/1/5/1, UI 0/1/0/0.

@@ -10,7 +10,7 @@ This repository is also an experiment in **developing with an AI agent team**. A
 
 ## Status
 
-🚧 Phase 10 — in progress. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, and the `PaymentRepository` storage contract. Persistence (Phase 9) is done: payments are stored on device with SwiftData. The design system (theme, card faces, amounts) is in; its card text contrast and navigation bar fixes ([#36](https://github.com/alicankurt1/Vadem-iOS/issues/36)) come next, then the home screen.
+🚧 Phase 10 — in progress. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, and the `PaymentRepository` storage contract. Persistence (Phase 9) is done: payments are stored on device with SwiftData. The design system (theme, card faces, amounts) is in; its card text contrast and navigation bar fixes ([#36](https://github.com/alicankurt1/Vadem-iOS/issues/36)) come next. The home screen (this month's total, per-card subtotals, payments with due chips) is in and backed by the on-device store.
 
 ## The pipeline
 
