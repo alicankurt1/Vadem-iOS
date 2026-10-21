@@ -183,6 +183,51 @@ struct AddInstallmentViewModelTests {
         #expect(result == expected.flatMap { Decimal(string: $0, locale: Locale(identifier: "en_US_POSIX")) })
     }
 
+    @Test("Integer part is limited to 12 digits, leading zeros counted", arguments: [
+        ("999999999999", "tr_TR", "999999999999" as String?),
+        ("999999999999,99", "tr_TR", "999999999999.99"),
+        ("999999999999.99", "en_US", "999999999999.99"),
+        ("000000000001", "tr_TR", "1"),
+        ("-999999999999", "tr_TR", "-999999999999"),
+        ("1000000000000", "tr_TR", nil),
+        ("1000000000000,50", "tr_TR", nil),
+        ("1000000000000.50", "en_US", nil),
+        ("0000000000001", "tr_TR", nil),
+        ("0000000000001,5", "tr_TR", nil),
+        ("0000000000001.5", "en_US", nil),
+        ("-1000000000000", "tr_TR", nil),
+        (String(repeating: "9", count: 40), "tr_TR", nil),
+    ])
+    func parseAmountDigitLimit(text: String, locale: String, expected: String?) {
+        #expect(AddInstallmentViewModel.maxIntegerDigits == 12)
+        let result = AddInstallmentViewModel.parseAmount(text, locale: Locale(identifier: locale))
+        #expect(result == expected.flatMap { Decimal(string: $0, locale: Locale(identifier: "en_US_POSIX")) })
+    }
+
+    @Test("Over-long amount shows the number error and blocks saving", arguments: [
+        ("tr_TR", "1000000000000,50", "Enter a number like 1499,90."),
+        ("en_US", "1000000000000.50", "Enter a number like 1499.90."),
+        ("tr_TR", "0000000000001", "Enter a number like 1499,90."),
+    ])
+    func overLongAmountError(locale: String, text: String, message: String) throws {
+        let (model, repository) = try Self.makeModel(locale: Locale(identifier: locale))
+        Self.fillValid(model)
+        model.amountText = text
+        #expect(model.errorMessage(for: .amount) == message)
+        #expect(!model.canSave)
+        #expect(!model.save())
+        #expect(try repository.installments().isEmpty)
+    }
+
+    @Test("Amount of 12 digits is accepted by the form")
+    func twelveDigitAmountSaves() throws {
+        let (model, _) = try Self.makeModel()
+        Self.fillValid(model)
+        model.amountText = "999999999999,99"
+        #expect(model.errorMessage(for: .amount) == nil)
+        #expect(model.canSave)
+    }
+
     @Test("Amount typed in Turkish becomes the exact decimal in the draft")
     func draftAmountIsExact() throws {
         let (model, _) = try Self.makeModel()
