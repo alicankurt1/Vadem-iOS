@@ -75,8 +75,11 @@ public struct YearMonth: Sendable, Hashable {
         // Sakamoto yöntemi: Ocak/Şubat önceki yılın sonu sayılır; sonuç 0 = Pazar.
         // Foundation takvimi 1582 öncesini Jülyen sayar; burada her yıl Gregoryen (numberOfDays ile tutarlı).
         let offsets = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
+        // supportedYears 1'den başladığı için y >= 0; Swift'in / ve % işlemleri sıfıra doğru
+        // kırptığı halde negatif ara değer oluşmaz. Yine de kalanı 0...6'ya normalize ediyoruz.
         let y = month < 3 ? year - 1 : year
-        let weekday = (y + y / 4 - y / 100 + y / 400 + offsets[month - 1] + 1) % 7
+        let raw = (y + y / 4 - y / 100 + y / 400 + offsets[month - 1] + 1) % 7
+        let weekday = (raw + 7) % 7
         return weekday + 1
     }
 

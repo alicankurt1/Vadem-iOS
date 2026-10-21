@@ -40,6 +40,15 @@ public struct HomeView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(Color.vademBackground.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) {
+            // Durum çubuğunun arkası opak: kaydırılan içerik (ör. takvim satırları) saat ve
+            // pil simgelerinin altına girip kontrastı bozmaz. Sıfır yükseklikli şerit,
+            // arka planını yalnızca üst güvenli alana taşır.
+            Color.clear
+                .frame(height: 0)
+                .background(Color.vademBackground.ignoresSafeArea(edges: .top))
+                .accessibilityHidden(true)
+        }
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
@@ -354,8 +363,11 @@ struct MonthCalendar: View {
     // Büyük yazıda yedi sütun sığmaz: boşluklar atlanır, her hücre gün adını da gösterir.
     private var accessibleGrid: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 8) {
-            ForEach(days.filter { $0.day != nil }) { cell in
-                dayButton(cell, day: cell.day!, showsWeekday: true)
+            ForEach(days) { cell in
+                // Boş hücreler (ay öncesi dolgu) bu görünümde atlanır.
+                if let day = cell.day {
+                    dayButton(cell, day: day, showsWeekday: true)
+                }
             }
         }
     }
