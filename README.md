@@ -25,9 +25,10 @@ flowchart LR
     V -- red --> C
     V -- green --> R[Reviewer]
     R -- blocker / major --> C
-    R --> U[UI check<br/>only if UI changed]
+    V -- green --> U[UI capture<br/>background, only if UI changed]
     U -- issues --> C
-    U --> PR([Pull request])
+    R --> PR([Pull request])
+    U --> PR
     PR --> H{{Human merge}}
     H --> W[Writer<br/>/after-merge]
     W --> D([Docs PR])
@@ -40,14 +41,14 @@ flowchart LR
 | Test writer | [`test-writer.md`](.claude/agents/test-writer.md) | Tests only, from acceptance criteria | — |
 | Verify | [`scripts/verify.sh`](scripts/verify.sh) (not an agent) | Nothing | **Pass / fail** (`swift test` + build) |
 | Reviewer | [`reviewer.md`](.claude/agents/reviewer.md) | Nothing (read-only tools) | Findings by severity, with `file:line` |
-| UI check | [`ui-checker.md`](.claude/agents/ui-checker.md) + [`scripts/ui-check.sh`](scripts/ui-check.sh) | Nothing | Visual findings from light / dark / AX5 screenshots + Apple's accessibility audit |
+| UI capture | [`scripts/ui-check.sh`](scripts/ui-check.sh), run by the orchestrator in the background (the [`ui-checker.md`](.claude/agents/ui-checker.md) agent is off) | Nothing | Accessibility audit failures on light / dark / AX5 screenshots; screenshots are opened only when a line needs it |
 | Writer | [`writer.md`](.claude/agents/writer.md) via [`/after-merge`](.claude/skills/after-merge/SKILL.md) | `CHANGELOG.md`, `README.md`, `NOTES.md` | — |
 
 ### Principles
 
 - **Agents write tests; a script runs them.** No agent can say "tests pass". Only `VERIFY: PASS` from the current tree counts.
 - **Independence.** The test writer and the reviewer get the issue and the diff, never the coder's reasoning. Otherwise they would share its blind spots.
-- **Roles are enforced by tools where possible.** The reviewer and UI checker have no edit tools.
+- **Roles are enforced by tools where possible.** The reviewer has no edit tools.
 - **Bounded loops.** At most 3 red-verify rounds and 2 review rounds. After that, the orchestrator stops and asks.
 - **The factory is not built by the product line.** Agents never change `scripts/`, `.claude/` or the harness. Harness bugs found during a run get their own PR, reviewed by a human.
 - **Merging is always human.**
@@ -91,7 +92,7 @@ open Vadem.xcodeproj
 | `/ship #N` | Whole pipeline for issue N. It waits once, for your "ok" on the plan, and ends with a PR. |
 | `/after-merge #P` | After you merge PR P, the writer updates the docs in a small docs PR. |
 | `/verify` or `scripts/verify.sh` | Package unit tests + app build, no simulator (seconds). |
-| `scripts/ui-check.sh` | Simulator screenshots (light / dark / largest text) + accessibility audit (~1 min). |
+| `scripts/ui-check.sh` | Simulator screenshots (light / dark / largest text) + accessibility audit (≤ 4 min for the full gallery). `UI_CHECK_ONLY=gallery,root` captures only those screens. |
 
 Write issues with the [task template](.github/ISSUE_TEMPLATE/task.md). Its acceptance criteria are the contract for every agent.
 

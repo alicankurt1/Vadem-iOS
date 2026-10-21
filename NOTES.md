@@ -196,3 +196,32 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Daha iyi alet → daha çok gerçek bulgu:** Harness düzelince denetim, eskiden göremediği ürün sorunlarını gördü: VoiceOver tutarlarda `₺` sembolünü okuyordu (`spokenLabel` ile "Türk lirası"), `₺1.000.000,00` AX5'te sayının ortasından kırılıyordu, kart yazısının kontrastı AX5'te ve dört stilde yetmiyordu. Birim testi her mesh rengini beyaza karşı geçiriyordu; denetim ise ekrandaki gerçek bileşimi ölçüyor. Ders: ilk görsel ekranda alet de ilk kez gerçek yük altındaydı; aleti ve ürünü aynı koşuda olgunlaştırmak pahalı ama kaçınılmaz.
 - **Sınırlı döngü işe yaradı:** Review limiti 2 tur; 3. tur kullanıcı onayıyla istisna oldu. 3. turdan sonra sonsuz düzeltme yerine durduk: ürün kalanları (kart yazısı kontrastı, navigasyon çubuğu) #36'ya, harness kalanları (kaydırma güvenilirliği, yarı gizli öğe gürültüsü, ~10 dk süre) #37'ye ayrıldı. PR, kriterlerin hepsi karşılanmadan açıkça yazılarak merge edildi; karar insanda kaldı.
 - **Metrikler:** ~131 dk (iki fabrika PR'ı dahil), 12 verify koşusu (0 kırmızı), 3 düzeltme turu; review 0 blocker / 2 major / 3 minor / 5 nit, UI check 1 blocker / 9 major / 4 minor / 2 nit.
+
+### Phase 10 — Hafif UI yakalama (fabrika)
+
+#33'ün 3. turundaki harness kalanları (#37) ve #36'da bir UI check koşusunun kotanın belirgin bir kısmını harcaması üzerine (PR #41):
+- **UI check agent'ı kapatıldı:** `/ship` adım 4'te orkestratör `UI_CHECK_ONLY=<ekranlar> scripts/ui-check.sh`'i reviewer çalışırken arka planda başlatıyor, sadece özet satırlarını okuyor; ekran görüntüsünü yalnızca bir satır gerektirdiğinde, 600 px kopyadan açıyor. Bekleme agent'ın işi değil. Test writer ve reviewer `sonnet` ile çalışıyor.
+- **Ulaşılamayan bölümün kök nedeni:** Kaydırma hedefi büyük başlığın altına denk geliyordu; işaret orada dokunulabilir sayılmadığı için `chips` bölümüne ulaşılamıyordu. Hedef artık hep navigasyon çubuğunun altında; %5 tolerans yerine bir bant kullanılıyor, sürüklemeler salınmıyor (her sürükleme ~3 sn).
+- **Gürültü ile hata ayrıldı:** Tam görünmeyen öğelerdeki denetim bulguları `[a11y-hidden]`, art arda aynı bölümler `[ui-note]` notu (`notes.txt`); hata sayılmıyorlar. Ulaşılamayan işaret, çerçeve, çubuk alt sınırı ve deneme sayısıyla raporlanıyor.
+- **Süre:** Tam galeri yakalaması ~10 dk'dan 237 sn'ye indi (30 bölümün 30'u ulaşıldı, 30 görüntü). Bir koşuda XCTest "Find the Target Application" adımında 17 dk takıldığı için test başına 180 sn sınır kondu.
+- **Ders:** Bir kapının maliyeti de kalitesinin parçası. Deterministik kısım (denetim, script) her zaman koşar; pahalı kısım (görüntüye bakmak) sadece bir sinyal gerektirdiğinde devreye girer.
+
+### Mülakat sorusu: Bir iş kuralını neden kodda değil önce bir ADR'de kararlaştırırsın, ADR'ye neyi yazarsın?
+
+**Cevap:**
+- **Kod "ne"yi gösterir, "neden"i göstermez:** ADR olmazsa biri kodu "basitleştirip" kuralı sessizce bozar.
+- **İş kuralı bir ürün kararıdır:** "Bu ay" tanımı gibi bir kural kullanıcının gördüğü toplamı değiştirir; yazılı olarak onaylanmalı.
+- **ADR → kabul kriteri → tablo testi:** Test writer koddan değil kuraldan test yazar.
+- **İçerik:** bağlam, tek cümlelik karar, sınır durumları (ekstre gününe düşen çekim, ay sonu, yıl dönümü), reddedilen seçenekler ve nedenleri, sonuçlar.
+- **Değiştirilmez:** ADR (Architecture Decision Record) numaralanır; karar değişirse eskisini "yerini aldı" diye işaretleyen yeni bir ADR yazılır.
+- **Ders:** Basit görünen kuralın çok yorumu vardır; yazılı karar yorum farkını koddan önce ortaya çıkarır.
+
+### Mülakat sorusu: Test writer'ın bazı testleri ilk koşuda kırmızı yanınca beklenen değerleri düzelttiğini söylemesi neden bir risk, pipeline bunu nasıl yakalıyor?
+
+**Cevap:**
+- **Kırmızı test iki şey demektir:** ya beklenti yanlış ya kod. Beklentiyi koda uydurmak testi kodun aynası yapar; kodda hata varsa test onu onaylar (test oracle problemi).
+- **Savunma 1:** Test writer koderin raporunu görmez; beklentiyi kabul kriterlerinden elle hesaplar.
+- **Savunma 2:** Orkestratör bu itirafı reviewer'a özel olarak iletir; reviewer beklenen değerleri ADR'den bağımsız olarak yeniden hesaplar (#42'de hepsi doğru çıktı).
+- **Savunma 3:** Verify kararı agent'ta değil script'te.
+- **Kalan risk:** Reviewer da aynı yanlış yorumu yaparsa; bu yüzden ADR'de sınır durumları açıkça yazılır.
+- **Ders:** "Test düzeltildi" cümlesi, "neye göre düzeltildi?" sorusunu gerektirir.
