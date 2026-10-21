@@ -183,4 +183,109 @@ struct HomeViewModelTests {
         #expect(model.state == .loaded)
         #expect(model.total == Money(10))
     }
+
+    // MARK: İnceleme turu 1: ek senaryolar (kendi veri kümeleriyle)
+
+    // Sabit içerik döndüren depo: gerçek depo bilinmeyen kartı kaydetmeyi reddeder, bu yüzden
+    // bu durumlara sadece protokol üzerinden ulaşılır.
+    private struct StubRepository: PaymentRepository {
+        var storedCards: [Card] = []
+        var storedInstallments: [InstallmentItem] = []
+        var storedSubscriptions: [SubscriptionItem] = []
+        func cards() throws -> [Card] { storedCards }
+        func save(_ card: Card) throws {}
+        func deleteCard(id: Card.ID) throws {}
+        func installments() throws -> [InstallmentItem] { storedInstallments }
+        func save(_ item: InstallmentItem) throws {}
+        func deleteInstallment(id: InstallmentItem.ID) throws {}
+        func subscriptions() throws -> [SubscriptionItem] { storedSubscriptions }
+        func save(_ item: SubscriptionItem) throws {}
+        func deleteSubscription(id: SubscriptionItem.ID) throws {}
+    }
+
+    @Test("Payments whose card is missing are skipped, not shown and not counted")
+    func unknownCardSkipped() {
+        let ghost = Card(name: "Ghost", statementDay: 1, dueDay: 10)!
+        let orphan = Self.sub("Orphan", day: 5, card: ghost, amount: 500, first: YearMonth(year: 2026, month: 8)!)
+        let free = Self.sub("Free", day: 20, amount: 70, first: YearMonth(year: 2026, month: 8)!)
+        let plan = InstallmentPlan(total: Money(300), count: 3, firstMonth: YearMonth(year: 2026, month: 9)!)!
+        let orphanInstallment = InstallmentItem(id: UUID(), title: "OrphanPlan", cardID: ghost.id, plan: plan)!
+        let repository = StubRepository(
+            storedInstallments: [orphanInstallment], storedSubscriptions: [orphan, free]
+        )
+        let model = HomeViewModel(repository: repository, today: Self.date(2026, 10, 12), calendar: Self.calendar)
+        #expect(model.state == .loaded)
+        #expect(model.rows.map(\.title) == ["Free"])
+        #expect(model.total == Money(70))
+        #expect(model.cardSubtotals.isEmpty)
+    }
+
+    @Test("Only orphaned payments leave the empty state")
+    func onlyUnknownCardIsEmpty() {
+        let ghost = Card(name: "Ghost", statementDay: 1, dueDay: 10)!
+        let orphan = Self.sub("Orphan", day: 5, card: ghost, first: YearMonth(year: 2026, month: 8)!)
+        let model = HomeViewModel(
+            repository: StubRepository(storedSubscriptions: [orphan]),
+            today: Self.date(2026, 10, 12), calendar: Self.calendar
+        )
+        #expect(model.state == .empty)
+        #expect(model.total == .zero)
+    }
+
+    @Test("One item with two payments in a month gives two rows with unique ids")
+    func twoPaymentsSameMonth() throws {
+        // Ekstre 29, vade 30: Şubat 2027'de (28 gün) vade 28 <= ekstre 28 olduğundan Mart 30'a kayar;
+        // Mart ekstresi de Mart 30'da öder. İki taksit de Mart 30'da.
+        let card = Card(name: "Edge", statementDay: 29, dueDay: 30)!
+        let plan = InstallmentPlan(total: Money(200), count: 2, firstMonth: YearMonth(year: 2027, month: 2)!)!
+        let item = InstallmentItem(id: UUID(), title: "Sofa", cardID: card.id, plan: plan)!
+        let repository = InMemoryPaymentRepository()
+        try repository.save(card)
+        try repository.save(item)
+        let model = HomeViewModel(repository: repository, today: Self.date(2027, 3, 1), calendar: Self.calendar)
+        #expect(model.rows.count == 2)
+        #expect(Set(model.rows.map(\.id)).count == 2)
+        #expect(model.rows.map(\.installmentText) == ["1/2", "2/2"])
+        #expect(model.rows.map(\.dueText) == ["30 March", "30 March"])
+        #expect(model.total == Money(200))
+        #expect(model.cardSubtotals.map(\.amount) == [Money(200)])
+    }
+
+    @Test("Today is the calendar's local day, not the UTC day")
+    func nonUTCCalendar() {
+        var istanbul = Calendar(identifier: .gregorian)
+        istanbul.timeZone = TimeZone(identifier: "Europe/Istanbul")!
+        // 14 Ekim 22:00 UTC = 15 Ekim 01:00 İstanbul (UTC+3).
+        let instant = Self.calendar.date(from: DateComponents(year: 2026, month: 10, day: 14, hour: 22))!
+        let repository = InMemoryPaymentRepository()
+        try! repository.save(Self.sub("Due15", day: 15, first: YearMonth(year: 2026, month: 9)!))
+        try! repository.save(Self.sub("Due14", day: 14, first: YearMonth(year: 2026, month: 9)!))
+        let model = HomeViewModel(repository: repository, today: instant, calendar: istanbul)
+        let kinds = Dictionary(uniqueKeysWithValues: model.rows.map { ($0.title, $0.chipKind) })
+        #expect(kinds == ["Due15": .today, "Due14": .overdue])
+    }
+
+    @Test("The starting month follows the calendar's local date")
+    func nonUTCMonth() {
+        var istanbul = Calendar(identifier: .gregorian)
+        istanbul.timeZone = TimeZone(identifier: "Europe/Istanbul")!
+        // 30 Eylül 22:00 UTC = 1 Ekim 01:00 İstanbul.
+        let instant = Self.calendar.date(from: DateComponents(year: 2026, month: 9, day: 30, hour: 22))!
+        let model = HomeViewModel(repository: InMemoryPaymentRepository(), today: instant, calendar: istanbul)
+        #expect(model.month == YearMonth(year: 2026, month: 10))
+    }
+
+    @Test("Duplicate card ids from the repository show one subtotal, first card wins")
+    func duplicateCardIDs() {
+        let id = UUID()
+        let first = Card(id: id, name: "First", statementDay: 1, dueDay: 10)!
+        let second = Card(id: id, name: "Second", statementDay: 1, dueDay: 10)!
+        let item = Self.sub("Svc", day: 1, card: first, amount: 40, first: YearMonth(year: 2026, month: 9)!)
+        let repository = StubRepository(storedCards: [first, second], storedSubscriptions: [item])
+        let model = HomeViewModel(repository: repository, today: Self.date(2026, 10, 12), calendar: Self.calendar)
+        #expect(model.cardSubtotals.count == 1)
+        #expect(model.cardSubtotals.first?.name == "First")
+        #expect(model.cardSubtotals.first?.amount == Money(40))
+        #expect(model.rows.first?.cardText == "First")
+    }
 }
