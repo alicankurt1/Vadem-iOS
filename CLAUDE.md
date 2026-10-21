@@ -67,6 +67,7 @@ Harness / factory problems found during a run (`scripts/`, `UICheckTests` plumbi
 **Visible mode** (on request): instead of subagents, each role runs as its own session in the desktop app (split view), started one at a time in this checkout. The session's brief says: "Read `.claude/agents/<role>.md` and act as that role" plus the issue and branch. The orchestrator relays only what the next role needs, same as with subagents.
 
 Rules:
+- Cost: the orchestrator (main session) runs on Sonnet (personal `.claude/settings.local.json`); the coder is pinned to Opus, the other agents to Sonnet. One issue per chat.
 - Branch per issue: `issue/N-<slug>`. Commits: `<imperative summary> (#N)`.
 - Agents commit only on the issue branch; they never push, open PRs or merge.
 - Agent comments on GitHub start with their role, e.g. `**[Review agent]**`.
