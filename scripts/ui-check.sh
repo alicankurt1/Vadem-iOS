@@ -12,7 +12,9 @@
 #   screenshots/<screen>__<variant>.png
 #   screenshots/small/…  600 px wide copies (cheap to look at)
 #   a11y.txt        one accessibility issue per line (empty = none)
-#   notes.txt       non-failing notes: identical consecutive parts, issues on elements under a bar
+#   notes.txt       non-failing notes: identical consecutive parts, issues on elements under a bar,
+#                   contrast findings ([a11y-contrast], or [a11y-flaky] when a retry did not
+#                   reproduce them; token ratios are covered by TokenContrastTests)
 #   report.md       summary for the PR (all failures, not only the first per test)
 # Last line is "UI-CHECK: PASS" (screenshots captured, no failures) or "UI-CHECK: FAIL".
 
@@ -118,7 +120,7 @@ for appearance in appearances:
                 if a["exportedFileName"].lower().endswith(".txt"):
                     # Xcode hata metinlerini de .txt ekler; sadece bizim notlar alınır.
                     lines = open(os.path.join(export, a["exportedFileName"])).read().splitlines()
-                    notes += [l for l in lines if l.startswith(("[ui-note]", "[a11y-hidden]"))]
+                    notes += [l for l in lines if l.startswith(("[ui-note]", "[a11y-hidden]", "[a11y-flaky]", "[a11y-contrast]"))]
                     continue
                 if not a["exportedFileName"].lower().endswith((".png", ".jpg", ".jpeg")):
                     continue
