@@ -128,7 +128,7 @@ struct MonthlyScheduleTests {
         let renewal: Int
         let queryYear: Int
         let queryMonth: Int
-        let expectedDay: Int?  // nil = o ayda giriş yok
+        let expectedDay: Int
         var expectedCount = 1
         var testDescription: String {
             "stmt \(statement) due \(due) renewal \(renewal) query \(queryYear)-\(queryMonth)"
@@ -143,7 +143,7 @@ struct MonthlyScheduleTests {
         CardSubCase(statement: 10, due: 20, renewal: 10, queryYear: 2026, queryMonth: 3, expectedDay: 20),
         // ekstre gününden sonra: sonraki ekstre, sonraki ay vade
         CardSubCase(statement: 10, due: 20, renewal: 11, queryYear: 2026, queryMonth: 4, expectedDay: 20),
-        // ay M'de çekim, M+1'de vade: M'de görünmez
+        // 20 Şubat çekimi (ekstre 25) Mart ekstresine girmez, 5 Mart'ta ödenir; Mart'ta bu giriş görünür
         CardSubCase(statement: 25, due: 5, renewal: 20, queryYear: 2026, queryMonth: 3, expectedDay: 5),
         // çekim M-2'de, vade M'de
         CardSubCase(statement: 25, due: 5, renewal: 28, queryYear: 2026, queryMonth: 5, expectedDay: 5),
@@ -161,7 +161,7 @@ struct MonthlyScheduleTests {
         let query = try ym(c.queryYear, c.queryMonth)
         let result = schedule(query, cards: [kart], subscriptions: [item])
 
-        let day = try #require(c.expectedDay)
+        let day = c.expectedDay
         #expect(result.entries.count == c.expectedCount)
         for entry in result.entries {
             #expect(entry.kind == .subscription)
@@ -198,7 +198,8 @@ struct MonthlyScheduleTests {
     func monthlyOncePerMonth() throws {
         let kart = try card(statement: 25, due: 5)
         let item = try sub(card: kart, day: 28, first: try ym(2026, 1))
-        // Şubat'ta giriş yok: Aralık 2025 çekimi henüz başlamadı.
+        // Şubat'ta giriş yok (Aralık 2025 çekimi yok); Mart'tan itibaren her ay tam bir giriş var.
+        #expect(schedule(try ym(2026, 2), cards: [kart], subscriptions: [item]).entries.isEmpty)
         for month in 3...12 {
             let result = schedule(try ym(2026, month), cards: [kart], subscriptions: [item])
             #expect(result.entries.count == 1, "month \(month)")
@@ -327,7 +328,7 @@ struct MonthlyScheduleTests {
         let kart = try card(statement: 10, due: 20)
         let month = try ym(2026, 2)
         let inst = try installment(card: kart, total: 300, count: 3, first: try ym(2026, 1))
-        let item = try sub(card: kart, amount: 49.9, day: 3, first: try ym(2026, 1))
+        let item = try sub(card: kart, amount: Decimal(string: "49.9")!, day: 3, first: try ym(2026, 1))
         let result = schedule(month, cards: [kart], installments: [inst], subscriptions: [item])
         #expect(result.entries.count == 2)
         #expect(result.total == Money(Decimal(string: "149.9")!))
@@ -335,14 +336,40 @@ struct MonthlyScheduleTests {
         #expect(result.month == month)
     }
 
-    @Test("Extreme months do not crash")
+    @Test("Extreme months do not crash and give the expected entries")
     func extremes() throws {
         let kart = try card(statement: 10, due: 5)
-        let first = try ym(1, 1)
         let last = try ym(9999, 12)
-        let item = try sub(card: kart, day: 31, first: first)
-        let inst = try installment(card: kart, total: 100, count: 1, first: try ym(9999, 12))
-        _ = schedule(first, cards: [kart], installments: [inst], subscriptions: [item])
-        _ = schedule(last, cards: [kart], installments: [inst], subscriptions: [item])
+        let late = try sub(card: kart, day: 31, first: try ym(9999, 1))
+        // Vadesi 10000. yıla düşen taksit temsil edilemez, atlanır.
+        let inst = try installment(card: kart, total: 100, count: 1, first: last)
+        let result = schedule(last, cards: [kart], installments: [inst], subscriptions: [late])
+        // Yalnızca Ekim çekimi (31 > 10, Kasım ekstresi) 5 Aralık 9999'da ödenir.
+        #expect(result.entries.count == 1)
+        #expect(result.entries.first?.kind == .subscription)
+        #expect(result.entries.first?.dueDate.month == last)
+        #expect(result.entries.first?.dueDate.day == 5)
+        #expect(result.total == Money(50))
+
+        // 0001-01 çekimi (5 <= 10) Ocak ekstresinde, 5 Şubat'ta ödenir.
+        let early = try sub(card: kart, day: 5, first: try ym(1, 1))
+        #expect(schedule(try ym(1, 1), cards: [kart], subscriptions: [early]).entries.isEmpty)
+        let feb = schedule(try ym(1, 2), cards: [kart], subscriptions: [early])
+        #expect(feb.entries.count == 1)
+        #expect(feb.entries.first?.dueDate.day == 5)
+    }
+
+    @Test("Yearly subscription on a card is due in the month after a late charge")
+    func yearlyOnCard() throws {
+        // Ekstre 10, vade 20; 15 Mart çekimi Nisan ekstresinde, 20 Nisan'da ödenir.
+        let kart = try card(statement: 10, due: 20)
+        let item = try sub(card: kart, period: .yearly, day: 15, first: try ym(2026, 3))
+        for (year, month, count) in [(2026, 3, 0), (2026, 4, 1), (2026, 5, 0), (2027, 3, 0), (2027, 4, 1), (2026, 12, 0)] {
+            let result = schedule(try ym(year, month), cards: [kart], subscriptions: [item])
+            #expect(result.entries.count == count, "\(year)-\(month)")
+        }
+        let entry = try #require(schedule(try ym(2026, 4), cards: [kart], subscriptions: [item]).entries.first)
+        #expect(entry.dueDate.day == 20)
+        #expect(entry.amount == Money(50))
     }
 }
