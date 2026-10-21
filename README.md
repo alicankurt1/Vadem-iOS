@@ -10,7 +10,7 @@ This repository is also an experiment in **developing with an AI agent team**. A
 
 ## Status
 
-🚧 Phase 10 — in progress. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, the `PaymentRepository` storage contract, and `MonthlySchedule` (what is due in a month, with totals). Persistence (Phase 9) is done: payments are stored on device with SwiftData. The design system (theme, card faces, amounts) is in; its card text contrast and navigation bar fixes ([#36](https://github.com/alicankurt1/Vadem-iOS/issues/36)) come next, then the rest of the home screen. Home has a strip of the next 6 months with totals; tapping a month selects it.
+🚧 Phase 10 — in progress. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, the `PaymentRepository` storage contract, and `MonthlySchedule` (what is due in a month, with totals). Persistence (Phase 9) is done: payments are stored on device with SwiftData. The design system (theme, card faces, amounts) is in; its card text contrast and navigation bar fixes ([#36](https://github.com/alicankurt1/Vadem-iOS/issues/36)) come next, then the rest of the home screen. Home has a strip of the next 6 months with totals; tapping a month selects it. Below it, a month calendar shows each day's total; tapping a day filters the list to that day.
 
 ## The pipeline
 

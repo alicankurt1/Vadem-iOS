@@ -240,3 +240,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Metrikler:** 10 dk, 0 düzeltme turu. Önceki UI koşusunda (#45) kapıların yakaladığı kontrast ve test eksikleri bu kez çıkmadı.
 - **Açık nokta:** VoiceOver "Türk lirası" okuyor, issue örneğindeki "₺" değil; ödeme satırlarıyla tutarlı olduğu için kabul edildi. `.isSelected` özelliği için otomatik doğrulama yok, sadece model bayrağı testli.
 - **Ders:** `home-upcoming` ile `home` aynı görüntü çıktı (şerit zaten en üstte); `[ui-note]` mekanizması bunu hata saymadan gösterdi. Bu, gürültü/hata ayrımının (#37) işe yaradığını gösteriyor.
+
+### Koşu #53 — Home: aylık takvim
+
+- **Ne yapıldı:** `MonthlySchedule`'a güne göre gruplama (`days`, `entries(onDay:)`, `total(onDay:)`), `YearMonth.weekdayOfFirstDay`, `HomeViewModel`'de gün seçimi ve filtre, `HomeView`'da ay ızgarası (PR #55).
+- **Kapılar:** Verify 6 koşu, 0 kırmızı. Reviewer 1. turda 0 blocker / 0 major / 2 minor / 2 nit buldu: `cell.day!` zorla açma ve yıl <= 0 için `weekdayOfFirstDay` kalanı; ikisi de düzeltildi (1 düzeltme turu).
+- **UI check FAIL kaldı:** `UI_CHECK_ONLY=home` 2 major kontrast bulgusu verdi (7 a11y sorunu: `Fri`, `Mon` ve öğesiz `screen` kayıtları). Muhtemel neden takvim satırlarının durum çubuğunun arkasına kaydırılması; doğrulanmadı. Öğesiz bulgular çerçeveyle sınıflanamıyor, bu yüzden harness takibi ayrı bir `phase-N/...` PR'ına kaldı. Sıfır yükseklikli `safeAreaInset` bulguyu gidermedi, kaldırılabilir.
+- **Harness:** PR #54 çubuğu olmayan ekranlarda `barBottom` hesabını düzeltti; bu koşu rebase ile onu aldı. Fabrika ayrımı yine korundu.
+- **Ders:** Kapı kırmızı kaldığında PR bunu açıkça yazıp ("open") merge edildi; karar insanda. Metrikler: 116 dk, 6 verify, 1 düzeltme turu.
