@@ -113,13 +113,17 @@ public final class AddInstallmentViewModel: Identifiable {
     /// The most digits ``parseAmount(_:locale:)`` accepts before the decimal separator.
     public nonisolated static let maxIntegerDigits = 12
 
+    /// The most digits ``parseAmount(_:locale:)`` accepts after the decimal separator.
+    public nonisolated static let maxFractionDigits = 6
+
     /// Parses `text` as a decimal number written with `locale`'s separators.
     ///
     /// Only ASCII digits, the locale's decimal separator (at most once) and a leading minus
     /// sign are accepted; surrounding whitespace is ignored. Returns `nil` for empty text or
     /// anything else, including grouping separators (`"1.499,90"` in Turkish), a `.` when
     /// the locale uses `,`, more than ``maxIntegerDigits`` digits before the separator
-    /// (leading zeros count) and a result that is NaN.
+    /// (leading zeros count), more than ``maxFractionDigits`` digits after it (trailing
+    /// zeros count) and a result that is NaN.
     public nonisolated static func parseAmount(_ text: String, locale: Locale) -> Decimal? {
         let decimalSeparator = locale.decimalSeparator ?? "."
         // Gruplama ayracı kabul edilmez: Türkçede "1499.90" sessizce 149990 olmasın, hata gösterilsin.
@@ -131,7 +135,9 @@ public final class AddInstallmentViewModel: Identifiable {
               parts.allSatisfy({ $0.allSatisfy { $0.isASCII && $0.isNumber } }),
               parts.contains(where: { !$0.isEmpty }),
               // Çok uzun tam kısım reddedilir; Decimal'in sınırına yaklaşmadan hata gösterilir.
-              parts[0].count <= maxIntegerDigits else {
+              parts[0].count <= maxIntegerDigits,
+              // Kesir kısmı da sınırlanır; kuruş yuvarlaması için birkaç fazla hane yeterli.
+              (parts.count < 2 || parts[1].count <= maxFractionDigits) else {
             return nil
         }
         // Locale'den bağımsız biçime çevrilip Decimal'e dönüştürülür; Double hiç kullanılmaz.

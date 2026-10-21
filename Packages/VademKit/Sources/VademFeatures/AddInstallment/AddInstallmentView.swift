@@ -48,8 +48,8 @@ public struct AddInstallmentView: View {
                         .accessibilityIdentifier("addInstallment.title")
                 }
                 field(.card) {
-                    // Menü etiketi ve gezinme bağlantısının oku denetimde "Dynamic Type desteklenmiyor"
-                    // sayılıyor; satır bizim çizdiğimiz bir düğme, seçim itilen listede yapılır.
+                    // Satır bizim çizdiğimiz bir düğme; seçim itilen listede (OptionList) yapılır.
+                    // Hazır menü ve gezinme bağlantısı oku denetimde "Dynamic Type desteklenmiyor" sayılıyordu.
                     choiceRow(title: "Card", value: cardTitle, opens: .card)
                         .accessibilityIdentifier("addInstallment.card")
                 }
@@ -138,7 +138,7 @@ public struct AddInstallmentView: View {
     // Başlık ve değer normal boyutlarda yan yana, erişilebilirlik boyutlarında alt alta durur.
     // ViewThatFits yerine AnyLayout: metinlerin kimliği boyut değişince korunur; aksi halde
     // denetim yeni oluşan metni "Dynamic Type kısmen desteklenmiyor" sayıyor.
-    private func menuRow(title: String, value: String) -> some View {
+    private func choiceLabel(title: String, value: String) -> some View {
         let stacked = dynamicTypeSize.isAccessibilitySize
         let layout = stacked
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
@@ -164,7 +164,7 @@ public struct AddInstallmentView: View {
             self.choice = choice
         } label: {
             HStack(spacing: 8) {
-                menuRow(title: title, value: value)
+                choiceLabel(title: title, value: value)
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Color.vademTextSecondary)
@@ -172,6 +172,7 @@ public struct AddInstallmentView: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityHint("Opens a list")
     }
 
     // Alan ve (varsa) altındaki hata metni aynı bölümde durur.
@@ -202,6 +203,7 @@ public struct AddInstallmentView: View {
 
 /// Seçenekleri tek sütunlu bir listede gösterir; seçilen satır işaretlenir, dokununca geri dönülür.
 /// Satırlar düz metin olduğundan Dynamic Type ile büyür ve satır sınırı olmadan sarılır.
+/// Kimlikler: liste `addInstallment.options`, satırlar `addInstallment.option.<sıra>` (0'dan başlar).
 @MainActor
 private struct OptionList<Value: Hashable>: View {
     struct Option {
@@ -217,8 +219,8 @@ private struct OptionList<Value: Hashable>: View {
 
     var body: some View {
         List {
-            ForEach(options.indices, id: \.self) { index in
-                let option = options[index]
+            // Satır kimliği değerdir (benzersiz); sıra yalnızca erişilebilirlik kimliği için kullanılır.
+            ForEach(Array(options.enumerated()), id: \.element.value) { index, option in
                 Button {
                     selection = option.value
                     dismiss()
@@ -236,11 +238,13 @@ private struct OptionList<Value: Hashable>: View {
                     .contentShape(Rectangle())
                 }
                 .accessibilityAddTraits(option.value == selection ? .isSelected : [])
+                .accessibilityIdentifier("addInstallment.option.\(index)")
                 .listRowBackground(Color.vademSurface)
             }
         }
         .scrollContentBackground(.hidden)
         .background(Color.vademBackground.ignoresSafeArea())
+        .accessibilityIdentifier("addInstallment.options")
         .navigationTitle(title)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
