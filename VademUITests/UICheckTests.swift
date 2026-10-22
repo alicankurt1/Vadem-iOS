@@ -165,7 +165,7 @@ final class UICheckTests: XCTestCase {
         try capture(
             screen: "add-subscription",
             launchArguments: ["-ui-sample-data", "-ui-add-subscription"],
-            sections: [.top, .scrolled(to: "addSubscription.renewalDay", named: "renewal")]
+            sections: [.top, .scrolled(to: "addSubscription.card", named: "card")]
         ) { app, variant in
             XCTAssertTrue(
                 app.textFields["addSubscription.title"].waitForExistence(timeout: 5),
