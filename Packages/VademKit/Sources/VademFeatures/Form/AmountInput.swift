@@ -45,6 +45,15 @@ public enum AmountInput {
         return value
     }
 
+    /// `amount` as the forms expect it typed: plain digits and `locale`'s decimal separator,
+    /// no grouping (e.g. `"1499,9"` in Turkish), so ``parse(_:locale:)`` reads it back exactly.
+    public static func text(for amount: Decimal, locale: Locale) -> String {
+        // Decimal'in açıklaması her zaman "." kullanır; yerel ayraçla değiştirilir.
+        let plain = amount.description
+        let decimalSeparator = locale.decimalSeparator ?? "."
+        return plain.replacingOccurrences(of: ".", with: decimalSeparator)
+    }
+
     /// The message for an amount that is missing: empty `text`, or text that is not a number.
     static func missingMessage(for text: String, locale: Locale) -> String {
         let isEmpty = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

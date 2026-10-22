@@ -8,69 +8,103 @@ import VademCore
 /// the form is invalid. No continuous animations, so it is idle under `-ui-static-motion`.
 /// Identifiers: `addCard.<field>` for fields (`name`, `statementDay`, `dueDay`),
 /// `addCard.<field>.error` for errors, `addCard.save`, `addCard.cancel`, `addCard.failure`.
+/// In edit mode (``AddCardViewModel/isEditing``) the title is "Edit card" and a Delete button
+/// (`addCard.delete`) asks for confirmation (`addCard.delete.confirm`, `addCard.delete.cancel`);
+/// a card still in use is not deleted and the reason shows in `addCard.failure`.
 @MainActor
 public struct AddCardView: View {
     /// The launch argument that opens Home with this form already presented (UI check).
     public nonisolated static let launchArgument = "-ui-add-card-form"
     /// The launch argument that, with ``launchArgument``, also shows every field's error.
     public nonisolated static let errorsLaunchArgument = "-ui-add-card-form-errors"
+    /// The launch argument that opens Home with the first card of the month's subtotals in this form,
+    /// in edit mode (UI check). In the sample data that card is in use, so deleting it shows the error.
+    public nonisolated static let editLaunchArgument = "-ui-edit-card"
 
     @State private var model: AddCardViewModel
     private let onSaved: (Card) -> Void
+    private let onDeleted: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
 
     /// Creates the form for `model`; `onSaved` gets the stored card after a successful save,
-    /// before the sheet closes.
-    public init(model: AddCardViewModel, onSaved: @escaping (Card) -> Void = { _ in }) {
+    /// and `onDeleted` runs after a successful delete, before the sheet closes.
+    public init(
+        model: AddCardViewModel, onSaved: @escaping (Card) -> Void = { _ in }, onDeleted: @escaping () -> Void = {}
+    ) {
         _model = State(initialValue: model)
         self.onSaved = onSaved
+        self.onDeleted = onDeleted
     }
 
     public var body: some View {
         NavigationStack {
-            Form {
-                if let message = model.failureMessage {
-                    Section {
-                        Label(message, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(Color.vademTextPrimary)
-                            .accessibilityIdentifier("addCard.failure")
+            ScrollViewReader { proxy in
+                Form {
+                    if let message = model.failureMessage {
+                        Section {
+                            Label(message, systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(Color.vademTextPrimary)
+                                .accessibilityIdentifier("addCard.failure")
+                                .id(Self.failureID)
+                        }
+                        .listRowBackground(Color.vademSurface)
                     }
-                    .listRowBackground(Color.vademSurface)
+                    // Alan adı bölüm başlığında (sarılabilen düz metin); yer tutucular AX5'te de
+                    // sığacak kadar kısa. Dikey eksen: yazılan metin kırpılmaz, sarılır.
+                    field(.name, title: "Card name") {
+                        TextField("Card name", text: nameBinding, prompt: Text("e.g. Everyday"), axis: .vertical)
+                            #if os(iOS)
+                            .textInputAutocapitalization(.words)
+                            #endif
+                            .accessibilityIdentifier("addCard.name")
+                    }
+                    field(.statementDay, title: "Statement day") {
+                        TextField("Statement day", text: $model.statementDayText, prompt: Text("1–31"), axis: .vertical)
+                            #if os(iOS)
+                            .keyboardType(.numberPad)
+                            #endif
+                            .accessibilityHint("The day of the month the statement is cut")
+                            .accessibilityIdentifier("addCard.statementDay")
+                    }
+                    field(.dueDay, title: "Due day") {
+                        TextField("Due day", text: $model.dueDayText, prompt: Text("1–31"), axis: .vertical)
+                            #if os(iOS)
+                            .keyboardType(.numberPad)
+                            #endif
+                            .accessibilityHint("The day of the month the payment is due")
+                            .accessibilityIdentifier("addCard.dueDay")
+                    }
+                    if model.isEditing {
+                        // Kullanımdaki kart silinmez; neden formun üstündeki hata satırında gösterilir.
+                        DeleteSection(
+                            title: "Delete card",
+                            confirmationTitle: "Delete this card?",
+                            confirmationMessage: "Cards used by installments or subscriptions cannot be deleted.",
+                            identifierPrefix: "addCard"
+                        ) {
+                            if model.delete() {
+                                onDeleted()
+                                dismiss()
+                            }
+                        }
+                    }
                 }
-                // Alan adı bölüm başlığında (sarılabilen düz metin); yer tutucular AX5'te de
-                // sığacak kadar kısa. Dikey eksen: yazılan metin kırpılmaz, sarılır.
-                field(.name, title: "Card name") {
-                    TextField("Card name", text: nameBinding, prompt: Text("e.g. Everyday"), axis: .vertical)
-                        #if os(iOS)
-                        .textInputAutocapitalization(.words)
-                        #endif
-                        .accessibilityIdentifier("addCard.name")
-                }
-                field(.statementDay, title: "Statement day") {
-                    TextField("Statement day", text: $model.statementDayText, prompt: Text("1–31"), axis: .vertical)
-                        #if os(iOS)
-                        .keyboardType(.numberPad)
-                        #endif
-                        .accessibilityHint("The day of the month the statement is cut")
-                        .accessibilityIdentifier("addCard.statementDay")
-                }
-                field(.dueDay, title: "Due day") {
-                    TextField("Due day", text: $model.dueDayText, prompt: Text("1–31"), axis: .vertical)
-                        #if os(iOS)
-                        .keyboardType(.numberPad)
-                        #endif
-                        .accessibilityHint("The day of the month the payment is due")
-                        .accessibilityIdentifier("addCard.dueDay")
+                .scrollContentBackground(.hidden)
+                // Silme reddedilince form en alttadır; hata satırı görünsün diye başa kaydırılır.
+                .onChange(of: model.failureMessage) { _, message in
+                    guard let message else { return }
+                    proxy.scrollTo(Self.failureID, anchor: .top)
+                    // VoiceOver kullanıcısı da hatayı duyar.
+                    AccessibilityNotification.Announcement(message).post()
                 }
             }
-            .scrollContentBackground(.hidden)
             .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
-            .navigationTitle("New card")
+            .navigationTitle(model.isEditing ? "Edit card" : "New card")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // Ekleme formu gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -96,6 +130,8 @@ public struct AddCardView: View {
             }
         }
     }
+
+    private static let failureID = "addCard.failure"
 
     // Dikey alanda Return yeni satır ekler; kart adı tek satırlık olduğundan satır sonları atılır.
     private var nameBinding: Binding<String> {

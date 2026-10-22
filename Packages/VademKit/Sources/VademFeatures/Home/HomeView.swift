@@ -4,6 +4,8 @@ import VademCore
 /// The Home screen: how much is due in the selected month, per card, and when.
 ///
 /// The app's "Vadem" title and version label sit at the top, above the month.
+/// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
+/// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
 public struct HomeView: View {
@@ -26,6 +28,9 @@ public struct HomeView: View {
     /// ``AddCardView/launchArgument`` does the same for the add-card form
     /// (errors: ``AddCardView/errorsLaunchArgument``), and ``AddSubscriptionView/launchArgument``
     /// for the add-subscription form (errors: ``AddSubscriptionView/errorsLaunchArgument``).
+    /// ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument`` and
+    /// ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
+    /// month in its edit form.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddModel: AddInstallmentViewModel?
@@ -52,6 +57,19 @@ public struct HomeView: View {
                 addSubscriptionModel.showAllErrors()
             }
             initialAddSubscriptionModel = addSubscriptionModel
+        } else if arguments.contains(AddInstallmentView.editLaunchArgument) {
+            // Ayın ilk taksiti düzenleme modunda açılır.
+            initialAddModel = model.rows.lazy
+                .filter { $0.entry.kind != .subscription }
+                .compactMap { model.makeEditInstallmentModel(id: $0.entry.itemID) }
+                .first
+        } else if arguments.contains(AddSubscriptionView.editLaunchArgument) {
+            initialAddSubscriptionModel = model.rows.lazy
+                .filter { $0.entry.kind == .subscription }
+                .compactMap { model.makeEditSubscriptionModel(id: $0.entry.itemID) }
+                .first
+        } else if arguments.contains(AddCardView.editLaunchArgument) {
+            initialAddCardModel = model.cardSubtotals.first.flatMap { model.makeEditCardModel(id: $0.id) }
         }
         #endif
         _addModel = State(initialValue: initialAddModel)
@@ -255,17 +273,27 @@ public struct HomeView: View {
     private var subtotalsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionTitle("By card", identifier: "home.cards")
-            ForEach(model.cardSubtotals) { subtotal in
-                adaptiveStack {
-                    Text(subtotal.name)
-                        .font(.body)
-                        .foregroundStyle(Color.vademTextPrimary)
-                    if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
-                    AmountText(subtotal.amount)
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(Color.vademTextPrimary)
+            ForEach(Array(model.cardSubtotals.enumerated()), id: \.element.id) { index, subtotal in
+                // Alt toplama dokunmak kartın düzenleme formunu açar.
+                Button {
+                    addCardModel = model.makeEditCardModel(id: subtotal.id)
+                } label: {
+                    adaptiveStack {
+                        Text(subtotal.name)
+                            .font(.body)
+                            .foregroundStyle(Color.vademTextPrimary)
+                        if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
+                        AmountText(subtotal.amount)
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(Color.vademTextPrimary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .contentShape(.rect)
                 }
+                .buttonStyle(.plain)
                 .accessibilityElement(children: .combine)
+                .accessibilityHint("Edits the card")
+                .accessibilityIdentifier("home.card.\(index)")
             }
         }
     }
@@ -278,16 +306,36 @@ public struct HomeView: View {
                 showAllButton
                     .padding(.bottom, 8)
             }
-            ForEach(model.rows) { row in
-                HomeRowView(row: row)
-                    .padding(.vertical, 12)
-                    .overlay(alignment: .bottom) {
-                        Rectangle()
-                            .fill(Color.vademSeparator)
-                            .frame(height: 1)
-                            .accessibilityHidden(true)
-                    }
+            ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
+                // Satıra dokunmak ödemenin formunu düzenleme modunda açar; VoiceOver etiketi aynı kalır.
+                Button {
+                    edit(row)
+                } label: {
+                    // Dikey boşluk da dokunma alanına dahil.
+                    HomeRowView(row: row)
+                        .padding(.vertical, 12)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Edits the payment")
+                .accessibilityIdentifier("home.row.\(index)")
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(Color.vademSeparator)
+                        .frame(height: 1)
+                        .accessibilityHidden(true)
+                }
             }
+        }
+    }
+
+    // Satırın kalemine göre taksit ya da abonelik formu düzenleme modunda açılır.
+    private func edit(_ row: HomeViewModel.Row) {
+        switch row.entry.kind {
+        case .installment:
+            addModel = model.makeEditInstallmentModel(id: row.entry.itemID)
+        case .subscription:
+            addSubscriptionModel = model.makeEditSubscriptionModel(id: row.entry.itemID)
         }
     }
 

@@ -83,3 +83,38 @@ struct ChoiceRow: View {
         .contentShape(Rectangle())
     }
 }
+
+/// Düzenleme formunun en altındaki silme bölümü: dokununca onay sorulur, onaylanınca `onDelete` çalışır.
+/// Kimlikler: düğme `<identifierPrefix>.delete`, onay `<identifierPrefix>.delete.confirm`,
+/// vazgeç `<identifierPrefix>.delete.cancel`.
+@MainActor
+struct DeleteSection: View {
+    let title: String
+    let confirmationTitle: String
+    let confirmationMessage: String
+    let identifierPrefix: String
+    let onDelete: () -> Void
+
+    @State private var isConfirming = false
+
+    var body: some View {
+        Section {
+            Button(role: .destructive) {
+                isConfirming = true
+            } label: {
+                Label(title, systemImage: "trash")
+            }
+            .accessibilityIdentifier("\(identifierPrefix).delete")
+            // Silme geri alınamaz; önce onay istenir.
+            .confirmationDialog(confirmationTitle, isPresented: $isConfirming, titleVisibility: .visible) {
+                Button("Delete", role: .destructive, action: onDelete)
+                    .accessibilityIdentifier("\(identifierPrefix).delete.confirm")
+                Button("Cancel", role: .cancel) {}
+                    .accessibilityIdentifier("\(identifierPrefix).delete.cancel")
+            } message: {
+                Text(confirmationMessage)
+            }
+        }
+        .listRowBackground(Color.vademSurface)
+    }
+}

@@ -7,27 +7,37 @@ import VademCore
 /// Each invalid field shows its error below it (once touched); Save stays disabled while
 /// the form is invalid. No continuous animations, so it is idle under `-ui-static-motion`.
 /// Identifiers: `addInstallment.<field>` for fields and `addInstallment.<field>.error` for errors.
+/// In edit mode (``AddInstallmentViewModel/isEditing``) the title is "Edit installment" and a
+/// Delete button (`addInstallment.delete`) asks for confirmation (`addInstallment.delete.confirm`,
+/// `addInstallment.delete.cancel`) before deleting.
 @MainActor
 public struct AddInstallmentView: View {
     /// The launch argument that opens Home with this form already presented (UI check).
     public nonisolated static let launchArgument = "-ui-add-form"
     /// The launch argument that, with ``launchArgument``, also shows every field's error.
     public nonisolated static let errorsLaunchArgument = "-ui-add-form-errors"
+    /// The launch argument that opens Home with the first installment of the month in this form, in edit mode (UI check).
+    public nonisolated static let editLaunchArgument = "-ui-edit-installment"
 
     @State private var model: AddInstallmentViewModel
     @State private var choice: Choice?
     // Kart listesinden açılan kart formunun modeli; nil iken sayfa kapalı.
     @State private var addCardModel: AddCardViewModel?
     private let onSaved: () -> Void
+    private let onDeleted: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
 
-    /// Creates the form for `model`; `onSaved` runs after a successful save, before the sheet closes.
-    public init(model: AddInstallmentViewModel, onSaved: @escaping () -> Void = {}) {
+    /// Creates the form for `model`; `onSaved` runs after a successful save and `onDeleted`
+    /// after a successful delete, before the sheet closes.
+    public init(
+        model: AddInstallmentViewModel, onSaved: @escaping () -> Void = {}, onDeleted: @escaping () -> Void = {}
+    ) {
         _model = State(initialValue: model)
         self.onSaved = onSaved
+        self.onDeleted = onDeleted
     }
 
     public var body: some View {
@@ -74,6 +84,19 @@ public struct AddInstallmentView: View {
                     ChoiceRow(title: "First due month", value: model.title(of: model.firstMonth)) { choice = .firstMonth }
                         .accessibilityIdentifier("addInstallment.firstMonth")
                 }
+                if model.isEditing {
+                    DeleteSection(
+                        title: "Delete installment",
+                        confirmationTitle: "Delete this installment?",
+                        confirmationMessage: "All of its payments are removed. This cannot be undone.",
+                        identifierPrefix: Self.identifierPrefix
+                    ) {
+                        if model.delete() {
+                            onDeleted()
+                            dismiss()
+                        }
+                    }
+                }
             }
             .scrollContentBackground(.hidden)
             .background(Color.vademBackground.ignoresSafeArea())
@@ -95,7 +118,7 @@ public struct AddInstallmentView: View {
                     )
                 }
             }
-            .navigationTitle("New installment")
+            .navigationTitle(model.isEditing ? "Edit installment" : "New installment")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // Galeri gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
