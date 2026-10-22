@@ -354,7 +354,7 @@ final class UICheckTests: XCTestCase {
             XCTAssertTrue(delete.exists, "[ui-check] edit-installment-confirm__\(variant.name): delete button not found")
             delete.tap()
             XCTAssertTrue(
-                app.buttons["addInstallment.delete.confirm"].waitForExistence(timeout: 5),
+                app.buttons["addInstallment.delete.confirm"].firstMatch.waitForExistence(timeout: 5),
                 "[ui-check] edit-installment-confirm__\(variant.name): confirmation not shown"
             )
         }
@@ -391,7 +391,7 @@ final class UICheckTests: XCTestCase {
             XCTAssertTrue(delete.exists, "[ui-check] edit-subscription-confirm__\(variant.name): delete button not found")
             delete.tap()
             XCTAssertTrue(
-                app.buttons["addSubscription.delete.confirm"].waitForExistence(timeout: 5),
+                app.buttons["addSubscription.delete.confirm"].firstMatch.waitForExistence(timeout: 5),
                 "[ui-check] edit-subscription-confirm__\(variant.name): confirmation not shown"
             )
         }
@@ -428,7 +428,7 @@ final class UICheckTests: XCTestCase {
             XCTAssertTrue(delete.exists, "[ui-check] edit-card-confirm__\(variant.name): delete button not found")
             delete.tap()
             XCTAssertTrue(
-                app.buttons["addCard.delete.confirm"].waitForExistence(timeout: 5),
+                app.buttons["addCard.delete.confirm"].firstMatch.waitForExistence(timeout: 5),
                 "[ui-check] edit-card-confirm__\(variant.name): confirmation not shown"
             )
         }
@@ -445,7 +445,7 @@ final class UICheckTests: XCTestCase {
             let delete = revealDelete(prefix: "addCard", in: app)
             XCTAssertTrue(delete.exists, "[ui-check] edit-card-in-use__\(variant.name): delete button not found")
             delete.tap()
-            let confirm = app.buttons["addCard.delete.confirm"]
+            let confirm = app.buttons["addCard.delete.confirm"].firstMatch
             XCTAssertTrue(
                 confirm.waitForExistence(timeout: 5),
                 "[ui-check] edit-card-in-use__\(variant.name): confirmation not shown"

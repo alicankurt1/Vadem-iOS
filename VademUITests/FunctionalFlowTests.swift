@@ -155,13 +155,13 @@ final class FunctionalFlowTests: XCTestCase {
         delete.tap()
 
         // Önce onay istenir; vazgeçince form açık kalır.
-        let cancel = app.buttons["addInstallment.delete.cancel"]
+        let cancel = app.buttons["addInstallment.delete.cancel"].firstMatch
         XCTAssertTrue(cancel.waitForExistence(timeout: 5), "confirmation not shown")
         cancel.tap()
         XCTAssertTrue(app.textFields["addInstallment.title"].exists, "form must stay open after cancelling")
 
         revealDelete(prefix: "addInstallment", in: app).tap()
-        let confirm = app.buttons["addInstallment.delete.confirm"]
+        let confirm = app.buttons["addInstallment.delete.confirm"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "confirmation not shown")
         confirm.tap()
 
@@ -182,7 +182,7 @@ final class FunctionalFlowTests: XCTestCase {
         let delete = revealDelete(prefix: "addCard", in: app)
         XCTAssertTrue(delete.exists, "delete button not found")
         delete.tap()
-        let confirm = app.buttons["addCard.delete.confirm"]
+        let confirm = app.buttons["addCard.delete.confirm"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "confirmation not shown")
         confirm.tap()
 
