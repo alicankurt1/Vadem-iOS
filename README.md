@@ -109,7 +109,7 @@ Write issues with the [task template](.github/ISSUE_TEMPLATE/task.md). Its accep
 ## The app
 
 - SwiftUI, Observation, MVVM. Swift 6 with strict concurrency, iOS 18+, newer APIs behind `@available`.
-- Local Swift package [`Packages/VademKit`](Packages/VademKit). `VademCore` is the pure domain, tested with `swift test`, and has no UI imports. `VademPersistence` is the only module that imports SwiftData (versioned schema, App Group store). `VademFeatures` holds the screens and the design system (theme "Ink and Vade": color tokens for light and dark, mesh card faces, Turkish lira amounts).
+- Local Swift package [`Packages/VademKit`](Packages/VademKit). `VademCore` is the pure domain, tested with `swift test`, and has no UI imports. `VademPersistence` is the only module that imports SwiftData (versioned schema, App Group store). `VademFeatures` holds the screens and the design system (theme "Ink and Vade": teal color tokens for light and dark, mesh card faces, Turkish lira amounts).
 - Money is `Decimal`, never `Double`. Installment rounding is decided in ADR-0001 ([#15](https://github.com/alicankurt1/Vadem-iOS/issues/15)).
 - Swift Testing for unit tests, XCUITest for UI capture. No third-party dependencies.
 - Roadmap: [PLAN.md](PLAN.md) · Changes: [CHANGELOG.md](CHANGELOG.md).
