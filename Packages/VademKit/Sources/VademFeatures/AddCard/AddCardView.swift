@@ -47,10 +47,20 @@ public struct AddCardView: View {
                 Form {
                     if let message = model.failureMessage {
                         Section {
-                            Label(message, systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(Color.vademTextPrimary)
-                                .accessibilityIdentifier("addCard.failure")
-                                .id(Self.failureID)
+                            // Label yerine düz metin + gizli simge: Label'ın sabit simge sütunu uzun
+                            // mesajı denetimde "kırpılmış" gösteriyordu; düz metin satırları sarılarak büyür.
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .accessibilityHidden(true)
+                                Text(message)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .font(.body)
+                            .foregroundStyle(Color.vademTextPrimary)
+                            .multilineTextAlignment(.leading)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityIdentifier("addCard.failure")
+                            .id(Self.failureID)
                         }
                         .listRowBackground(Color.vademSurface)
                     }

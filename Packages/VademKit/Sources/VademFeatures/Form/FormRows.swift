@@ -85,7 +85,7 @@ struct ChoiceRow: View {
 }
 
 /// Düzenleme formunun en altındaki silme bölümü: dokununca `isConfirming` açılır.
-/// Onay, formun kendisine ``SwiftUI/View/deleteConfirmation(isPresented:title:message:identifierPrefix:onDelete:)``
+/// Onay uyarısı formun kendisine ``SwiftUI/View/deleteConfirmation(isPresented:title:message:identifierPrefix:onDelete:)``
 /// ile bağlanır. Kimlik: düğme `<identifierPrefix>.delete`.
 @MainActor
 struct DeleteSection: View {
@@ -96,20 +96,24 @@ struct DeleteSection: View {
     var body: some View {
         Section {
             // Label yerine düz metin + gizli simge: Label'ın sabit simge sütunu denetimde metni
-            // "kırpılmış" gösteriyordu; düz metin Dynamic Type ile sarılır, satır yüksekliği serbest.
-            Button(role: .destructive) {
+            // "kırpılmış" gösteriyordu. ChoiceRow gibi düz stil ve açık renk: Form'un hazır yıkıcı
+            // düğme stili denetimde "Dynamic Type kısmen desteklenmiyor" sayılıyordu.
+            Button {
                 isConfirming = true
             } label: {
                 HStack(spacing: 8) {
                     Text(title)
+                        .font(.body)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
                     Image(systemName: "trash")
+                        .font(.body)
                         .accessibilityHidden(true)
                 }
+                .foregroundStyle(Color.red)
                 .multilineTextAlignment(.leading)
                 .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .accessibilityIdentifier("\(identifierPrefix).delete")
         }
         .listRowBackground(Color.vademSurface)
@@ -126,10 +130,9 @@ extension View {
         identifierPrefix: String,
         onDelete: @escaping () -> Void
     ) -> some View {
-        // Onay düğmeye değil tüm forma bağlanır: iOS 26'da diyalog bağlandığı görünümden açılır;
-        // küçük bir düğmeye bağlıyken dar bir açılır pencere (popover) oluyor, Vazgeç düğmesi
-        // gizleniyor ve düğme kimliği iki kez görünüyordu. Forma bağlıyken alttan açılan sayfa olur.
-        confirmationDialog(title, isPresented: isPresented, titleVisibility: .visible) {
+        // Onay, ortada açılan standart uyarı (alert): confirmationDialog iOS 26'da forma bağlıyken de
+        // dar bir açılır pencere (popover) oluyor, Vazgeç düğmesini gizliyor ve kimliği iki kez veriyordu.
+        alert(title, isPresented: isPresented) {
             Button("Delete", role: .destructive, action: onDelete)
                 .accessibilityIdentifier("\(identifierPrefix).delete.confirm")
             Button("Cancel", role: .cancel) {}
