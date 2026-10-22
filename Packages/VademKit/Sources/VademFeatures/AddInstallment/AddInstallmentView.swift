@@ -20,6 +20,8 @@ public struct AddInstallmentView: View {
     public nonisolated static let editLaunchArgument = "-ui-edit-installment"
 
     @State private var model: AddInstallmentViewModel
+    // Silme onayı açık mı.
+    @State private var isConfirmingDelete = false
     @State private var choice: Choice?
     // Kart listesinden açılan kart formunun modeli; nil iken sayfa kapalı.
     @State private var addCardModel: AddCardViewModel?
@@ -86,19 +88,23 @@ public struct AddInstallmentView: View {
                 }
                 if model.isEditing {
                     DeleteSection(
-                        title: "Delete installment",
-                        confirmationTitle: "Delete this installment?",
-                        confirmationMessage: "All of its payments are removed. This cannot be undone.",
-                        identifierPrefix: Self.identifierPrefix
-                    ) {
-                        if model.delete() {
-                            onDeleted()
-                            dismiss()
-                        }
-                    }
+                        title: "Delete installment", identifierPrefix: Self.identifierPrefix,
+                        isConfirming: $isConfirmingDelete
+                    )
                 }
             }
             .scrollContentBackground(.hidden)
+            .deleteConfirmation(
+                isPresented: $isConfirmingDelete,
+                title: "Delete this installment?",
+                message: "All of its payments are removed. This cannot be undone.",
+                identifierPrefix: Self.identifierPrefix
+            ) {
+                if model.delete() {
+                    onDeleted()
+                    dismiss()
+                }
+            }
             .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)

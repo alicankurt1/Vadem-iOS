@@ -22,6 +22,8 @@ public struct AddCardView: View {
     public nonisolated static let editLaunchArgument = "-ui-edit-card"
 
     @State private var model: AddCardViewModel
+    // Silme onayı açık mı.
+    @State private var isConfirmingDelete = false
     private let onSaved: (Card) -> Void
     private let onDeleted: () -> Void
 
@@ -79,20 +81,21 @@ public struct AddCardView: View {
                     }
                     if model.isEditing {
                         // Kullanımdaki kart silinmez; neden formun üstündeki hata satırında gösterilir.
-                        DeleteSection(
-                            title: "Delete card",
-                            confirmationTitle: "Delete this card?",
-                            confirmationMessage: "Cards used by installments or subscriptions cannot be deleted.",
-                            identifierPrefix: "addCard"
-                        ) {
-                            if model.delete() {
-                                onDeleted()
-                                dismiss()
-                            }
-                        }
+                        DeleteSection(title: "Delete card", identifierPrefix: "addCard", isConfirming: $isConfirmingDelete)
                     }
                 }
                 .scrollContentBackground(.hidden)
+                .deleteConfirmation(
+                    isPresented: $isConfirmingDelete,
+                    title: "Delete this card?",
+                    message: "Cards used by installments or subscriptions cannot be deleted.",
+                    identifierPrefix: "addCard"
+                ) {
+                    if model.delete() {
+                        onDeleted()
+                        dismiss()
+                    }
+                }
                 // Silme reddedilince form en alttadır; hata satırı görünsün diye başa kaydırılır.
                 .onChange(of: model.failureMessage) { _, message in
                     guard let message else { return }

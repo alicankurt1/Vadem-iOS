@@ -84,37 +84,58 @@ struct ChoiceRow: View {
     }
 }
 
-/// Düzenleme formunun en altındaki silme bölümü: dokununca onay sorulur, onaylanınca `onDelete` çalışır.
-/// Kimlikler: düğme `<identifierPrefix>.delete`, onay `<identifierPrefix>.delete.confirm`,
-/// vazgeç `<identifierPrefix>.delete.cancel`.
+/// Düzenleme formunun en altındaki silme bölümü: dokununca `isConfirming` açılır.
+/// Onay, formun kendisine ``SwiftUI/View/deleteConfirmation(isPresented:title:message:identifierPrefix:onDelete:)``
+/// ile bağlanır. Kimlik: düğme `<identifierPrefix>.delete`.
 @MainActor
 struct DeleteSection: View {
     let title: String
-    let confirmationTitle: String
-    let confirmationMessage: String
     let identifierPrefix: String
-    let onDelete: () -> Void
-
-    @State private var isConfirming = false
+    @Binding var isConfirming: Bool
 
     var body: some View {
         Section {
+            // Label yerine düz metin + gizli simge: Label'ın sabit simge sütunu denetimde metni
+            // "kırpılmış" gösteriyordu; düz metin Dynamic Type ile sarılır, satır yüksekliği serbest.
             Button(role: .destructive) {
                 isConfirming = true
             } label: {
-                Label(title, systemImage: "trash")
+                HStack(spacing: 8) {
+                    Text(title)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Image(systemName: "trash")
+                        .accessibilityHidden(true)
+                }
+                .multilineTextAlignment(.leading)
+                .contentShape(Rectangle())
             }
             .accessibilityIdentifier("\(identifierPrefix).delete")
-            // Silme geri alınamaz; önce onay istenir.
-            .confirmationDialog(confirmationTitle, isPresented: $isConfirming, titleVisibility: .visible) {
-                Button("Delete", role: .destructive, action: onDelete)
-                    .accessibilityIdentifier("\(identifierPrefix).delete.confirm")
-                Button("Cancel", role: .cancel) {}
-                    .accessibilityIdentifier("\(identifierPrefix).delete.cancel")
-            } message: {
-                Text(confirmationMessage)
-            }
         }
         .listRowBackground(Color.vademSurface)
+    }
+}
+
+extension View {
+    /// Silme onayını bu görünüme bağlar. Kimlikler: onay `<identifierPrefix>.delete.confirm`,
+    /// vazgeç `<identifierPrefix>.delete.cancel`.
+    func deleteConfirmation(
+        isPresented: Binding<Bool>,
+        title: String,
+        message: String,
+        identifierPrefix: String,
+        onDelete: @escaping () -> Void
+    ) -> some View {
+        // Onay düğmeye değil tüm forma bağlanır: iOS 26'da diyalog bağlandığı görünümden açılır;
+        // küçük bir düğmeye bağlıyken dar bir açılır pencere (popover) oluyor, Vazgeç düğmesi
+        // gizleniyor ve düğme kimliği iki kez görünüyordu. Forma bağlıyken alttan açılan sayfa olur.
+        confirmationDialog(title, isPresented: isPresented, titleVisibility: .visible) {
+            Button("Delete", role: .destructive, action: onDelete)
+                .accessibilityIdentifier("\(identifierPrefix).delete.confirm")
+            Button("Cancel", role: .cancel) {}
+                .accessibilityIdentifier("\(identifierPrefix).delete.cancel")
+        } message: {
+            Text(message)
+        }
     }
 }

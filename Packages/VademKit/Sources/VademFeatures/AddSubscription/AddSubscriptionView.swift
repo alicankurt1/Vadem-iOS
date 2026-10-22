@@ -23,6 +23,8 @@ public struct AddSubscriptionView: View {
     public nonisolated static let editLaunchArgument = "-ui-edit-subscription"
 
     @State private var model: AddSubscriptionViewModel
+    // Silme onayı açık mı.
+    @State private var isConfirmingDelete = false
     @State private var choice: Choice?
     private let onSaved: () -> Void
     private let onDeleted: () -> Void
@@ -95,19 +97,23 @@ public struct AddSubscriptionView: View {
                 }
                 if model.isEditing {
                     DeleteSection(
-                        title: "Delete subscription",
-                        confirmationTitle: "Delete this subscription?",
-                        confirmationMessage: "All of its charges are removed. This cannot be undone.",
-                        identifierPrefix: Self.identifierPrefix
-                    ) {
-                        if model.delete() {
-                            onDeleted()
-                            dismiss()
-                        }
-                    }
+                        title: "Delete subscription", identifierPrefix: Self.identifierPrefix,
+                        isConfirming: $isConfirmingDelete
+                    )
                 }
             }
             .scrollContentBackground(.hidden)
+            .deleteConfirmation(
+                isPresented: $isConfirmingDelete,
+                title: "Delete this subscription?",
+                message: "All of its charges are removed. This cannot be undone.",
+                identifierPrefix: Self.identifierPrefix
+            ) {
+                if model.delete() {
+                    onDeleted()
+                    dismiss()
+                }
+            }
             .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
