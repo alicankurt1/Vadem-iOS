@@ -23,6 +23,19 @@ public struct HeroPanel<Actions: View>: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            summary
+            actionStack
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vademHero, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    // Başlık, toplam, çubuk ve açıklama VoiceOver'da tek öğe; tutarlar "₺" yerine okunabilir.
+    // Uzun okunan etiket kısa açıklama metninin üstünde olsaydı denetim onu metnin çerçevesiyle
+    // ölçüp "kırpılmış" sayıyordu; 8 pt'lik çubuğun üstünde ise "dokunma alanı küçük" sayıyordu.
+    private var summary: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Color.vademHeroText)
@@ -33,16 +46,12 @@ public struct HeroPanel<Actions: View>: View {
             Text(Self.caption(paid: paid, total: total))
                 .font(.footnote)
                 .foregroundStyle(Color.vademHeroSecondary)
-                // VoiceOver "₺" yerine okunabilir tutarları duyar.
-                .accessibilityLabel(Self.spokenCaption(paid: paid, total: total))
-            actionStack
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.vademHero, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Self.accessibilitySummary(title: title, paid: paid, total: total))
     }
 
-    // Çubuk yalnızca görsel; aynı bilgiyi altındaki açıklama metni okutur.
+    // Çubuk yalnızca görsel; bilgisi özet etiketinde.
     private var progressBar: some View {
         let value = Self.progress(paid: paid, total: total)
         return GeometryReader { proxy in
@@ -57,7 +66,6 @@ public struct HeroPanel<Actions: View>: View {
         .frame(height: 8)
         // Reduce Motion veya -ui-static-motion açıkken çubuk animasyonsuz değişir.
         .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: value)
-        .accessibilityHidden(true)
     }
 
     // Düğmeler normalde yan yana, erişilebilirlik boyutlarında alt alta durur.
@@ -90,6 +98,11 @@ public struct HeroPanel<Actions: View>: View {
     // Okunan açıklama: "Paid 1.200,00 Türk lirası of 4.825,50 Türk lirası".
     nonisolated static func spokenCaption(paid: Money, total: Money) -> String {
         "Paid " + AmountText.spokenLabel(paid) + " of " + AmountText.spokenLabel(total)
+    }
+
+    // Panelin okunan özeti: "This month, 4.825,50 Türk lirası, Paid 1.200,00 Türk lirası of 4.825,50 Türk lirası".
+    nonisolated static func accessibilitySummary(title: String, paid: Money, total: Money) -> String {
+        [title, AmountText.spokenLabel(total), spokenCaption(paid: paid, total: total)].joined(separator: ", ")
     }
 }
 
