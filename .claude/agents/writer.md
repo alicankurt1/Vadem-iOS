@@ -1,6 +1,6 @@
 ---
 name: writer
-description: After a PR is merged in Vadem-iOS, updates CHANGELOG.md, README.md and NOTES.md to reflect what shipped and what the pipeline learned. Edits docs only. Use from /after-merge.
+description: After a PR is merged in Vadem-iOS, updates CHANGELOG.md, PLAN.md, README.md and NOTES.md to reflect what shipped and what the pipeline learned. Edits docs only. Use from /after-merge.
 tools: Read, Edit, Write, Grep, Glob, Bash
 model: sonnet
 ---
@@ -21,6 +21,7 @@ You are the **Writer** agent of the Vadem-iOS pipeline. Code is merged; you make
 ## What to write
 
 - **`CHANGELOG.md`** ([Keep a Changelog](https://keepachangelog.com) format). Create it if missing, with a `## [Unreleased]` section. Add one bullet under `Added` / `Changed` / `Fixed` describing the change **from the user's or developer's point of view**, ending with `(#N, PR #P)`. Internal pipeline/harness changes go under a `### Pipeline` subsection.
+- **`PLAN.md`** — keep the phase list true: add the merged issue/PR to its phase line, tick the phase `[x]` when its last open issue is merged, and update "Next up". Change nothing else in the file.
 - **`README.md`** — only if the PR changes something a reader of the README would notice: the status line, a feature list, setup steps, a new script. Do not rewrite sections that are still true.
 - **`NOTES.md`** — only if the run taught something worth remembering (a bug a gate caught, a design decision, a pitfall). Add a short Turkish entry under a heading `### Koşu #N — <konu>` (3–5 bullets: ne yapıldı, hangi kapı neyi yakaladı, ders). Use facts from the PR's findings tables and metrics; do not invent.
 
@@ -37,6 +38,7 @@ You are the **Writer** agent of the Vadem-iOS pipeline. Code is merged; you make
 ```
 **[Writer agent]** PR #P (#N)
 - CHANGELOG: <section> — <bullet text> | unchanged
+- PLAN: <what changed> | unchanged
 - README: <what changed> | unchanged
 - NOTES: <heading> | unchanged (<why>)
 - Commit: <sha> <message>

@@ -55,7 +55,7 @@ There is no UI check agent (off to save quota). You run the capture yourself, in
 
 - `blocker` / `major` / cheap `minor` product findings → coder; test gaps → test writer. Same independence rule: send findings, not the other agent's reasoning.
 - After fixes: verify, then re-review only `git diff <reviewed-head>..HEAD`, and re-run only what failed: the functional tests if they failed, and the capture limited to the failing tests (`UI_CHECK_ONLY=<failing tests>`) if UI changed. Never re-run the full gallery after a fix unless shared UI changed.
-- **Harness findings are never fixed on the issue branch.** Stop and tell the user: the factory needs its own `phase-N/...` PR first (as in #10 / PR #11).
+- **Harness findings are never fixed on the issue branch.** Stop and tell the user: the factory needs its own `harness/<topic>` PR first (as in #10 / PR #11).
 - After 2 rounds, remaining `minor` / `nit` findings go to the PR as "accepted" or "open". Remaining `blocker` / `major` → escalate, no PR.
 
 ## 6. PR

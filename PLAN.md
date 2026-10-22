@@ -25,6 +25,15 @@ Principles:
 - Every agent instruction is versioned in the repo (`.claude/agents/`, `CLAUDE.md`, skills).
 - Each run's duration and caught issues are recorded (`metrics/`), starting from Phase 2.
 
+## How we work (read this first)
+
+- **One source of truth for "where are we":** this file. The current phase is the first one below that is not `[x]`. After a PR merges, `/after-merge` (writer) ticks items here.
+- **Feature work** = a GitHub issue → `/ship #N` → branch `issue/N-<slug>` → PR. The issue belongs to a phase listed below.
+- **Harness work** (scripts, agents, skills, UI-check plumbing) = branch `harness/<topic>`, commit `Harness: <summary>`. It has no phase number.
+- **Docs after merge** = `docs/pr-P` (writer agent).
+- One issue per chat; a new chat starts by reading this file and `gh issue list`.
+- History note: until PR #71, harness PRs were named `phase-N/...` with whatever feature phase was current (e.g. `phase-10/ui-check-*`, `phase-12/ui-check-targeted`). Those numbers are historical labels, not phases of this plan.
+
 ## Phases
 
 ### Pipeline (local)
@@ -32,18 +41,24 @@ Principles:
 - [x] **Phase 1 — Verify script**: `scripts/verify.sh` (build + unit tests) and a `/verify` skill.
 - [x] **Phase 2 — Coder + test writer subagents**: end-to-end trial on a small issue.
 - [x] **Phase 3 — Review subagent**: findings format (severity, file:line), fix loop.
-- [x] **Phase 4 — UI check subagent**: deterministic screenshot capture + agent evaluation.
+- [x] **Phase 4 — UI check subagent**: deterministic screenshot capture + agent evaluation (later made lean: no agent, `scripts/ui-check.sh`).
 - [x] **Phase 5 — Orchestrator**: `/ship #N` skill, PR creation, writer subagent.
-- [ ] **Phase 6 — Showcase**: first feature through the pipeline, screen recording, README diagram + metrics.
+- [ ] **Phase 6 — Showcase**: README diagram + metrics report are merged (PR #18); the screen recording is still missing.
 - [ ] **Phase 7 — Cloud (optional)**: GitHub Actions CI + automatic PR review agent.
 
 ### Features
-- [ ] **Phase 8 — Domain (TDD)**: `Money`, `Installment`, `Subscription`, schedule calculations, table tests. Starts with an ADR on rounding, statement/due days, month-end rules. v1: TRY only.
-- [ ] **Phase 9 — Persistence**: SwiftData with `VersionedSchema` and App Group container from day one.
-- [ ] **Phase 10 — Home**: this month's payments, calendar, upcoming months.
-- [ ] **Phase 11 — Forms**: add/edit with validation.
-- [ ] **Phase 12 — Notifications**: rolling window (iOS 64 pending limit).
+- [x] **Phase 8 — Domain (TDD)**: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, tracked items, `MonthlySchedule` (#4, #7, #15, #19, #23, #26, #42).
+- [x] **Phase 9 — Persistence**: SwiftData with `VersionedSchema` and App Group container (#30, PRs #22, #29).
+- [x] **Phase 10 — Home**: design system, this month's payments, upcoming months, calendar (#33, #36, #45, #50, #53).
+- [ ] **Phase 11 — Forms**: add installment (#62), add card (#65), add subscription (#66) are done; **edit and delete (#67) is open** and closes this phase.
+- [ ] **Phase 12 — Notifications**: rolling window (iOS 64 pending limit). Not started; needs issues.
 - [ ] **Phase 13 — Widget + App Intents (Siri)**.
 - [ ] **Phase 14 — Swift Charts analytics**.
 - [ ] **Phase 15 — On-device AI assistant**: Foundation Models, read-only tool calling, data/instruction separation, tests.
 - [ ] **Phase 16 — Polish & release**: TR/EN, accessibility, icon, privacy manifest + policy, screenshots, App Store submission.
+
+## Next up
+
+1. `/ship #67` (edit/delete): closes Phase 11. Extend `FunctionalFlowTests` as part of it (edit and delete flows).
+2. Loose ends, small: a subscription flow in `FunctionalFlowTests` (#70 is merged now); the Phase 6 screen recording.
+3. Phase 12: write the first issues (schedule notifications, permission flow, rolling window), then `/ship` them.
