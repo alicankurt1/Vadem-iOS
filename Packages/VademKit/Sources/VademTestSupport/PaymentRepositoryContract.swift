@@ -336,6 +336,67 @@ public enum PaymentRepositoryContract {
         #expect(try repo.subscriptions() == [item])
     }
 
+    public static func draftSubscriptionIsStoredAndReadBack(_ repo: any PaymentRepository) throws {
+        // Formdan gelen (kırpılmış başlık, kuruşa yuvarlanmış tutar) abonelik aynen geri okunur.
+        let card = try Fixture.card()
+        try repo.save(card)
+        let draft = SubscriptionDraft(
+            title: "  Bulut  ", cardID: card.id, amount: Decimal(string: "149.90")!,
+            period: .yearly, renewalDay: 31, firstMonth: try Fixture.month(2026, 11)
+        )
+        let item = try #require(draft.makeItem(id: Fixture.id(1)))
+        try repo.save(item)
+        let stored = try #require(try repo.subscriptions().first)
+        #expect(try repo.subscriptions().count == 1)
+        #expect(stored == item)
+        #expect(stored.title == "Bulut")
+        #expect(stored.cardID == card.id)
+        #expect(stored.subscription.amount == Money(Decimal(string: "149.90")!))
+        #expect(stored.subscription.period == .yearly)
+        #expect(stored.subscription.renewalDay == 31)
+        #expect(stored.subscription.firstMonth == (try Fixture.month(2026, 11)))
+    }
+
+    public static func draftSubscriptionWithoutCardIsStored(_ repo: any PaymentRepository) throws {
+        let draft = SubscriptionDraft(
+            title: "Müzik", cardID: nil, amount: 50, period: .monthly, renewalDay: 1, firstMonth: try Fixture.month(2026, 1)
+        )
+        let item = try #require(draft.makeItem())
+        try repo.save(item)
+        #expect(try repo.subscriptions() == [item])
+        #expect(try repo.cards().isEmpty)
+    }
+
+    public static func newSubscriptionChargesInItsMonths(_ repo: any PaymentRepository) throws {
+        let before = try repo.subscriptions()
+        let monthly = try Fixture.subscriptionItem(
+            "Aylık", card: nil,
+            subscription: try #require(Subscription(
+                amount: Money(100), period: .monthly, renewalDay: 5, firstMonth: Fixture.month(2026, 12)
+            ))
+        )
+        let yearly = try Fixture.subscriptionItem(
+            "Yıllık", card: nil,
+            subscription: try #require(Subscription(
+                amount: Money(1200), period: .yearly, renewalDay: 31, firstMonth: Fixture.month(2026, 12)
+            ))
+        )
+        try repo.save(monthly)
+        try repo.save(yearly)
+        let stored = try repo.subscriptions()
+        let m = try #require(stored.first { $0.id == monthly.id })
+        let y = try #require(stored.first { $0.id == yearly.id })
+        #expect(before.isEmpty)
+        #expect(stored.count == 2)
+        #expect(m.subscription.amount(in: try Fixture.month(2026, 11)) == .zero)
+        #expect(m.subscription.amount(in: try Fixture.month(2026, 12)) == Money(100))
+        #expect(m.subscription.amount(in: try Fixture.month(2027, 6)) == Money(100))
+        #expect(y.subscription.amount(in: try Fixture.month(2027, 1)) == .zero)
+        #expect(y.subscription.amount(in: try Fixture.month(2027, 12)) == Money(1200))
+        // 31. gün kısa ayda ayın son gününe kayar; aynı ay numarasında yıllık yenileme.
+        #expect(y.subscription.chargeDay(in: try Fixture.month(2027, 12)) == 31)
+    }
+
     public static func valuesComeBackExactlyAsSaved(_ repo: any PaymentRepository) throws {
         let card = try #require(Card(id: Fixture.id(1), name: "Bonus Platinum", statementDay: 31, dueDay: 10))
         let installment = try Fixture.installment(
@@ -397,6 +458,9 @@ public enum PaymentRepositoryContract {
         Scenario(name: "Deleting an unknown subscription id is a no-op", run: deletingUnknownSubscriptionIsNoOp),
         Scenario(name: "An installment made from a draft is stored and read back", run: draftItemIsStoredAndReadBack),
         Scenario(name: "A new installment is charged in its months only", run: newInstallmentAppearsInItsMonths),
+        Scenario(name: "A subscription made from a draft is stored and read back", run: draftSubscriptionIsStoredAndReadBack),
+        Scenario(name: "A subscription made from a draft without a card is stored", run: draftSubscriptionWithoutCardIsStored),
+        Scenario(name: "A new subscription is charged in its months only", run: newSubscriptionChargesInItsMonths),
         Scenario(name: "Values come back exactly as saved", run: valuesComeBackExactlyAsSaved),
     ]
 }

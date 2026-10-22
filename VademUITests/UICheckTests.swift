@@ -160,6 +160,109 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testAddSubscriptionForm() throws {
+        // Boş abonelik formu (#66): Kaydet kapalı olmalı.
+        try capture(
+            screen: "add-subscription",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription"],
+            sections: [.top, .scrolled(to: "addSubscription.firstMonth", named: "first-month")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addSubscription.title"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription__\(variant.name): title field not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addSubscription.save"].isEnabled,
+                "[ui-check] add-subscription__\(variant.name): save must be disabled while the form is empty"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionCardList() throws {
+        // Kart seçim listesi (itme ekranı).
+        try capture(
+            screen: "add-subscription-card-list",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addSubscription.card"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-card-list__\(variant.name): card row not found"
+            )
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addSubscription.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-card-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionPeriodList() throws {
+        // Yenileme sıklığı seçim listesi (itme ekranı).
+        try capture(
+            screen: "add-subscription-period-list",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addSubscription.period"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-period-list__\(variant.name): period row not found"
+            )
+            if !row.isHittable { app.swipeUp() }
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addSubscription.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-period-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionMonthList() throws {
+        // İlk ödeme ayı seçim listesi (itme ekranı).
+        try capture(
+            screen: "add-subscription-month-list",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addSubscription.firstMonth"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-month-list__\(variant.name): first month row not found"
+            )
+            if !row.isHittable { app.swipeUp() }
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addSubscription.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-month-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionFormErrors() throws {
+        // Tüm hataları gösteren form: başlık ve tutar hatası görünmeli, Kaydet kapalı kalmalı.
+        try capture(
+            screen: "add-subscription-errors",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription", "-ui-add-subscription-errors"],
+            sections: [.top, .scrolled(to: "addSubscription.amount", named: "amount")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["addSubscription.title.error"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-errors__\(variant.name): title error not found"
+            )
+            XCTAssertFalse(
+                app.buttons["addSubscription.save"].isEnabled,
+                "[ui-check] add-subscription-errors__\(variant.name): save must be disabled"
+            )
+        }
+    }
+
+    @MainActor
     func testAddCardForm() throws {
         // Boş kart formu (#65): örnek veriyle açılır, Kaydet kapalı olmalı.
         try capture(
