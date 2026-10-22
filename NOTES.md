@@ -287,3 +287,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **UI capture yakaladı:** Tam galeri testi (`testGalleryScreen`) 3 dk'lık test süresini aştı (3 koşuda tekrarlandı). Neden özellik dalında değil, harness PR #78'de testi bölerek çözüldü; PR #79 bu yüzden #78'e bağlıydı.
 - **Metrikler:** 52 dk, 2 verify (0 kırmızı), 0 düzeltme turu; reviewer yalnızca 1 nit.
 - **Ders:** Harness sınırı (süre) yeni içerikle aşılabilir; sorunu kendi PR'ında çözmek özellik PR'ını temiz tutar. Bağımlılık PR açıklamasında yazılı olmalı.
+
+### Koşu #82 — Tasarım bileşenleri (HeroPanel, HeroPill, PaymentRow, SurfaceCard)
+
+- **Ne yapıldı:** `Design/` altında dört bileşen, `DesignGalleryView`'a Hero / Rows / Pills bölümleri; Home ve formlara bağlanmadı (PR #83). `progress(paid:total:)` ve `PaymentRow.accessibilityLabel` saf fonksiyon, birim testli.
+- **UI capture yakaladı:** Hero alt yazısı `Text clipped` verdi (kısa `Text` üstünde uzun `accessibilityLabel`), 4 a11y hatası. Çözüm: panel tek VoiceOver öğesi, özet saf fonksiyondan (`accessibilitySummary`); düzeltme için test eklendi.
+- **Reviewer:** 1 minor (yeni capture testi çalıştırılmamıştı, sonra `UI-CHECK PASS`), 2 nit kabul edildi.
+- **Metrikler:** 20 dk, 4 verify (0 kırmızı), 1 düzeltme turu.
+- **Ders:** Etiketi görünen metinden çok uzun olan öğe audit'te kırpılmış sayılır; uzun sesli açıklamayı ayrı bir erişilebilirlik öğesine ver. Saf fonksiyon + birim test, UI audit'ten önce davranışı sabitler.
