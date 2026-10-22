@@ -10,25 +10,37 @@ import VademCore
 /// `renewalDay`, `firstMonth`), `addSubscription.<field>.error` for errors,
 /// `addSubscription.save`, `addSubscription.cancel`, `addSubscription.failure`; pushed lists
 /// use `addSubscription.options` and `addSubscription.option.<index>`.
+/// In edit mode (``AddSubscriptionViewModel/isEditing``) the title is "Edit subscription" and a
+/// Delete button (`addSubscription.delete`) asks for confirmation (`addSubscription.delete.confirm`,
+/// `addSubscription.delete.cancel`) before deleting.
 @MainActor
 public struct AddSubscriptionView: View {
     /// The launch argument that opens Home with this form already presented (UI check).
     public nonisolated static let launchArgument = "-ui-add-subscription"
     /// The launch argument that, with ``launchArgument``, also shows every field's error.
     public nonisolated static let errorsLaunchArgument = "-ui-add-subscription-errors"
+    /// The launch argument that opens Home with the first subscription of the month in this form, in edit mode (UI check).
+    public nonisolated static let editLaunchArgument = "-ui-edit-subscription"
 
     @State private var model: AddSubscriptionViewModel
+    // Silme onayı açık mı.
+    @State private var isConfirmingDelete = false
     @State private var choice: Choice?
     private let onSaved: () -> Void
+    private let onDeleted: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
 
-    /// Creates the form for `model`; `onSaved` runs after a successful save, before the sheet closes.
-    public init(model: AddSubscriptionViewModel, onSaved: @escaping () -> Void = {}) {
+    /// Creates the form for `model`; `onSaved` runs after a successful save and `onDeleted`
+    /// after a successful delete, before the sheet closes.
+    public init(
+        model: AddSubscriptionViewModel, onSaved: @escaping () -> Void = {}, onDeleted: @escaping () -> Void = {}
+    ) {
         _model = State(initialValue: model)
         self.onSaved = onSaved
+        self.onDeleted = onDeleted
     }
 
     public var body: some View {
@@ -83,8 +95,25 @@ public struct AddSubscriptionView: View {
                     }
                     .accessibilityIdentifier("addSubscription.firstMonth")
                 }
+                if model.isEditing {
+                    DeleteSection(
+                        title: "Delete subscription", identifierPrefix: Self.identifierPrefix,
+                        isConfirming: $isConfirmingDelete
+                    )
+                }
             }
             .scrollContentBackground(.hidden)
+            .deleteConfirmation(
+                isPresented: $isConfirmingDelete,
+                title: "Delete this subscription?",
+                message: "All of its charges are removed. This cannot be undone.",
+                identifierPrefix: Self.identifierPrefix
+            ) {
+                if model.delete() {
+                    onDeleted()
+                    dismiss()
+                }
+            }
             .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
@@ -107,7 +136,7 @@ public struct AddSubscriptionView: View {
                     )
                 }
             }
-            .navigationTitle("New subscription")
+            .navigationTitle(model.isEditing ? "Edit subscription" : "New subscription")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // Taksit formu gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.

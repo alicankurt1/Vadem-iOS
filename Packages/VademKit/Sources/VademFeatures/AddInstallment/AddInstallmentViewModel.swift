@@ -6,6 +6,8 @@ import VademCore
 ///
 /// Validation comes from ``InstallmentDraft``. A field's error is shown only after the field
 /// was changed, or after ``showAllErrors()`` / a failed ``save()``.
+/// Created with ``init(repository:editing:locale:)`` the form edits a saved installment:
+/// fields start with its values, ``save()`` replaces it (same `id`) and ``delete()`` removes it.
 @MainActor
 @Observable
 public final class AddInstallmentViewModel: Identifiable {
@@ -13,6 +15,8 @@ public final class AddInstallmentViewModel: Identifiable {
     public nonisolated static let cardsLoadErrorMessage = "Your cards could not be loaded."
     /// The message shown when saving failed.
     public nonisolated static let saveErrorMessage = "The installment could not be saved. Please try again."
+    /// The message shown when deleting failed.
+    public nonisolated static let deleteErrorMessage = "The installment could not be deleted. Please try again."
     /// How many months before the initial month the first-month picker offers.
     public nonisolated static let monthsBefore = InstallmentPlan.supportedCounts.upperBound - 1
     /// How many months after the initial month the first-month picker offers.
@@ -33,8 +37,13 @@ public final class AddInstallmentViewModel: Identifiable {
     public private(set) var cards: [Card] = []
     /// The months the first-month picker offers, in order; contains the initial month.
     public let firstMonthOptions: [YearMonth]
-    /// A message for a load or save failure, or `nil`.
+    /// A message for a load, save or delete failure, or `nil`.
     public private(set) var failureMessage: String?
+    /// The id of the installment being edited, or `nil` for a new one.
+    public let editingID: InstallmentItem.ID?
+
+    /// `true` when the form edits a saved installment.
+    public var isEditing: Bool { editingID != nil }
 
     @ObservationIgnored private let repository: any PaymentRepository
     @ObservationIgnored private let locale: Locale
@@ -50,7 +59,30 @@ public final class AddInstallmentViewModel: Identifiable {
         self.locale = locale
         self.firstMonth = initialMonth
         self.cardID = nil
+        self.editingID = nil
         self.firstMonthOptions = Self.months(around: initialMonth)
+        loadCards()
+    }
+
+    /// Creates a form that edits `item`: every field starts with its value, and the cards are loaded.
+    ///
+    /// The first-month picker is centered on the item's first month. No error shows until a field changes.
+    public init(repository: any PaymentRepository, editing item: InstallmentItem, locale: Locale = .current) {
+        self.repository = repository
+        self.locale = locale
+        self.editingID = item.id
+        self.title = item.title
+        self.cardID = item.cardID
+        self.amountText = AmountInput.text(for: item.plan.total.amount, locale: locale)
+        self.count = item.plan.count
+        self.firstMonth = item.plan.firstMonth
+        self.firstMonthOptions = Self.months(around: item.plan.firstMonth)
+        loadCards()
+        // Ön doldurma kullanıcı değişikliği sayılmaz; hata ancak bir alan değişince görünür.
+        touched.removeAll()
+    }
+
+    private func loadCards() {
         do {
             cards = try repository.cards()
         } catch {
@@ -85,13 +117,13 @@ public final class AddInstallmentViewModel: Identifiable {
         showsAllErrors = true
     }
 
-    /// Saves the draft as a new installment.
+    /// Saves the draft: as a new installment, or in edit mode under ``editingID`` (replacing the saved one).
     ///
     /// Returns `true` on success. An invalid draft shows every error and returns `false`;
     /// a repository error sets ``failureMessage`` and returns `false`.
     @discardableResult
     public func save() -> Bool {
-        guard let item = draft.makeItem() else {
+        guard let item = draft.makeItem(id: editingID ?? UUID()) else {
             showAllErrors()
             return false
         }
@@ -101,6 +133,23 @@ public final class AddInstallmentViewModel: Identifiable {
             return true
         } catch {
             failureMessage = Self.saveErrorMessage
+            return false
+        }
+    }
+
+    /// Deletes the edited installment.
+    ///
+    /// Returns `true` on success. Outside edit mode nothing happens and it returns `false`;
+    /// a repository error sets ``failureMessage`` and returns `false`.
+    @discardableResult
+    public func delete() -> Bool {
+        guard let editingID else { return false }
+        do {
+            try repository.deleteInstallment(id: editingID)
+            failureMessage = nil
+            return true
+        } catch {
+            failureMessage = Self.deleteErrorMessage
             return false
         }
     }

@@ -83,3 +83,62 @@ struct ChoiceRow: View {
         .contentShape(Rectangle())
     }
 }
+
+/// Düzenleme formunun en altındaki silme bölümü: dokununca `isConfirming` açılır.
+/// Onay uyarısı formun kendisine ``SwiftUI/View/deleteConfirmation(isPresented:title:message:identifierPrefix:onDelete:)``
+/// ile bağlanır. Kimlik: düğme `<identifierPrefix>.delete`.
+@MainActor
+struct DeleteSection: View {
+    let title: String
+    let identifierPrefix: String
+    @Binding var isConfirming: Bool
+
+    var body: some View {
+        Section {
+            // Label yerine düz metin + gizli simge: Label'ın sabit simge sütunu denetimde metni
+            // "kırpılmış" gösteriyordu. ChoiceRow gibi düz stil ve açık renk: Form'un hazır yıkıcı
+            // düğme stili denetimde "Dynamic Type kısmen desteklenmiyor" sayılıyordu.
+            Button {
+                isConfirming = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text(title)
+                        .font(.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "trash")
+                        .font(.body)
+                        .accessibilityHidden(true)
+                }
+                .foregroundStyle(Color.red)
+                .multilineTextAlignment(.leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("\(identifierPrefix).delete")
+        }
+        .listRowBackground(Color.vademSurface)
+    }
+}
+
+extension View {
+    /// Silme onayını bu görünüme bağlar. Kimlikler: onay `<identifierPrefix>.delete.confirm`,
+    /// vazgeç `<identifierPrefix>.delete.cancel`.
+    func deleteConfirmation(
+        isPresented: Binding<Bool>,
+        title: String,
+        message: String,
+        identifierPrefix: String,
+        onDelete: @escaping () -> Void
+    ) -> some View {
+        // Onay, ortada açılan standart uyarı (alert): confirmationDialog iOS 26'da forma bağlıyken de
+        // dar bir açılır pencere (popover) oluyor, Vazgeç düğmesini gizliyor ve kimliği iki kez veriyordu.
+        alert(title, isPresented: isPresented) {
+            Button("Delete", role: .destructive, action: onDelete)
+                .accessibilityIdentifier("\(identifierPrefix).delete.confirm")
+            Button("Cancel", role: .cancel) {}
+                .accessibilityIdentifier("\(identifierPrefix).delete.cancel")
+        } message: {
+            Text(message)
+        }
+    }
+}

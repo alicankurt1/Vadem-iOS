@@ -185,6 +185,30 @@ public final class HomeViewModel {
         AddCardViewModel(repository: repository)
     }
 
+    /// An edit form for the installment with `id`, or `nil` when it is not saved or cannot be loaded.
+    ///
+    /// Call ``reload()`` after it saves or deletes.
+    public func makeEditInstallmentModel(id: InstallmentItem.ID, locale: Locale = .current) -> AddInstallmentViewModel? {
+        guard let item = (try? repository.installments())?.first(where: { $0.id == id }) else { return nil }
+        return AddInstallmentViewModel(repository: repository, editing: item, locale: locale)
+    }
+
+    /// An edit form for the subscription with `id`, or `nil` when it is not saved or cannot be loaded.
+    ///
+    /// Call ``reload()`` after it saves or deletes.
+    public func makeEditSubscriptionModel(id: SubscriptionItem.ID, locale: Locale = .current) -> AddSubscriptionViewModel? {
+        guard let item = (try? repository.subscriptions())?.first(where: { $0.id == id }) else { return nil }
+        return AddSubscriptionViewModel(repository: repository, editing: item, locale: locale)
+    }
+
+    /// An edit form for the card with `id`, or `nil` when it is not saved or cannot be loaded.
+    ///
+    /// Call ``reload()`` after it saves or deletes.
+    public func makeEditCardModel(id: Card.ID) -> AddCardViewModel? {
+        guard let card = (try? repository.cards())?.first(where: { $0.id == id }) else { return nil }
+        return AddCardViewModel(repository: repository, editing: card)
+    }
+
     /// Selects `month` (e.g. a tapped chip of ``upcoming``) and reloads; clears ``selectedDay``.
     public func select(month: YearMonth) {
         change(to: month)

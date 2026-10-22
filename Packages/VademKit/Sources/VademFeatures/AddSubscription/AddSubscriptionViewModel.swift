@@ -6,6 +6,8 @@ import VademCore
 ///
 /// Validation comes from ``SubscriptionDraft``. A field's error is shown only after the field
 /// was changed, or after ``showAllErrors()`` / a failed ``save()``. The card is optional.
+/// Created with ``init(repository:editing:locale:)`` the form edits a saved subscription:
+/// fields start with its values, ``save()`` replaces it (same `id`) and ``delete()`` removes it.
 @MainActor
 @Observable
 public final class AddSubscriptionViewModel: Identifiable {
@@ -13,6 +15,8 @@ public final class AddSubscriptionViewModel: Identifiable {
     public nonisolated static let cardsLoadErrorMessage = "Your cards could not be loaded."
     /// The message shown when saving failed.
     public nonisolated static let saveErrorMessage = "The subscription could not be saved. Please try again."
+    /// The message shown when deleting failed.
+    public nonisolated static let deleteErrorMessage = "The subscription could not be deleted. Please try again."
     /// How many months before the initial month the first-month picker offers.
     public nonisolated static let monthsBefore = 60
     /// How many months after the initial month the first-month picker offers.
@@ -37,14 +41,21 @@ public final class AddSubscriptionViewModel: Identifiable {
     public private(set) var cards: [Card] = []
     /// The months the first-month picker offers, in order; contains the initial month.
     public let firstMonthOptions: [YearMonth]
-    /// A message for a load or save failure, or `nil`.
+    /// A message for a load, save or delete failure, or `nil`.
     public private(set) var failureMessage: String?
+    /// The id of the subscription being edited, or `nil` for a new one.
+    public let editingID: SubscriptionItem.ID?
+
+    /// `true` when the form edits a saved subscription.
+    public var isEditing: Bool { editingID != nil }
 
     @ObservationIgnored private let repository: any PaymentRepository
     @ObservationIgnored private let locale: Locale
     // Değiştirilmiş alanlar; hata sadece bunlarda (veya hepsi açılınca) gösterilir.
     private var touched: Set<SubscriptionDraft.Field> = []
     private var showsAllErrors = false
+    // Düzenlenen aboneliğin bitiş ayı; formda alanı yok, kayıtta korunur.
+    @ObservationIgnored private let lastMonth: YearMonth?
 
     /// Creates an empty form whose first month is `initialMonth` and renewal day is
     /// `initialRenewalDay`, and loads the cards.
@@ -61,9 +72,38 @@ public final class AddSubscriptionViewModel: Identifiable {
         self.firstMonth = initialMonth
         self.renewalDay = initialRenewalDay
         self.cardID = nil
+        self.editingID = nil
+        self.lastMonth = nil
         self.firstMonthOptions = MonthOptions.months(
             around: initialMonth, before: Self.monthsBefore, after: Self.monthsAfter
         )
+        loadCards()
+    }
+
+    /// Creates a form that edits `item`: every field starts with its value, and the cards are loaded.
+    ///
+    /// The first-month picker is centered on the item's first month. No error shows until a field changes.
+    /// The subscription's last month (not a form field) is kept on save while it is not before the first month.
+    public init(repository: any PaymentRepository, editing item: SubscriptionItem, locale: Locale = .current) {
+        self.repository = repository
+        self.locale = locale
+        self.editingID = item.id
+        self.lastMonth = item.subscription.lastMonth
+        self.title = item.title
+        self.cardID = item.cardID
+        self.amountText = AmountInput.text(for: item.subscription.amount.amount, locale: locale)
+        self.period = item.subscription.period
+        self.renewalDay = item.subscription.renewalDay
+        self.firstMonth = item.subscription.firstMonth
+        self.firstMonthOptions = MonthOptions.months(
+            around: item.subscription.firstMonth, before: Self.monthsBefore, after: Self.monthsAfter
+        )
+        loadCards()
+        // Ön doldurma kullanıcı değişikliği sayılmaz; hata ancak bir alan değişince görünür.
+        touched.removeAll()
+    }
+
+    private func loadCards() {
         do {
             cards = try repository.cards()
         } catch {
@@ -99,16 +139,17 @@ public final class AddSubscriptionViewModel: Identifiable {
         showsAllErrors = true
     }
 
-    /// Saves the draft as a new subscription.
+    /// Saves the draft: as a new subscription, or in edit mode under ``editingID`` (replacing the saved one).
     ///
     /// Returns `true` on success. An invalid draft shows every error and returns `false`;
     /// a repository error sets ``failureMessage`` and returns `false`.
     @discardableResult
     public func save() -> Bool {
-        guard let item = draft.makeItem() else {
+        guard let made = draft.makeItem(id: editingID ?? UUID()) else {
             showAllErrors()
             return false
         }
+        let item = keepingLastMonth(made)
         do {
             try repository.save(item)
             failureMessage = nil
@@ -117,6 +158,35 @@ public final class AddSubscriptionViewModel: Identifiable {
             failureMessage = Self.saveErrorMessage
             return false
         }
+    }
+
+    /// Deletes the edited subscription.
+    ///
+    /// Returns `true` on success. Outside edit mode nothing happens and it returns `false`;
+    /// a repository error sets ``failureMessage`` and returns `false`.
+    @discardableResult
+    public func delete() -> Bool {
+        guard let editingID else { return false }
+        do {
+            try repository.deleteSubscription(id: editingID)
+            failureMessage = nil
+            return true
+        } catch {
+            failureMessage = Self.deleteErrorMessage
+            return false
+        }
+    }
+
+    // Bitiş ayı yeni ilk aydan önce kalırsa geçersiz olurdu; o durumda bitiş ayı bırakılır.
+    private func keepingLastMonth(_ item: SubscriptionItem) -> SubscriptionItem {
+        guard let lastMonth else { return item }
+        let base = item.subscription
+        guard let subscription = Subscription(
+            amount: base.amount, period: base.period, renewalDay: base.renewalDay,
+            firstMonth: base.firstMonth, lastMonth: lastMonth
+        ), let kept = SubscriptionItem(id: item.id, title: item.title, cardID: item.cardID, subscription: subscription)
+        else { return item }
+        return kept
     }
 
     /// The month as `"October 2026"`, like Home.

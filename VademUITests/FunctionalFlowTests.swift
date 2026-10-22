@@ -113,4 +113,84 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after cancel")
         XCTAssertFalse(scrollToRow(titled: "Cancelled item", in: app), "cancelled item must not appear on Home")
     }
+
+    /// Silme düğmesi görünene dek formu yukarı kaydırır (en çok 6 kez).
+    @MainActor
+    private func revealDelete(prefix: String, in app: XCUIApplication) -> XCUIElement {
+        let button = app.buttons["\(prefix).delete"]
+        _ = button.waitForExistence(timeout: 5)
+        for _ in 0..<6 where !button.isHittable {
+            app.swipeUp()
+        }
+        return button
+    }
+
+    @MainActor
+    func testEditInstallmentFromHomeSavesNewTitle() throws {
+        let app = launchHome()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "Home not shown")
+        XCTAssertTrue(scrollToRow(titled: "Laptop", in: app), "sample installment 'Laptop' not shown on Home")
+        row(titled: "Laptop", in: app).tap()
+
+        // Form kayıtlı değerlerle açılır.
+        let titleField = app.textFields["addInstallment.title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "edit form not shown")
+        XCTAssertEqual(titleField.value as? String, "Laptop", "title must be prefilled")
+        XCTAssertTrue(app.buttons["addInstallment.save"].isEnabled, "save must be enabled with the saved values")
+
+        titleField.tap()
+        titleField.typeText(" Pro")
+        app.buttons["addInstallment.save"].tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
+        XCTAssertTrue(scrollToRow(titled: "Laptop Pro", in: app), "edited title not shown on Home")
+    }
+
+    @MainActor
+    func testDeleteInstallmentFromHomeRemovesPayment() throws {
+        let app = launchHome()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "Home not shown")
+        XCTAssertTrue(scrollToRow(titled: "Laptop", in: app), "sample installment 'Laptop' not shown on Home")
+        row(titled: "Laptop", in: app).tap()
+
+        let delete = revealDelete(prefix: "addInstallment", in: app)
+        XCTAssertTrue(delete.exists, "delete button not found")
+        delete.tap()
+
+        // Önce onay istenir; vazgeçince form açık kalır.
+        let cancel = app.buttons["addInstallment.delete.cancel"].firstMatch
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5), "confirmation not shown")
+        cancel.tap()
+        XCTAssertTrue(app.textFields["addInstallment.title"].exists, "form must stay open after cancelling")
+
+        revealDelete(prefix: "addInstallment", in: app).tap()
+        let confirm = app.buttons["addInstallment.delete.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "confirmation not shown")
+        confirm.tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after deleting")
+        XCTAssertFalse(scrollToRow(titled: "Laptop", in: app), "deleted installment must not appear on Home")
+    }
+
+    @MainActor
+    func testDeleteCardInUseShowsMessageAndKeepsForm() throws {
+        let app = launchHome()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "Home not shown")
+        // Kart alt toplamları takvimin altında; ilki açılır.
+        let card = element("home.card.0", in: app)
+        for _ in 0..<6 where !card.exists { app.swipeUp() }
+        XCTAssertTrue(card.exists, "card subtotal not found")
+        card.tap()
+
+        let delete = revealDelete(prefix: "addCard", in: app)
+        XCTAssertTrue(delete.exists, "delete button not found")
+        delete.tap()
+        let confirm = app.buttons["addCard.delete.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "confirmation not shown")
+        confirm.tap()
+
+        // Kart kullanımda: form açık kalır ve ret mesajı görünür.
+        XCTAssertTrue(element("addCard.failure", in: app).waitForExistence(timeout: 5), "in-use message not shown")
+        XCTAssertTrue(app.textFields["addCard.name"].exists, "form must stay open when the card is in use")
+    }
 }
