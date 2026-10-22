@@ -121,6 +121,8 @@ public final class HomeViewModel {
     /// Starts at the current month while the selected month is one of them, otherwise at the
     /// selected month, so the selected month is always in the strip. Empty after a repository error.
     public private(set) var upcoming: [MonthSummary] = []
+    /// `true` when the repository has at least one card; `false` before loading or after a repository error.
+    public private(set) var hasCards = false
 
     @ObservationIgnored private let repository: any PaymentRepository
     // Enjekte edilen bugün: ay ve gün (Card.DueDate dışarıdan kurulamaz).
@@ -167,6 +169,13 @@ public final class HomeViewModel {
     /// Call ``reload()`` after it saves, so the new payment shows.
     public func makeAddInstallmentModel(locale: Locale = .current) -> AddInstallmentViewModel {
         AddInstallmentViewModel(repository: repository, initialMonth: month, locale: locale)
+    }
+
+    /// A new add-card form on the same repository.
+    ///
+    /// Call ``reload()`` after it saves, so ``hasCards`` and the card names update.
+    public func makeAddCardModel() -> AddCardViewModel {
+        AddCardViewModel(repository: repository)
     }
 
     /// Selects `month` (e.g. a tapped chip of ``upcoming``) and reloads; clears ``selectedDay``.
@@ -237,6 +246,7 @@ public final class HomeViewModel {
             )
             apply(schedule, cards: cards)
             upcoming = upcomingMonths.schedules.map(makeSummary)
+            hasCards = !cards.isEmpty
         } catch {
             // Hata sessizce boş liste olmaz; ekranda hata durumu gösterilir.
             schedule = nil
@@ -246,6 +256,7 @@ public final class HomeViewModel {
             rows = []
             calendarDays = []
             upcoming = []
+            hasCards = false
             state = .error(message: Self.loadErrorMessage)
         }
     }

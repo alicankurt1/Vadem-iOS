@@ -105,6 +105,27 @@ public final class AddInstallmentViewModel: Identifiable {
         }
     }
 
+    /// A new add-card form on the same repository.
+    ///
+    /// Call ``selectAddedCard(_:)`` with its saved card, so the new card shows and is chosen.
+    public func makeAddCardModel() -> AddCardViewModel {
+        AddCardViewModel(repository: repository)
+    }
+
+    /// Reloads ``cards`` after `card` was saved elsewhere and chooses it.
+    ///
+    /// A load error sets ``failureMessage``; the card is chosen anyway, since it was saved.
+    public func selectAddedCard(_ card: Card) {
+        do {
+            cards = try repository.cards()
+            // Önceki yükleme hatası artık geçerli değil.
+            if failureMessage == Self.cardsLoadErrorMessage { failureMessage = nil }
+        } catch {
+            failureMessage = Self.cardsLoadErrorMessage
+        }
+        cardID = card.id
+    }
+
     /// The month as `"October 2026"`, like Home.
     public func title(of month: YearMonth) -> String {
         HomeViewModel.title(of: month)
