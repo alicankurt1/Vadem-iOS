@@ -9,6 +9,7 @@ public struct HeroPanel<Actions: View>: View {
     private let total: Money
     private let paid: Money
     private let captionPrefix: String
+    private let summaryIdentifier: String?
     private let actions: Actions
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -17,17 +18,21 @@ public struct HeroPanel<Actions: View>: View {
     /// Creates a panel showing `paid` of `total`, with `actions` (usually ``HeroPill`` buttons) below.
     ///
     /// The caption reads `"<captionPrefix> ₺1.200,00 of ₺4.825,50"`, e.g. `"Due so far …"` on Home.
+    /// `summaryIdentifier` is the accessibility identifier of the summary (title, total, caption),
+    /// a single header element.
     public init(
         title: String,
         total: Money,
         paid: Money,
         captionPrefix: String = HeroPanel.defaultCaptionPrefix,
+        summaryIdentifier: String? = nil,
         @ViewBuilder actions: () -> Actions
     ) {
         self.title = title
         self.total = total
         self.paid = paid
         self.captionPrefix = captionPrefix
+        self.summaryIdentifier = summaryIdentifier
         self.actions = actions()
     }
 
@@ -61,6 +66,8 @@ public struct HeroPanel<Actions: View>: View {
         .accessibilityLabel(Self.accessibilitySummary(
             title: title, paid: paid, total: total, captionPrefix: captionPrefix
         ))
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityIdentifier(summaryIdentifier ?? "")
     }
 
     // Çubuk yalnızca görsel; bilgisi özet etiketinde.

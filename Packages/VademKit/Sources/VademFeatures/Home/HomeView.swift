@@ -114,10 +114,8 @@ public struct HomeView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     AppHeader()
                     monthBar
-                    // Hata durumunda gösterilecek bir toplam yok; panel yalnızca yüklenen ayda.
-                    if !isError {
-                        hero(proxy)
-                    }
+                    // Hata durumunda da görünür (toplam sıfır): ekleme menüsü her zaman erişilebilir.
+                    hero(proxy)
                     sections
                 }
                 // 20 pt yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
@@ -147,27 +145,26 @@ public struct HomeView: View {
         content
     }
 
-    private var isError: Bool {
-        if case .error = model.state { return true }
-        return false
-    }
-
     // Ayın toplamı ve vadesi gelen kısmı; altında ekleme menüsü ve takvim düğmesi.
     private func hero(_ proxy: ScrollViewProxy) -> some View {
         HeroPanel(
-            title: model.monthTitle, total: model.total, paid: model.dueSoFar, captionPrefix: "Due so far"
+            title: "Due this month", total: model.total, paid: model.dueSoFar,
+            captionPrefix: "Due so far", summaryIdentifier: "home.total"
         ) {
             addMenu
-            Button {
-                // Reduce Motion veya -ui-static-motion açıkken animasyonsuz kaydırır.
-                withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
-                    proxy.scrollTo(Self.calendarAnchor, anchor: .top)
+            // Takvim gizliyken (hata durumu) kaydırılacak yer yok; düğme de gösterilmez.
+            if !model.calendarDays.isEmpty {
+                Button {
+                    // Reduce Motion veya -ui-static-motion açıkken animasyonsuz kaydırır.
+                    withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+                        proxy.scrollTo(Self.calendarAnchor, anchor: .top)
+                    }
+                } label: {
+                    Label("Calendar", systemImage: "calendar")
                 }
-            } label: {
-                Label("Calendar", systemImage: "calendar")
+                .buttonStyle(.heroPill)
+                .accessibilityIdentifier("home.showCalendar")
             }
-            .buttonStyle(.heroPill)
-            .accessibilityIdentifier("home.showCalendar")
         }
     }
 
@@ -193,6 +190,7 @@ public struct HomeView: View {
             Label("Add", systemImage: "plus")
                 .heroPillLabel()
         }
+        .accessibilityLabel("Add payment")
         .accessibilityIdentifier("home.add")
     }
 
