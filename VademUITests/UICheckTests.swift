@@ -460,11 +460,8 @@ final class UICheckTests: XCTestCase {
 
     @MainActor
     func testGalleryScreen() throws {
-        // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
-        // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
-        let cardParts: [Section] = ["night", "ocean", "emerald", "sunset", "lavender", "graphite"].map {
-            .scrolled(to: "gallery.card.\($0)", named: "card-\($0)")
-        }
+        // Galeri uzun bir ekran; başlık, çipler ve tutarlar ayrı görüntülerde yakalanır (#33).
+        // Kart yüzleri testGalleryCards'ta: tek testte 9 parça × 3 varyant 3 dk sınırını aşıyordu.
         try capture(
             screen: "gallery",
             launchArguments: ["-ui-gallery"],
@@ -472,7 +469,26 @@ final class UICheckTests: XCTestCase {
                 .top,
                 .scrolled(to: "gallery.chips", named: "chips"),
                 .scrolled(to: "gallery.amounts", named: "amounts"),
-            ] + cardParts
+            ]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
+                "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testGalleryCards() throws {
+        // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
+        // Ekran adı "gallery" kalır: görüntü adları (gallery-card-<yüz>) değişmez.
+        let cardParts: [Section] = ["night", "ocean", "emerald", "sunset", "lavender", "graphite"].map {
+            .scrolled(to: "gallery.card.\($0)", named: "card-\($0)")
+        }
+        try capture(
+            screen: "gallery",
+            launchArguments: ["-ui-gallery"],
+            sections: cardParts
         ) { app, variant in
             XCTAssertTrue(
                 app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
