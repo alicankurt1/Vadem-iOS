@@ -20,7 +20,7 @@ The repo also hosts an **AI agent pipeline** that develops the app: issue → co
 - After each step, explain in 3–5 short bullets: what was done, why, which concept it shows.
 - **Never commit unless the user says "commit'le".** Exception: once the pipeline exists, the coder agent may commit on its own feature branch.
 - **Merging is always done by the human.** Never merge PRs.
-- One branch per phase: `phase-N/<topic>`. Commit format: `Phase N: <summary>`.
+- Branch names say what the work is, never a guessed phase number: `issue/N-<slug>` (feature work, via `/ship`), `harness/<topic>` (scripts, agents, skills, UI-check plumbing), `docs/pr-P` (after merge). Commit format: `<imperative summary> (#N)` for issues, `Harness: <summary>` for harness PRs. The phase of a feature is tracked only in `PLAN.md` (each phase lists its issues and PRs); the current phase is the first one not checked there.
 - At the end of each phase ask **one** interview-style question. If the user says "sen cevapla", answer it and add the answer to `NOTES.md`.
 - Name the SOLID principle(s) applied in each phase and where.
 - Public repo: no company names, interview references, personal notes, secrets or API keys. Team ID lives in git-ignored `Config/Local.xcconfig`.
@@ -64,7 +64,7 @@ Agents live in `.claude/agents/`. The main session is the **orchestrator**: it p
 - `/after-merge #P` — after the human merges PR P: writer agent updates docs on `docs/pr-P` and opens a docs PR.
 - `/verify` — the gate on its own.
 
-Harness / factory problems found during a run (`scripts/`, `UICheckTests` plumbing, agent definitions) are never fixed on the issue branch; they get their own `phase-N/...` PR first.
+Harness / factory problems found during a run (`scripts/`, `UICheckTests` plumbing, agent definitions) are never fixed on the issue branch; they get their own `harness/<topic>` PR first.
 
 **Visible mode** (on request): instead of subagents, each role runs as its own session in the desktop app (split view), started one at a time in this checkout. The session's brief says: "Read `.claude/agents/<role>.md` and act as that role" plus the issue and branch. The orchestrator relays only what the next role needs, same as with subagents.
 
