@@ -263,3 +263,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer yakaladı:** `parseAmount` sınırsız hane/NaN (minor), 2. turda yeni `OptionList` ekranları için capture testi yok (major) ve sınırsız kesir hanesi. Hepsi düzeltildi; 3 düzeltme turu, 12 verify (1 kırmızı), 90 dk.
 - **Açık noktalar:** Kart ekleme yok, taze depoda Kaydet kapalı kalır. `UI_CHECK_ONLY` adı `testFooScreen` kalıbına bağlı, yeni capture testleri sadece tam script ile koşuyor (harness için ayrı PR adayı).
 - **Ders:** Sistem kontrolü her zaman erişilebilir değildir; audit kırılınca bileşeni değiştirmek, audit'i gevşetmekten doğru yol. Yeni ekranın (liste) kendi capture testi olmazsa kapı onu görmez.
+
+### Koşu #65 — Kart ekleme formu
+
+- **Ne yapıldı:** `CardDraft` (VademCore, ad 1–40, ekstre/son ödeme günü 1–31), `AddCardViewModel` / `AddCardView` sheet'i; giriş noktaları taksit formundaki "Add a card" satırı ve kart yokken Home'daki istem (PR #68). Repository kuralı değişmedi, yeni `PaymentRepositoryContract` senaryosu yok.
+- **UI capture yakaladı:** 3 major: kart formunda ve "Add a card" satırında `Text clipped`, ayrıca AX5'te gün alanı placeholder'ları kesiliyordu (son biri audit'te çıkmadı, ekran görüntüsünden görüldü). Tek turda düzeltildi (0e31e06).
+- **Reviewer:** 4 minor / 3 nit; 2'si açık kaldı (`\r` temizlenmiyor, `.submitLabel(.done)` yok). Home istemi için boş depo launch argument'ı olmadığından otomatik capture yok.
+- **Metrikler:** 37 dk, 2 verify, 0 kırmızı, 1 düzeltme turu. `UI_CHECK_ONLY` yeni capture testlerini seçemedi (ad kalıbı `Screen` ekliyor), tam galeri iki kez koştu (~14 dk); #62'den bilinen harness PR adayı.
+- **Ders:** Audit her sorunu görmez; AX5 ekran görüntüsünü gözle kontrol etmek placeholder kesilmesini yakaladı. Harness takibi iki koşudur bekliyor, maliyeti artık ölçülebilir.
