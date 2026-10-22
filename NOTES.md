@@ -295,3 +295,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer:** 1 minor (yeni capture testi çalıştırılmamıştı, sonra `UI-CHECK PASS`), 2 nit kabul edildi.
 - **Metrikler:** 20 dk, 4 verify (0 kırmızı), 1 düzeltme turu.
 - **Ders:** Etiketi görünen metinden çok uzun olan öğe audit'te kırpılmış sayılır; uzun sesli açıklamayı ayrı bir erişilebilirlik öğesine ver. Saf fonksiyon + birim test, UI audit'ten önce davranışı sabitler.
+
+### Koşu #85 — Home'a B2b hero, satır ve yüzey kartları
+
+- **Ne yapıldı:** Home'daki "Total due" bloğu `HeroPanel` oldu, toolbar "+" yerine hero'da "Add" hapı (menü ve identifier'lar aynı), "Calendar" hapı takvime kaydırır; satırlar `PaymentRow`, gruplar `SurfaceCard` (PR #86). İlerleme saf fonksiyon `HomeViewModel.dueSoFar` ile hesaplanır (ödeme takibi yok, "vadesi gelen pay").
+- **Reviewer yakaladı:** 1 major: toolbar "+" kalkınca hata durumunda Add menüsüne ulaşılamıyordu; hero hata durumunda da gösterilerek düzeltildi. Ayrıca 4 minor (ay başlığı iki kez, menü etiketi kaybı, takvimsiz ölü pill, `home.total` identifier'ı).
+- **Metrikler:** 16 dk, 5 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve `home` UI-CHECK geçti.
+- **Ders:** Bir kontrolü kaldırırken onun tüm durumlardaki (hata, boş) erişim yolunu da kontrol et. Açık kalan: hata durumu hero'su ve gizli Calendar hapı için test yok.
