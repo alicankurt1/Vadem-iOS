@@ -271,3 +271,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer:** 4 minor / 3 nit; 2'si açık kaldı (`\r` temizlenmiyor, `.submitLabel(.done)` yok). Home istemi için boş depo launch argument'ı olmadığından otomatik capture yok.
 - **Metrikler:** 37 dk, 2 verify, 0 kırmızı, 1 düzeltme turu. `UI_CHECK_ONLY` yeni capture testlerini seçemedi (ad kalıbı `Screen` ekliyor), tam galeri iki kez koştu (~14 dk); #62'den bilinen harness PR adayı.
 - **Ders:** Audit her sorunu görmez; AX5 ekran görüntüsünü gözle kontrol etmek placeholder kesilmesini yakaladı. Harness takibi iki koşudur bekliyor, maliyeti artık ölçülebilir.
+
+### Koşu #67 — Ödeme ve kart düzenleme / silme
+
+- **Ne yapıldı:** Taksit, abonelik ve kart formlarına düzenleme modu (dolu açılış, aynı doğrulama, aynı `id` ile kayıt, `delete()`); Home'da satır ve kart ara toplamı formu açar; silme uyarı (alert) arkasında, kullanımdaki kart `cardInUse` ile reddedilir (PR #74).
+- **UI capture yakaladı:** `confirmationDialog` iOS 26'da 180 pt'lik küçük bir popover olarak çıktı ve Delete etiketi kırpıldı; alert'e geçilince düzeldi. Kullanımdaki kart hata mesajı da kırpılıyordu (düzeltildi). Audit sistem alert etiketlerini de bulgu saydı ve iki ana test bayattı: harness PR #73.
+- **Konuma bağlı bulgu:** Delete satırlarında "Dynamic Type partially unsupported" çıktı; aynı satır ekranda daha yukarıda geçiyor, tembel `Form` içinde aşağıda geçmiyor. Harness PR #75 bunu `[a11y-lazy]` notu yaptı; neden hipotez, kanıtlanmadı.
+- **Metrikler:** 150 dk, 11 verify (0 kırmızı), 3 düzeltme turu; reviewer 0 / 0 / 5 / 2, UI 0 / 3 / 0 / 0. Açık kalan: Delete satırı `Color.red` ve düz buton (destructive rol / kontrast çifti yok); kullanılmayan kartı silmenin UI yolu yok (kart listesi ekranı ayrı issue).
+- **Ders:** Sistem bileşeninin davranışı iOS sürümüne göre değişir (dialog, popover); audit kırılınca bileşeni değiştirmek doğru yol. Harness sorunları (#73, #75) issue dalında değil kendi PR'larında çözüldü, böylece özellik PR'ı temiz kaldı.
