@@ -497,6 +497,25 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testGalleryDesign() throws {
+        // Hero, satırlar ve hap düğmeler kendi parçalarında yakalanır (#82); ayrı test, 3 dk sınırı için.
+        try capture(
+            screen: "gallery",
+            launchArguments: ["-ui-gallery"],
+            sections: [
+                .scrolled(to: "gallery.hero", named: "hero"),
+                .scrolled(to: "gallery.rows", named: "rows"),
+                .scrolled(to: "gallery.pills", named: "pills"),
+            ]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
+                "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
+            )
+        }
+    }
+
     /// Sürüm etiketi görünür, "Version x.y.z" biçiminde, dokunulabilir ve başlığın altında,
     /// başlıktan daha küçük olmalı (ikincil bilgi hiyerarşisi).
     @MainActor

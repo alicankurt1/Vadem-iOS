@@ -63,6 +63,43 @@ public struct DesignGalleryView: View {
                         .vademGlass()
                     }
 
+                    section("Hero", id: "gallery.hero") {
+                        HeroPanel(title: "This month", total: Money(Decimal(482_550) / 100), paid: Money(1_200)) {
+                            Button {} label: { Label("Add", systemImage: "plus") }
+                                .buttonStyle(.heroPill)
+                            Button {} label: { Label("Calendar", systemImage: "calendar") }
+                                .buttonStyle(.heroPill)
+                        }
+                    }
+
+                    section("Rows", id: "gallery.rows") {
+                        SurfaceCard {
+                            PaymentRow(
+                                day: 22, title: "Rent", subtitle: "Everyday card",
+                                amount: Money(15_000), dueTitle: "Overdue", dueKind: .overdue
+                            )
+                            PaymentRow(
+                                day: 24, title: "Netflix", subtitle: "Subscription",
+                                amount: Money(Decimal(22_999) / 100), dueTitle: "Today", dueKind: .today
+                            )
+                            PaymentRow(
+                                day: 27, title: "Laptop", subtitle: "Everyday card · 3/12",
+                                amount: Money(Decimal(208_333) / 100), dueTitle: "In 3 days", dueKind: .soon
+                            )
+                            PaymentRow(
+                                day: 5, title: "Phone", subtitle: "Travel card · 7/9",
+                                amount: Money(1_000_000), dueTitle: "Later", dueKind: .later
+                            )
+                        }
+                    }
+
+                    section("Pills", id: "gallery.pills") {
+                        Button {} label: { Label("Add", systemImage: "plus") }
+                            .buttonStyle(.heroPill)
+                        Button("Calendar") {}
+                            .buttonStyle(.heroPill)
+                    }
+
                     section("Cards", id: "gallery.cards") {
                         ForEach(CardStyle.allCases, id: \.self) { style in
                             CardFaceView(title: style.name, subtitle: "Due on the 15th", style: style)
