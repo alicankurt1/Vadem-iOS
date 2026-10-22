@@ -171,6 +171,13 @@ public final class HomeViewModel {
         AddInstallmentViewModel(repository: repository, initialMonth: month, locale: locale)
     }
 
+    /// A new add-subscription form on the same repository, starting at the selected ``month``.
+    ///
+    /// Call ``reload()`` after it saves, so the new payment shows.
+    public func makeAddSubscriptionModel(locale: Locale = .current) -> AddSubscriptionViewModel {
+        AddSubscriptionViewModel(repository: repository, initialMonth: month, locale: locale)
+    }
+
     /// A new add-card form on the same repository.
     ///
     /// Call ``reload()`` after it saves, so ``hasCards`` and the card names update.
