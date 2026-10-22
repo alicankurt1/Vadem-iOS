@@ -29,6 +29,9 @@ struct TokenContrastTests {
         Pair(foreground: "brand", background: "surface"),
         Pair(foreground: "paid", background: "background"),
         Pair(foreground: "paid", background: "surface"),
+        Pair(foreground: "heroText", background: "hero"),
+        Pair(foreground: "heroSecondary", background: "hero"),
+        Pair(foreground: "onAccent", background: "accent"),
     ]
 
     @Test("Pair meets WCAG AA (4.5:1) in light and dark", arguments: pairs)

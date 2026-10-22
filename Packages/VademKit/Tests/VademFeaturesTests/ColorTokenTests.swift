@@ -8,19 +8,24 @@ struct ColorTokenTests {
 
     /// Issue tablosu: token → (açık, koyu). Değerler issue'dan kopyalandı.
     static let table: [(name: String, light: String, dark: String)] = [
-        ("background", "F7F6F3", "0B0D14"),
-        ("surface", "FFFFFF", "151824"),
-        ("separator", "E4E2DC", "1E2232"),
-        ("textPrimary", "14161F", "F3F4F8"),
-        ("textSecondary", "5B6070", "A1A7B8"),
-        ("brand", "4338CA", "A5B4FC"),
-        ("dueToday", "991B1B", "FCA5A5"),
-        ("dueTodayBackground", "FDECEC", "3B1515"),
-        ("dueSoon", "92400E", "FCD34D"),
-        ("dueSoonBackground", "FEF3C7", "3A2A0B"),
-        ("dueLater", "3F4352", "C3C8D6"),
-        ("dueLaterBackground", "EDECE8", "1E2232"),
-        ("paid", "0F766E", "5EEAD4"),
+        ("background", "EAF7F5", "06161A"),
+        ("surface", "FFFFFF", "0D2429"),
+        ("separator", "CFE5E2", "143238"),
+        ("hero", "0F766E", "0F3A40"),
+        ("heroText", "FFFFFF", "E8FAF8"),
+        ("heroSecondary", "CCFBF1", "9CC5C2"),
+        ("accent", "5EEAD4", "2DE2C8"),
+        ("onAccent", "06302C", "06161A"),
+        ("textPrimary", "06262A", "E8FAF8"),
+        ("textSecondary", "3F6368", "9CC5C2"),
+        ("brand", "0B5F58", "5EEAD4"),
+        ("dueToday", "B42318", "FDA29B"),
+        ("dueTodayBackground", "FEE4E2", "3B1420"),
+        ("dueSoon", "93370D", "FEC84B"),
+        ("dueSoonBackground", "FEF0C7", "3A2A05"),
+        ("dueLater", "3F6368", "A9D3D0"),
+        ("dueLaterBackground", "D5EFEC", "143238"),
+        ("paid", "067647", "6CE9A6"),
     ]
 
     @Test("ColorToken has exactly the tokens in the issue table")
@@ -36,6 +41,7 @@ struct ColorTokenTests {
             .vademBackground, .vademSurface, .vademSeparator, .vademTextPrimary, .vademTextSecondary,
             .vademBrand, .vademDueToday, .vademDueTodayBackground, .vademDueSoon, .vademDueSoonBackground,
             .vademDueLater, .vademDueLaterBackground, .vademPaid,
+            .vademHero, .vademHeroText, .vademHeroSecondary, .vademAccent, .vademOnAccent,
         ]
         #expect(statics.count == Self.table.count)
     }
