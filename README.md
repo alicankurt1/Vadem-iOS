@@ -10,7 +10,7 @@ This repository is also an experiment in **developing with an AI agent team**. A
 
 ## Status
 
-🚧 Phase 11 — in progress. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, the `PaymentRepository` storage contract, and `MonthlySchedule` (what is due in a month, with totals). Persistence (Phase 9) is done: payments are stored on device with SwiftData. The design system (theme, card faces, amounts) is in; its card text contrast and navigation bar fixes ([#36](https://github.com/alicankurt1/Vadem-iOS/issues/36)) come next, then the rest of the home screen. Home has a strip of the next 6 months with totals; tapping a month selects it. Below it, a month calendar shows each day's total; tapping a day filters the list to that day. A "+" button on Home opens a form to add an installment plan, with validation; cards are added from a separate form (from the installment form or from a prompt on Home when no card exists).
+🚧 Phase 12 (notifications) is next; Phase 11 (forms) is done. The pipeline is complete; features go through it. Domain so far: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, `InstallmentItem`, `SubscriptionItem`, the `PaymentRepository` storage contract, and `MonthlySchedule` (what is due in a month, with totals). Persistence (Phase 9) is done: payments are stored on device with SwiftData. The design system (theme, card faces, amounts) is in; its card text contrast and navigation bar fixes ([#36](https://github.com/alicankurt1/Vadem-iOS/issues/36)) come next, then the rest of the home screen. Home has a strip of the next 6 months with totals; tapping a month selects it. Below it, a month calendar shows each day's total; tapping a day filters the list to that day. A "+" button on Home opens a form to add an installment plan, with validation; cards are added from a separate form (from the installment form or from a prompt on Home when no card exists). Tapping a payment row or card subtotal on Home opens it for editing, and the edit screen can delete it (a card that still has payments cannot be deleted).
 
 ## The pipeline
 
@@ -75,7 +75,17 @@ One row per pipeline run, from [`metrics/runs.jsonl`](metrics/runs.jsonl) (`scri
 | #26 | #27 | 11 | 8 (0) | 1 | 0 / 0 / 3 / 1 | — |
 | #30 | #31 | 15 | 7 (0) | 1 | 0 / 0 / 1 / 2 | — |
 | #33 | #38 | 131 | 12 (0) | 3 | 0 / 2 / 3 / 5 | 1 / 9 / 4 / 2 |
-| **9 runs** | | **238** | **64 (0)** | **10** | **0 / 3 / 13 / 21** | **1 / 14 / 5 / 4** |
+| #36 | #40 | 83 | 7 (0) | 2 | 0 / 0 / 2 / 4 | 0 / 1 / 0 / 0 |
+| #42 | #43 | 9 | 7 (0) | 1 | 0 / 0 / 2 / 4 | — |
+| #45 | #46 | 13 | 11 (0) | 2 | 0 / 1 / 5 / 1 | 0 / 1 / 0 / 0 |
+| #50 | #51 | 10 | 3 (0) | 0 | 0 / 0 / 3 / 1 | 0 / 0 / 0 / 0 |
+| #53 | #55 | 116 | 6 (0) | 1 | 0 / 0 / 2 / 2 | 0 / 2 / 0 / 0 |
+| #59 | #60 | 118 | 2 (0) | 0 | 0 / 0 / 0 / 0 | — |
+| #62 | #63 | 90 | 12 (1) | 3 | 0 / 1 / 4 / 6 | 0 / 2 / 0 / 0 |
+| #65 | #68 | 37 | 2 (0) | 1 | 0 / 0 / 4 / 3 | 0 / 3 / 0 / 0 |
+| #66 | #70 | 33 | 6 (0) | 1 | 0 / 0 / 1 / 2 | 0 / 2 / 0 / 0 |
+| #67 | #74 | 150 | 11 (0) | 3 | 0 / 0 / 5 / 2 | 0 / 3 / 0 / 0 |
+| **19 runs** | | **897** | **131 (1)** | **24** | **0 / 5 / 41 / 46** | **1 / 28 / 5 / 4** |
 <!-- metrics:end -->
 
 ## Using it

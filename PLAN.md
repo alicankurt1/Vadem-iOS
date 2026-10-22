@@ -50,7 +50,7 @@ Principles:
 - [x] **Phase 8 — Domain (TDD)**: `Money`, `YearMonth`, `InstallmentPlan`, `Subscription`, `Card`, tracked items, `MonthlySchedule` (#4, #7, #15, #19, #23, #26, #42).
 - [x] **Phase 9 — Persistence**: SwiftData with `VersionedSchema` and App Group container (#30, PRs #22, #29).
 - [x] **Phase 10 — Home**: design system, this month's payments, upcoming months, calendar (#33, #36, #45, #50, #53).
-- [ ] **Phase 11 — Forms**: add installment (#62), add card (#65), add subscription (#66) are done; **edit and delete (#67) is open** and closes this phase.
+- [x] **Phase 11 — Forms**: add installment (#62), add card (#65), add subscription (#66), edit and delete (#67, PR #74).
 - [ ] **Phase 12 — Notifications**: rolling window (iOS 64 pending limit). Not started; needs issues.
 - [ ] **Phase 13 — Widget + App Intents (Siri)**.
 - [ ] **Phase 14 — Swift Charts analytics**.
@@ -59,6 +59,5 @@ Principles:
 
 ## Next up
 
-1. `/ship #67` (edit/delete): closes Phase 11. Extend `FunctionalFlowTests` as part of it (edit and delete flows).
-2. Loose ends, small: a subscription flow in `FunctionalFlowTests` (#70 is merged now); the Phase 6 screen recording.
-3. Phase 12: write the first issues (schedule notifications, permission flow, rolling window), then `/ship` them.
+1. Loose ends, small: a card list screen (an unused card cannot be deleted from the UI, found in #67); a subscription flow in `FunctionalFlowTests`; the Phase 6 screen recording.
+2. Phase 12: write the first issues (schedule notifications, permission flow, rolling window), then `/ship` them.
