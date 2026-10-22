@@ -7,15 +7,23 @@ public struct HeroPill: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.semibold))
+            .heroPillLabel()
+            // Basılı durum yalnızca saydamlıkla gösterilir; sürekli animasyon yok.
+            .opacity(configuration.isPressed ? 0.8 : 1)
+    }
+}
+
+extension View {
+    // Hap görünümü; düğme stili uygulanamayan yerlerde (örn. Menu etiketi) de aynısı kullanılır.
+    @MainActor
+    func heroPillLabel() -> some View {
+        font(.subheadline.weight(.semibold))
             .foregroundStyle(Color.vademOnAccent)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             // En az 44 pt dokunma alanı.
             .frame(minHeight: 44)
             .background(Color.vademAccent, in: .capsule)
-            // Basılı durum yalnızca saydamlıkla gösterilir; sürekli animasyon yok.
-            .opacity(configuration.isPressed ? 0.8 : 1)
             .contentShape(.capsule)
     }
 }

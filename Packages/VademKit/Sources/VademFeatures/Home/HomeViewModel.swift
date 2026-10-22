@@ -106,6 +106,11 @@ public final class HomeViewModel {
     public private(set) var schedule: MonthlySchedule?
     /// The total due in ``month``; zero when empty or after an error.
     public private(set) var total: Money = .zero
+    /// The part of ``total`` due by the injected today: payments due today or earlier in the
+    /// current month, the whole ``total`` for a past month, zero for a future month.
+    ///
+    /// Computed from the whole month, so ``selectedDay`` does not change it; zero after an error.
+    public private(set) var dueSoFar: Money = .zero
     /// Subtotals of the cards with payments in ``month``, in the repository's card order.
     public private(set) var cardSubtotals: [CardSubtotal] = []
     /// The payments of ``month``, in schedule order; only those due on ``selectedDay`` when a day is selected.
@@ -282,6 +287,7 @@ public final class HomeViewModel {
             // Hata sessizce boş liste olmaz; ekranda hata durumu gösterilir.
             schedule = nil
             total = .zero
+            dueSoFar = .zero
             cardSubtotals = []
             allRows = []
             rows = []
@@ -315,6 +321,9 @@ public final class HomeViewModel {
         }
         self.schedule = schedule
         total = schedule.total
+        dueSoFar = Self.dueSoFar(
+            of: schedule.entries, month: schedule.month, todayMonth: todayMonth, todayDay: todayDay
+        )
         // Durum ayın tamamına göre: seçili günün boş olması ayı "boş" yapmaz.
         state = schedule.entries.isEmpty ? .empty : .loaded
         applySelection()
@@ -328,6 +337,24 @@ public final class HomeViewModel {
             rows = allRows
         }
         calendarDays = schedule.map(makeCalendarDays) ?? []
+    }
+
+    /// The sum of `entries` (all due in `month`) due on or before `todayDay` of `todayMonth`.
+    ///
+    /// Pure: a month before `todayMonth` gives the whole sum, a later month gives zero.
+    nonisolated static func dueSoFar(
+        of entries: [MonthlySchedule.Entry], month: YearMonth, todayMonth: YearMonth, todayDay: Int
+    ) -> Money {
+        // Geçmiş ayın tamamı vadesi gelmiş, gelecek ayın hiçbiri gelmemiştir.
+        let due: [MonthlySchedule.Entry]
+        if month < todayMonth {
+            due = entries
+        } else if month > todayMonth {
+            due = []
+        } else {
+            due = entries.filter { $0.dueDate.day <= todayDay }
+        }
+        return due.reduce(Money.zero) { $0 + $1.amount }
     }
 
     private func makeCalendarDays(_ schedule: MonthlySchedule) -> [CalendarDay] {
