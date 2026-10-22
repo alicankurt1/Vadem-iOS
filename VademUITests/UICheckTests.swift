@@ -165,7 +165,7 @@ final class UICheckTests: XCTestCase {
         try capture(
             screen: "add-subscription",
             launchArguments: ["-ui-sample-data", "-ui-add-subscription"],
-            sections: [.top, .scrolled(to: "addSubscription.firstMonth", named: "first-month")]
+            sections: [.top, .scrolled(to: "addSubscription.renewalDay", named: "renewal")]
         ) { app, variant in
             XCTAssertTrue(
                 app.textFields["addSubscription.title"].waitForExistence(timeout: 5),
@@ -230,6 +230,12 @@ final class UICheckTests: XCTestCase {
             sections: [.top]
         ) { app, variant in
             let row = app.descendants(matching: .any)["addSubscription.firstMonth"]
+            // AX5'te satır kaydırılana kadar oluşmaz (lazy liste): önce kaydır, sonra doğrula.
+            var attempts = 0
+            while !row.exists && attempts < 5 {
+                app.swipeUp()
+                attempts += 1
+            }
             XCTAssertTrue(
                 row.waitForExistence(timeout: 5),
                 "[ui-check] add-subscription-month-list__\(variant.name): first month row not found"
