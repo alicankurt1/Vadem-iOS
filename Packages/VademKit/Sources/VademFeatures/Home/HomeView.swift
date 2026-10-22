@@ -3,7 +3,9 @@ import VademCore
 
 /// The Home screen: how much is due in the selected month, per card, and when.
 ///
-/// The app's "Vadem" title and version label sit at the top, above the month.
+/// The app's "Vadem" title and version label sit at the top, above the month. Below the month
+/// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" menu
+/// (`home.add`) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
@@ -20,6 +22,10 @@ public struct HomeView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // Takvim düğmesinin kaydırma hedefi.
+    private static let calendarAnchor = "home.calendarAnchor"
 
     /// Creates the screen for `model`.
     ///
@@ -78,7 +84,7 @@ public struct HomeView: View {
     }
 
     public var body: some View {
-        // NavigationStack "+" düğmesinin çubuğunu verir; içerik saatin altına da girmez.
+        // NavigationStack çubuğu verir; içerik saatin altına girmez.
         NavigationStack {
             scrollContent
                 // Kart formu kapanınca Home yeniden yüklenir; yeni kart ve "kart ekle" girişi güncellenir.
@@ -92,31 +98,6 @@ public struct HomeView: View {
                 .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
                 #endif
-                .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        // "+" bir menü: taksit mi abonelik mi eklenecek, kullanıcı seçer.
-                        Menu {
-                            Button {
-                                addModel = model.makeAddInstallmentModel()
-                            } label: {
-                                Label("Installment", systemImage: "creditcard")
-                            }
-                            .accessibilityLabel("Add installment")
-                            .accessibilityIdentifier("home.add.installment")
-                            Button {
-                                addSubscriptionModel = model.makeAddSubscriptionModel()
-                            } label: {
-                                Label("Subscription", systemImage: "arrow.triangle.2.circlepath")
-                            }
-                            .accessibilityLabel("Add subscription")
-                            .accessibilityIdentifier("home.add.subscription")
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                        .accessibilityLabel("Add payment")
-                        .accessibilityIdentifier("home.add")
-                    }
-                }
         }
         // Form kapanınca (kaydedilse de iptal edilse de) Home yeniden yüklenir; yeni ödeme hemen görünür.
         .sheet(item: $addModel, onDismiss: { model.reload() }) { addModel in
@@ -128,29 +109,89 @@ public struct HomeView: View {
     }
 
     private var scrollContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                AppHeader()
-                monthBar
-                // Ay şeridi seçili ayın altında, listenin üstünde.
-                if !model.upcoming.isEmpty {
-                    UpcomingStrip(months: model.upcoming) { month in
-                        model.select(month: month)
-                    }
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    AppHeader()
+                    monthBar
+                    // Hata durumunda da görünür (toplam sıfır): ekleme menüsü her zaman erişilebilir.
+                    hero(proxy)
+                    sections
                 }
-                // Ay takvimi şeridin altında; bir güne dokunmak listeyi o güne süzer.
-                if !model.calendarDays.isEmpty {
-                    MonthCalendar(days: model.calendarDays, weekdaySymbols: model.calendarWeekdaySymbols) { day in
-                        model.select(day: day)
-                    }
-                }
-                content
+                // 20 pt yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            // 20 pt yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.vademBackground.ignoresSafeArea())
         }
-        .background(Color.vademBackground.ignoresSafeArea())
+    }
+
+    // Ay şeridi ve takvim; hata durumunda ikisi de boş olduğundan görünmez.
+    @ViewBuilder
+    private var sections: some View {
+        // Ay şeridi seçili ayın altında, listenin üstünde.
+        if !model.upcoming.isEmpty {
+            UpcomingStrip(months: model.upcoming) { month in
+                model.select(month: month)
+            }
+        }
+        // Ay takvimi şeridin altında; bir güne dokunmak listeyi o güne süzer.
+        if !model.calendarDays.isEmpty {
+            MonthCalendar(days: model.calendarDays, weekdaySymbols: model.calendarWeekdaySymbols) { day in
+                model.select(day: day)
+            }
+            .id(Self.calendarAnchor)
+        }
+        content
+    }
+
+    // Ayın toplamı ve vadesi gelen kısmı; altında ekleme menüsü ve takvim düğmesi.
+    private func hero(_ proxy: ScrollViewProxy) -> some View {
+        HeroPanel(
+            title: "Due this month", total: model.total, paid: model.dueSoFar,
+            captionPrefix: "Due so far", summaryIdentifier: "home.total"
+        ) {
+            addMenu
+            // Takvim gizliyken (hata durumu) kaydırılacak yer yok; düğme de gösterilmez.
+            if !model.calendarDays.isEmpty {
+                Button {
+                    // Reduce Motion veya -ui-static-motion açıkken animasyonsuz kaydırır.
+                    withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+                        proxy.scrollTo(Self.calendarAnchor, anchor: .top)
+                    }
+                } label: {
+                    Label("Calendar", systemImage: "calendar")
+                }
+                .buttonStyle(.heroPill)
+                .accessibilityIdentifier("home.showCalendar")
+            }
+        }
+    }
+
+    // "Add" bir menü: taksit mi abonelik mi eklenecek, kullanıcı seçer.
+    // Menu düğme stili almadığından etiket hap görünümüyle elle biçimlenir.
+    private var addMenu: some View {
+        Menu {
+            Button {
+                addModel = model.makeAddInstallmentModel()
+            } label: {
+                Label("Installment", systemImage: "creditcard")
+            }
+            .accessibilityLabel("Add installment")
+            .accessibilityIdentifier("home.add.installment")
+            Button {
+                addSubscriptionModel = model.makeAddSubscriptionModel()
+            } label: {
+                Label("Subscription", systemImage: "arrow.triangle.2.circlepath")
+            }
+            .accessibilityLabel("Add subscription")
+            .accessibilityIdentifier("home.add.subscription")
+        } label: {
+            Label("Add", systemImage: "plus")
+                .heroPillLabel()
+        }
+        .accessibilityLabel("Add payment")
+        .accessibilityIdentifier("home.add")
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
@@ -195,12 +236,10 @@ public struct HomeView: View {
                 .accessibilityIdentifier("home.error")
         case .empty:
             if !model.hasCards { addCardPrompt }
-            totalSection
             messageView(title: "Nothing due this month", detail: nil, systemImage: "checkmark.circle")
                 .accessibilityIdentifier("home.empty")
         case .loaded:
             if !model.hasCards { addCardPrompt }
-            totalSection
             if !model.cardSubtotals.isEmpty {
                 subtotalsSection
             }
@@ -217,6 +256,12 @@ public struct HomeView: View {
 
     // Hiç kart yokken taksit eklenemez; önce kart eklemeye yönlendirir.
     private var addCardPrompt: some View {
+        SurfaceCard {
+            addCardPromptContent
+        }
+    }
+
+    private var addCardPromptContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Add a card to start tracking installments.")
                 .font(.body)
@@ -233,9 +278,6 @@ public struct HomeView: View {
             .buttonStyle(.plain)
             .accessibilityIdentifier("home.addCard")
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.vademSurface, in: .rect(cornerRadius: 12))
     }
 
     // Gün süzgecini kaldırır; tüm ayın ödemeleri yeniden listelenir.
@@ -253,47 +295,32 @@ public struct HomeView: View {
         .accessibilityIdentifier("home.showAll")
     }
 
-    // Ayın toplamı; VoiceOver'da tek öğe ve başlık.
-    private var totalSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Bölüm etiketleri koyu temada da kontrast denetimini geçsin diye birincil renkte;
-            // hiyerarşi yazı boyutu ve ağırlığıyla kurulur.
-            Text("Total due")
-                .font(.headline)
-                .foregroundStyle(Color.vademTextPrimary)
-            AmountText(model.total)
-                .font(.largeTitle.weight(.bold))
-                .foregroundStyle(Color.vademTextPrimary)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
-        .accessibilityIdentifier("home.total")
-    }
-
     private var subtotalsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionTitle("By card", identifier: "home.cards")
-            ForEach(Array(model.cardSubtotals.enumerated()), id: \.element.id) { index, subtotal in
-                // Alt toplama dokunmak kartın düzenleme formunu açar.
-                Button {
-                    addCardModel = model.makeEditCardModel(id: subtotal.id)
-                } label: {
-                    adaptiveStack {
-                        Text(subtotal.name)
-                            .font(.body)
-                            .foregroundStyle(Color.vademTextPrimary)
-                        if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
-                        AmountText(subtotal.amount)
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(Color.vademTextPrimary)
+            SurfaceCard {
+                ForEach(Array(model.cardSubtotals.enumerated()), id: \.element.id) { index, subtotal in
+                    // Alt toplama dokunmak kartın düzenleme formunu açar.
+                    Button {
+                        addCardModel = model.makeEditCardModel(id: subtotal.id)
+                    } label: {
+                        adaptiveStack {
+                            Text(subtotal.name)
+                                .font(.body)
+                                .foregroundStyle(Color.vademTextPrimary)
+                            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
+                            AmountText(subtotal.amount)
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(Color.vademTextPrimary)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(.rect)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                    .contentShape(.rect)
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityHint("Edits the card")
+                    .accessibilityIdentifier("home.card.\(index)")
                 }
-                .buttonStyle(.plain)
-                .accessibilityElement(children: .combine)
-                .accessibilityHint("Edits the card")
-                .accessibilityIdentifier("home.card.\(index)")
             }
         }
     }
@@ -306,24 +333,19 @@ public struct HomeView: View {
                 showAllButton
                     .padding(.bottom, 8)
             }
-            ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
-                // Satıra dokunmak ödemenin formunu düzenleme modunda açar; VoiceOver etiketi aynı kalır.
-                Button {
-                    edit(row)
-                } label: {
-                    // Dikey boşluk da dokunma alanına dahil.
-                    HomeRowView(row: row)
-                        .padding(.vertical, 12)
-                        .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("Edits the payment")
-                .accessibilityIdentifier("home.row.\(index)")
-                .overlay(alignment: .bottom) {
-                    Rectangle()
-                        .fill(Color.vademSeparator)
-                        .frame(height: 1)
-                        .accessibilityHidden(true)
+            SurfaceCard {
+                ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
+                    // Satıra dokunmak ödemenin formunu düzenleme modunda açar; VoiceOver etiketi aynı kalır.
+                    Button {
+                        edit(row)
+                    } label: {
+                        HomeRowView(row: row)
+                            .frame(minHeight: 44)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Edits the payment")
+                    .accessibilityIdentifier("home.row.\(index)")
                 }
             }
         }
@@ -591,39 +613,22 @@ struct AppHeader: View {
     }
 }
 
-/// One payment: title, card, installment number, due day, amount and chip; read as one element.
+/// One payment as a ``PaymentRow`` (due day, title, "card · n/m", amount, chip), read as one
+/// element with the view model's label.
 @MainActor
 struct HomeRowView: View {
     let row: HomeViewModel.Row
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     var body: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
-        layout {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(row.title)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.vademTextPrimary)
-                Text(detailText)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.vademTextSecondary)
-                Text("Due \(row.dueText)")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.vademTextSecondary)
-            }
-            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
-            VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: 6) {
-                AmountText(row.amount)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.vademTextPrimary)
-                DueChip(row.chipText, kind: row.chipKind)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Satır VoiceOver'da tek öğe; etiket view model'den gelir.
+        PaymentRow(
+            day: row.entry.dueDate.day,
+            title: row.title,
+            subtitle: detailText,
+            amount: row.amount,
+            dueTitle: row.chipText,
+            dueKind: row.chipKind
+        )
+        // Satır VoiceOver'da tek öğe; etiket view model'den gelir (PaymentRow'un etiketinin yerine).
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(row.accessibilityLabel)
     }

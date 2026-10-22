@@ -8,16 +8,31 @@ public struct HeroPanel<Actions: View>: View {
     private let title: String
     private let total: Money
     private let paid: Money
+    private let captionPrefix: String
+    private let summaryIdentifier: String?
     private let actions: Actions
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// Creates a panel showing `paid` of `total`, with `actions` (usually ``HeroPill`` buttons) below.
-    public init(title: String, total: Money, paid: Money, @ViewBuilder actions: () -> Actions) {
+    ///
+    /// The caption reads `"<captionPrefix> ₺1.200,00 of ₺4.825,50"`, e.g. `"Due so far …"` on Home.
+    /// `summaryIdentifier` is the accessibility identifier of the summary (title, total, caption),
+    /// a single header element.
+    public init(
+        title: String,
+        total: Money,
+        paid: Money,
+        captionPrefix: String = HeroPanel.defaultCaptionPrefix,
+        summaryIdentifier: String? = nil,
+        @ViewBuilder actions: () -> Actions
+    ) {
         self.title = title
         self.total = total
         self.paid = paid
+        self.captionPrefix = captionPrefix
+        self.summaryIdentifier = summaryIdentifier
         self.actions = actions()
     }
 
@@ -43,12 +58,16 @@ public struct HeroPanel<Actions: View>: View {
                 .font(.largeTitle.weight(.bold))
                 .foregroundStyle(Color.vademHeroText)
             progressBar
-            Text(Self.caption(paid: paid, total: total))
+            Text(Self.caption(paid: paid, total: total, prefix: captionPrefix))
                 .font(.footnote)
                 .foregroundStyle(Color.vademHeroSecondary)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Self.accessibilitySummary(title: title, paid: paid, total: total))
+        .accessibilityLabel(Self.accessibilitySummary(
+            title: title, paid: paid, total: total, captionPrefix: captionPrefix
+        ))
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityIdentifier(summaryIdentifier ?? "")
     }
 
     // Çubuk yalnızca görsel; bilgisi özet etiketinde.
@@ -79,6 +98,9 @@ public struct HeroPanel<Actions: View>: View {
         .padding(.top, 4)
     }
 
+    /// The caption's default first word: `"Paid"`.
+    public nonisolated static var defaultCaptionPrefix: String { "Paid" }
+
     /// The share of `total` already paid, clamped to `0...1`.
     ///
     /// Pure: a zero or negative total and a negative paid amount give `0`, overpaying gives `1`.
@@ -90,26 +112,29 @@ public struct HeroPanel<Actions: View>: View {
         return min(max(NSDecimalNumber(decimal: ratio).doubleValue, 0), 1)
     }
 
-    // Görünen açıklama: "Paid ₺1.200,00 of ₺4.825,50".
-    nonisolated static func caption(paid: Money, total: Money) -> String {
-        "Paid " + AmountText.format(paid) + " of " + AmountText.format(total)
+    // Görünen açıklama: "Paid ₺1.200,00 of ₺4.825,50" (ön ek değiştirilebilir, örn. "Due so far").
+    nonisolated static func caption(paid: Money, total: Money, prefix: String = defaultCaptionPrefix) -> String {
+        prefix + " " + AmountText.format(paid) + " of " + AmountText.format(total)
     }
 
     // Okunan açıklama: "Paid 1.200,00 Türk lirası of 4.825,50 Türk lirası".
-    nonisolated static func spokenCaption(paid: Money, total: Money) -> String {
-        "Paid " + AmountText.spokenLabel(paid) + " of " + AmountText.spokenLabel(total)
+    nonisolated static func spokenCaption(paid: Money, total: Money, prefix: String = defaultCaptionPrefix) -> String {
+        prefix + " " + AmountText.spokenLabel(paid) + " of " + AmountText.spokenLabel(total)
     }
 
     // Panelin okunan özeti: "This month, 4.825,50 Türk lirası, Paid 1.200,00 Türk lirası of 4.825,50 Türk lirası".
-    nonisolated static func accessibilitySummary(title: String, paid: Money, total: Money) -> String {
-        [title, AmountText.spokenLabel(total), spokenCaption(paid: paid, total: total)].joined(separator: ", ")
+    nonisolated static func accessibilitySummary(
+        title: String, paid: Money, total: Money, captionPrefix: String = defaultCaptionPrefix
+    ) -> String {
+        [title, AmountText.spokenLabel(total), spokenCaption(paid: paid, total: total, prefix: captionPrefix)]
+            .joined(separator: ", ")
     }
 }
 
 public extension HeroPanel where Actions == EmptyView {
     /// Creates a panel without action pills.
-    init(title: String, total: Money, paid: Money) {
-        self.init(title: title, total: total, paid: paid) { EmptyView() }
+    init(title: String, total: Money, paid: Money, captionPrefix: String = HeroPanel.defaultCaptionPrefix) {
+        self.init(title: title, total: total, paid: paid, captionPrefix: captionPrefix) { EmptyView() }
     }
 }
 
