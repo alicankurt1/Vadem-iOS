@@ -52,6 +52,8 @@ final class FunctionalFlowTests: XCTestCase {
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
+        // `home.add` bir menü (Installment / Subscription): önce taksit seçilir.
+        app.buttons["home.add.installment"].tap()
 
         // Boş formda kaydet kapalı.
         let titleField = app.textFields["addInstallment.title"]
@@ -99,6 +101,7 @@ final class FunctionalFlowTests: XCTestCase {
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
+        app.buttons["home.add.installment"].tap()
 
         let titleField = app.textFields["addInstallment.title"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
