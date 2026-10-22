@@ -310,6 +310,154 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    // MARK: Düzenleme ve silme (#67)
+
+    /// Silme düğmesi görünene dek formu yukarı kaydırır (en çok 6 kez); düğmeyi döndürür.
+    @MainActor
+    private func revealDelete(prefix: String, in app: XCUIApplication) -> XCUIElement {
+        let button = app.buttons["\(prefix).delete"]
+        _ = button.waitForExistence(timeout: 5)
+        for _ in 0..<6 where !button.isHittable {
+            app.swipeUp()
+        }
+        return button
+    }
+
+    @MainActor
+    func testEditInstallmentForm() throws {
+        // Dolu taksit formu: değerler hazır, Kaydet açık; silme bölümü ayrı parçada.
+        try capture(
+            screen: "edit-installment",
+            launchArguments: ["-ui-sample-data", "-ui-edit-installment"],
+            sections: [.top, .scrolled(to: "addInstallment.delete", named: "delete")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addInstallment.title"].waitForExistence(timeout: 5),
+                "[ui-check] edit-installment__\(variant.name): title field not found"
+            )
+            XCTAssertTrue(
+                app.buttons["addInstallment.save"].isEnabled,
+                "[ui-check] edit-installment__\(variant.name): save must be enabled with the saved values"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditInstallmentDeleteConfirmation() throws {
+        // Silme onayı açık.
+        try capture(
+            screen: "edit-installment-confirm",
+            launchArguments: ["-ui-sample-data", "-ui-edit-installment"],
+            sections: [.top]
+        ) { app, variant in
+            let delete = revealDelete(prefix: "addInstallment", in: app)
+            XCTAssertTrue(delete.exists, "[ui-check] edit-installment-confirm__\(variant.name): delete button not found")
+            delete.tap()
+            XCTAssertTrue(
+                app.buttons["addInstallment.delete.confirm"].waitForExistence(timeout: 5),
+                "[ui-check] edit-installment-confirm__\(variant.name): confirmation not shown"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditSubscriptionForm() throws {
+        // Dolu abonelik formu.
+        try capture(
+            screen: "edit-subscription",
+            launchArguments: ["-ui-sample-data", "-ui-edit-subscription"],
+            sections: [.top, .scrolled(to: "addSubscription.delete", named: "delete")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addSubscription.title"].waitForExistence(timeout: 5),
+                "[ui-check] edit-subscription__\(variant.name): title field not found"
+            )
+            XCTAssertTrue(
+                app.buttons["addSubscription.save"].isEnabled,
+                "[ui-check] edit-subscription__\(variant.name): save must be enabled with the saved values"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditSubscriptionDeleteConfirmation() throws {
+        // Abonelik silme onayı açık.
+        try capture(
+            screen: "edit-subscription-confirm",
+            launchArguments: ["-ui-sample-data", "-ui-edit-subscription"],
+            sections: [.top]
+        ) { app, variant in
+            let delete = revealDelete(prefix: "addSubscription", in: app)
+            XCTAssertTrue(delete.exists, "[ui-check] edit-subscription-confirm__\(variant.name): delete button not found")
+            delete.tap()
+            XCTAssertTrue(
+                app.buttons["addSubscription.delete.confirm"].waitForExistence(timeout: 5),
+                "[ui-check] edit-subscription-confirm__\(variant.name): confirmation not shown"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditCardForm() throws {
+        // Dolu kart formu.
+        try capture(
+            screen: "edit-card",
+            launchArguments: ["-ui-sample-data", "-ui-edit-card"],
+            sections: [.top, .scrolled(to: "addCard.delete", named: "delete")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addCard.name"].waitForExistence(timeout: 5),
+                "[ui-check] edit-card__\(variant.name): name field not found"
+            )
+            XCTAssertTrue(
+                app.buttons["addCard.save"].isEnabled,
+                "[ui-check] edit-card__\(variant.name): save must be enabled with the saved values"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditCardDeleteConfirmation() throws {
+        // Kart silme onayı açık.
+        try capture(
+            screen: "edit-card-confirm",
+            launchArguments: ["-ui-sample-data", "-ui-edit-card"],
+            sections: [.top]
+        ) { app, variant in
+            let delete = revealDelete(prefix: "addCard", in: app)
+            XCTAssertTrue(delete.exists, "[ui-check] edit-card-confirm__\(variant.name): delete button not found")
+            delete.tap()
+            XCTAssertTrue(
+                app.buttons["addCard.delete.confirm"].waitForExistence(timeout: 5),
+                "[ui-check] edit-card-confirm__\(variant.name): confirmation not shown"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditCardInUseError() throws {
+        // Örnek veride kart kullanımda: silme onaylanınca ret mesajı görünür.
+        try capture(
+            screen: "edit-card-in-use",
+            launchArguments: ["-ui-sample-data", "-ui-edit-card"],
+            sections: [.top]
+        ) { app, variant in
+            let delete = revealDelete(prefix: "addCard", in: app)
+            XCTAssertTrue(delete.exists, "[ui-check] edit-card-in-use__\(variant.name): delete button not found")
+            delete.tap()
+            let confirm = app.buttons["addCard.delete.confirm"]
+            XCTAssertTrue(
+                confirm.waitForExistence(timeout: 5),
+                "[ui-check] edit-card-in-use__\(variant.name): confirmation not shown"
+            )
+            confirm.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addCard.failure"].waitForExistence(timeout: 5),
+                "[ui-check] edit-card-in-use__\(variant.name): in-use message not shown"
+            )
+        }
+    }
+
     @MainActor
     func testGalleryScreen() throws {
         // Galeri uzun bir ekran; başlık, çipler, tutarlar ve kartlar ayrı görüntülerde yakalanır (#33).
