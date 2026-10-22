@@ -279,3 +279,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Konuma bağlı bulgu:** Delete satırlarında "Dynamic Type partially unsupported" çıktı; aynı satır ekranda daha yukarıda geçiyor, tembel `Form` içinde aşağıda geçmiyor. Harness PR #75 bunu `[a11y-lazy]` notu yaptı; neden hipotez, kanıtlanmadı.
 - **Metrikler:** 150 dk, 11 verify (0 kırmızı), 3 düzeltme turu; reviewer 0 / 0 / 5 / 2, UI 0 / 3 / 0 / 0. Açık kalan: Delete satırı `Color.red` ve düz buton (destructive rol / kontrast çifti yok); kullanılmayan kartı silmenin UI yolu yok (kart listesi ekranı ayrı issue).
 - **Ders:** Sistem bileşeninin davranışı iOS sürümüne göre değişir (dialog, popover); audit kırılınca bileşeni değiştirmek doğru yol. Harness sorunları (#73, #75) issue dalında değil kendi PR'larında çözüldü, böylece özellik PR'ı temiz kaldı.
+
+### Koşu #77 — B2b tasarım token'ları
+
+- **Ne yapıldı:** Renk token'ları teal ailesine taşındı (13 set güncellendi, 5 yeni: hero, heroText, heroSecondary, accent, onAccent); sadece token, bileşen yeniden stillenmedi (PR #79).
+- **Kontrast:** Hiçbir hex ayarlanmadı; `TokenContrastTests.pairs` 3 yeni çift ekledi, en sıkı çift heroSecondary/hero 4,86:1 (light). Kontrast garantisi UI audit'te değil birim testte.
+- **UI capture yakaladı:** Tam galeri testi (`testGalleryScreen`) 3 dk'lık test süresini aştı (3 koşuda tekrarlandı). Neden özellik dalında değil, harness PR #78'de testi bölerek çözüldü; PR #79 bu yüzden #78'e bağlıydı.
+- **Metrikler:** 52 dk, 2 verify (0 kırmızı), 0 düzeltme turu; reviewer yalnızca 1 nit.
+- **Ders:** Harness sınırı (süre) yeni içerikle aşılabilir; sorunu kendi PR'ında çözmek özellik PR'ını temiz tutar. Bağımlılık PR açıklamasında yazılı olmalı.
