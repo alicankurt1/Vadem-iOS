@@ -5,8 +5,12 @@
 #
 # Usage: scripts/ui-check.sh
 #   UI_CHECK_DEVICE   simulator name (default: "iPhone 17")
-#   UI_CHECK_ONLY     screens to capture, comma separated (e.g. "gallery"); default: all.
-#                     Screen "foo" is the test method testFooScreen in UICheckTests.
+#   UI_CHECK_ONLY     tests to run, comma separated; default: all. A name is matched case-insensitively
+#                     against the test methods of UICheckTests, as given ("testAddCardForm"), without the
+#                     "test" prefix ("addCardForm") or as a screen ("gallery" = testGalleryScreen).
+#                     An unknown name fails the run and lists the available tests.
+#   UI_CHECK_APPEARANCES  appearances to run, space separated (default: "light dark"); "light" alone
+#                     halves a targeted run. The AX5 text variant runs in the light pass.
 #
 # Output: .build/ui-check/latest/
 #   screenshots/<screen>__<variant>.png
@@ -25,7 +29,10 @@ cd "$ROOT"
 
 DEVICE="${UI_CHECK_DEVICE:-iPhone 17}"
 OUT="$ROOT/.build/ui-check/latest"
-APPEARANCES="light dark"
+APPEARANCES="${UI_CHECK_APPEARANCES:-light dark}"
+for appearance in $APPEARANCES; do
+  case "$appearance" in light|dark) ;; *) echo "  unknown appearance '$appearance' (light or dark)"; echo "UI-CHECK: FAIL"; exit 1 ;; esac
+done
 rm -rf "$OUT"
 mkdir -p "$OUT/screenshots"
 
@@ -54,11 +61,23 @@ echo "▶ simulator '$DEVICE' ($UDID)"
 xcrun simctl boot "$UDID" >/dev/null 2>&1
 xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || fail "simulator did not boot"
 
-# Seçici koşu: "gallery,root" → -only-testing:…/testGalleryScreen -only-testing:…/testRootScreen
+# Seçici koşu: "gallery,addCardForm" → -only-testing:…/testGalleryScreen -only-testing:…/testAddCardForm
+# Adlar UICheckTests'teki gerçek test metotlarına karşı doğrulanır; bilinmeyen ad koşuyu durdurur.
 ONLY_TESTING=()
 if [ -n "${UI_CHECK_ONLY:-}" ]; then
-  for screen in ${UI_CHECK_ONLY//,/ }; do
-    ONLY_TESTING+=("-only-testing:VademUITests/UICheckTests/test$(echo "${screen:0:1}" | tr '[:lower:]' '[:upper:]')${screen:1}Screen")
+  METHODS=$(grep -oE 'func test[A-Za-z0-9_]*' VademUITests/UICheckTests.swift | sed 's/^func //')
+  for name in ${UI_CHECK_ONLY//,/ }; do
+    wanted=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+    match=""
+    for method in $METHODS; do
+      lower=$(echo "$method" | tr '[:upper:]' '[:lower:]')
+      if [ "$lower" = "$wanted" ] || [ "$lower" = "test$wanted" ] || [ "$lower" = "test${wanted}screen" ]; then
+        match="$method"
+        break
+      fi
+    done
+    [ -n "$match" ] || fail "unknown test '$name' in UI_CHECK_ONLY; available: $(echo $METHODS | sed 's/test//g; s/ /, /g')"
+    ONLY_TESTING+=("-only-testing:VademUITests/UICheckTests/$match")
   done
 else
   ONLY_TESTING=("-only-testing:VademUITests/UICheckTests")

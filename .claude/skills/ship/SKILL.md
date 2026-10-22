@@ -20,7 +20,7 @@ Invoking `/ship #N` authorizes, for this issue only: agents committing on `issue
 ## 1. Plan (human gate)
 
 - `gh issue view N --comments`. Stop if the issue is closed or has no acceptance criteria.
-- Show the user a plan in ≤ 8 bullets: files/modules, approach, risks, whether the UI capture will run (diff touches `Vadem/`, `VademFeatures`, `VademUITests/`) and for which screens, and the branch name `issue/N-<slug>`.
+- Show the user a plan in ≤ 8 bullets: files/modules, approach, risks, whether the UI checks will run (diff touches `Vadem/`, `VademFeatures`, `VademUITests/`) and for which functional tests and capture tests (screens in the diff only), and the branch name `issue/N-<slug>`.
 - **Wait for "ok".** This is the only stop before the PR, apart from escalations below.
 
 ## 2. Branch
@@ -41,7 +41,11 @@ Tell the user one line after each agent returns (who, what, verify result).
 
 There is no UI check agent (off to save quota). You run the capture yourself, in parallel with the reviewer.
 
-1. If UI is touched: start `UI_CHECK_ONLY=<screens> scripts/ui-check.sh` **in the background** (`run_in_background`; omit `UI_CHECK_ONLY` only when shared UI changed). Otherwise note "UI capture skipped (domain-only)".
+1. If UI is touched, run two checks in the background, **one after the other** (they share the simulator), each with `run_in_background`:
+   - **Functional first:** `scripts/ui-functional.sh` (~1 min). A failure here is a product finding; the capture is pointless until it passes.
+   - **Capture only the task's own screens:** `UI_CHECK_ONLY=<tests> UI_CHECK_APPEARANCES=light scripts/ui-check.sh`, where `<tests>` are the `UICheckTests` capture tests of the screens **in the diff** (new or changed screens, e.g. `addSubscriptionForm,addSubscriptionMonthList`), not the screens that lead there. Add `dark` to `UI_CHECK_APPEARANCES` only when colors, backgrounds or tokens changed. Run the whole gallery (omit `UI_CHECK_ONLY`) **only** when shared UI changed (design tokens, shared components, `Vadem/` entry point, `UICheckTests` plumbing). Budget: a targeted run ~1–3 min; if it takes longer than 5 min, say so in the report.
+   If a new screen has no capture test yet, that is a test-writer gap: send it back before running.
+   If UI is not touched, note "UI capture skipped (domain-only)".
 2. Agent `reviewer`: issue N and branch only.
 3. When the capture finishes, read only its summary: `tail -40` of the output (counts, `[a11y]`, `[ui-check]`, `[ui-note]`, `[a11y-hidden]` lines, `UI-CHECK:`). Do not open `report.md` or screenshots by default.
 4. Look at a screenshot only when a line needs it to be judged, one at a time, from `screenshots/small/`. `[a11y-hidden]` and `[ui-note]` lines are not failures; mention them only if they hide a real problem.
@@ -50,7 +54,7 @@ There is no UI check agent (off to save quota). You run the capture yourself, in
 ## 5. Fix loop (max 2 rounds)
 
 - `blocker` / `major` / cheap `minor` product findings → coder; test gaps → test writer. Same independence rule: send findings, not the other agent's reasoning.
-- After fixes: verify, then re-review only `git diff <reviewed-head>..HEAD`, and re-run the UI capture (same `UI_CHECK_ONLY`) only if UI changed.
+- After fixes: verify, then re-review only `git diff <reviewed-head>..HEAD`, and re-run only what failed: the functional tests if they failed, and the capture limited to the failing tests (`UI_CHECK_ONLY=<failing tests>`) if UI changed. Never re-run the full gallery after a fix unless shared UI changed.
 - **Harness findings are never fixed on the issue branch.** Stop and tell the user: the factory needs its own `phase-N/...` PR first (as in #10 / PR #11).
 - After 2 rounds, remaining `minor` / `nit` findings go to the PR as "accepted" or "open". Remaining `blocker` / `major` → escalate, no PR.
 
