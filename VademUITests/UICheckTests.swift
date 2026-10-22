@@ -670,8 +670,15 @@ final class UICheckTests: XCTestCase {
                     // altına kayan içerik varsa bulgu oradan gelir; o içeriğin etiketleri nota yazılır.
                     let underStatusBar = findings.contains { $0.isContrast && !$0.hasElement }
                         ? Self.labelsUnderStatusBar(in: app) : []
+                    // Sistem alert'inin etiketleri (başlık, mesaj) uygulamanın yazı tipine bağlı değil: denetim bunları
+                    // "Dynamic Type kısmen desteklenmiyor" diye işaretliyor ama düzeltilemez. Alert açıkken, alert
+                    // çerçevesindeki (ya da elementsiz) Dynamic Type bulguları hata değil not olur.
+                    let alert = app.alerts.firstMatch
+                    let alertFrame: CGRect? = alert.exists ? alert.frame : nil
                     for finding in findings {
-                        if finding.isContrast {
+                        if let alertFrame, finding.isDynamicType, finding.frame.map({ alertFrame.insetBy(dx: -1, dy: -1).contains($0) }) ?? true {
+                            notes.append("[a11y-system] \(name): \(finding.text) (system alert)")
+                        } else if finding.isContrast {
                             let tag = retried.contains(finding.key) ? "[a11y-contrast]" : "[a11y-flaky]"
                             let detail = finding.hasElement || underStatusBar.isEmpty
                                 ? "" : " (content under the status bar: \(underStatusBar.joined(separator: ", ")))"
@@ -703,6 +710,7 @@ final class UICheckTests: XCTestCase {
         let key: String
         let frame: CGRect?
         let isContrast: Bool
+        let isDynamicType: Bool
         var hasElement: Bool { frame != nil }
     }
 
@@ -722,7 +730,8 @@ final class UICheckTests: XCTestCase {
             let key = issue.element.map { "\($0.label)@\($0.frame.integral)" } ?? "screen:\(issue.detailedDescription)"
             findings.append(AuditFinding(
                 text: text, key: "\(issue.auditType.rawValue)|\(key)", frame: frame,
-                isContrast: issue.auditType == .contrast
+                isContrast: issue.auditType == .contrast,
+                isDynamicType: issue.auditType == .dynamicType
             ))
             return true
         }
