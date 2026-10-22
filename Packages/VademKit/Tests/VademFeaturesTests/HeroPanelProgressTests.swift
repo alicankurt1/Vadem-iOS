@@ -57,3 +57,50 @@ struct HeroPanelProgressTests {
         #expect(!label.contains("₺"))
     }
 }
+
+@Suite("HeroPanel caption prefix")
+struct HeroPanelCaptionPrefixTests {
+    private static func money(_ text: String) -> Money { Money(Decimal(string: text)!) }
+
+    @Test("Default prefix is Paid")
+    func defaultPrefix() {
+        #expect(HeroPanel<EmptyView>.caption(paid: Self.money("1200"), total: Self.money("4825.50")).hasPrefix("Paid "))
+    }
+
+    @Test("Caption uses the given prefix instead of Paid")
+    func captionPrefix() {
+        let text = HeroPanel<EmptyView>.caption(paid: Self.money("1200"), total: Self.money("4825.50"), prefix: "Due so far")
+        #expect(text.hasPrefix("Due so far "))
+        #expect(!text.contains("Paid"))
+        #expect(text.contains(" of "))
+    }
+
+    @Test("Caption with prefix is the same as default except the first word")
+    func captionSameTail() {
+        let paid = Self.money("350"), total = Self.money("1000")
+        let a = HeroPanel<EmptyView>.caption(paid: paid, total: total)
+        let b = HeroPanel<EmptyView>.caption(paid: paid, total: total, prefix: "Due so far")
+        #expect(a.dropFirst("Paid".count) == b.dropFirst("Due so far".count))
+    }
+
+    @Test("Spoken caption uses the given prefix")
+    func spokenPrefix() {
+        let text = HeroPanel<EmptyView>.spokenCaption(paid: Self.money("1200"), total: Self.money("4825.50"), prefix: "Due so far")
+        #expect(text == "Due so far 1.200,00 Türk lirası of 4.825,50 Türk lirası")
+    }
+
+    @Test("Summary reads the custom prefix")
+    func summaryPrefix() {
+        let label = HeroPanel<EmptyView>.accessibilitySummary(
+            title: "October 2026", paid: Self.money("1200"), total: Self.money("4825.50"), captionPrefix: "Due so far")
+        #expect(label == "October 2026, 4.825,50 Türk lirası, Due so far 1.200,00 Türk lirası of 4.825,50 Türk lirası")
+    }
+
+    @Test("Summary with custom prefix never contains the lira symbol or Paid")
+    func summaryClean() {
+        let label = HeroPanel<EmptyView>.accessibilitySummary(
+            title: "October 2026", paid: Self.money("0"), total: Self.money("0"), captionPrefix: "Due so far")
+        #expect(!label.contains("₺"))
+        #expect(!label.contains("Paid"))
+    }
+}
