@@ -12,6 +12,8 @@ public struct HomeView: View {
     @State private var addModel: AddInstallmentViewModel?
     // Açık kart formunun modeli; nil iken sayfa kapalı.
     @State private var addCardModel: AddCardViewModel?
+    // Açık abonelik formunun modeli; nil iken sayfa kapalı.
+    @State private var addSubscriptionModel: AddSubscriptionViewModel?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -22,11 +24,13 @@ public struct HomeView: View {
     /// In debug builds, ``AddInstallmentView/launchArgument`` opens the add form right away
     /// (with every error shown under ``AddInstallmentView/errorsLaunchArgument``), for the UI check.
     /// ``AddCardView/launchArgument`` does the same for the add-card form
-    /// (errors: ``AddCardView/errorsLaunchArgument``).
+    /// (errors: ``AddCardView/errorsLaunchArgument``), and ``AddSubscriptionView/launchArgument``
+    /// for the add-subscription form (errors: ``AddSubscriptionView/errorsLaunchArgument``).
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddModel: AddInstallmentViewModel?
         var initialAddCardModel: AddCardViewModel?
+        var initialAddSubscriptionModel: AddSubscriptionViewModel?
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AddInstallmentView.launchArgument) {
@@ -42,10 +46,17 @@ public struct HomeView: View {
                 addCardModel.showAllErrors()
             }
             initialAddCardModel = addCardModel
+        } else if arguments.contains(AddSubscriptionView.launchArgument) {
+            let addSubscriptionModel = model.makeAddSubscriptionModel()
+            if arguments.contains(AddSubscriptionView.errorsLaunchArgument) {
+                addSubscriptionModel.showAllErrors()
+            }
+            initialAddSubscriptionModel = addSubscriptionModel
         }
         #endif
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
+        _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
     }
 
     public var body: some View {
@@ -65,12 +76,26 @@ public struct HomeView: View {
                 #endif
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            addModel = model.makeAddInstallmentModel()
+                        // "+" bir menü: taksit mi abonelik mi eklenecek, kullanıcı seçer.
+                        Menu {
+                            Button {
+                                addModel = model.makeAddInstallmentModel()
+                            } label: {
+                                Label("Installment", systemImage: "creditcard")
+                            }
+                            .accessibilityLabel("Add installment")
+                            .accessibilityIdentifier("home.add.installment")
+                            Button {
+                                addSubscriptionModel = model.makeAddSubscriptionModel()
+                            } label: {
+                                Label("Subscription", systemImage: "arrow.triangle.2.circlepath")
+                            }
+                            .accessibilityLabel("Add subscription")
+                            .accessibilityIdentifier("home.add.subscription")
                         } label: {
                             Image(systemName: "plus")
                         }
-                        .accessibilityLabel("Add installment")
+                        .accessibilityLabel("Add payment")
                         .accessibilityIdentifier("home.add")
                     }
                 }
@@ -78,6 +103,9 @@ public struct HomeView: View {
         // Form kapanınca (kaydedilse de iptal edilse de) Home yeniden yüklenir; yeni ödeme hemen görünür.
         .sheet(item: $addModel, onDismiss: { model.reload() }) { addModel in
             AddInstallmentView(model: addModel)
+        }
+        .sheet(item: $addSubscriptionModel, onDismiss: { model.reload() }) { addSubscriptionModel in
+            AddSubscriptionView(model: addSubscriptionModel)
         }
     }
 
