@@ -51,6 +51,7 @@ Principles:
 - [x] **Phase 9 — Persistence**: SwiftData with `VersionedSchema` and App Group container (#30, PRs #22, #29).
 - [x] **Phase 10 — Home**: design system, this month's payments, upcoming months, calendar (#33, #36, #45, #50, #53).
 - [x] **Phase 11 — Forms**: add installment (#62), add card (#65), add subscription (#66), edit and delete (#67, PR #74).
+- [ ] **Design refresh (B2b, between phases 11 and 12)**: teal palette, bold hero panel. Order, one issue and PR each: tokens (#77, PRs #78, #79, done), `Design/` components (HeroPanel, DueChip, rows, FormRows), Home, forms, calendar. Issues for the last four are not written yet.
 - [ ] **Phase 12 — Notifications**: rolling window (iOS 64 pending limit). Not started; needs issues.
 - [ ] **Phase 13 — Widget + App Intents (Siri)**.
 - [ ] **Phase 14 — Swift Charts analytics**.
