@@ -105,7 +105,8 @@ struct PaymentSummaryTests {
         #expect(result.remainingCount == 0)
         // Sıradaki ödemeler Kasım'dan.
         #expect(result.next.map(\.title) == ["A", "B"])
-        #expect(result.next.allSatisfy { $0.dueDate.month == (try! Fixture.month(2026, 11)) })
+        let november = try Fixture.month(2026, 11)
+        #expect(result.next.allSatisfy { $0.dueDate.month == november })
     }
 
     @Test("Month follows the calendar's time zone, not UTC")
@@ -202,12 +203,16 @@ struct PaymentSummaryTests {
         #expect(result.remainingCount == 2)
     }
 
-    @Test("Payments before today are never listed")
-    func pastExcluded() throws {
+    @Test("A past day this month is not listed in the current month; it returns next month (21 days)")
+    func pastDayReturnsNextMonth() throws {
         let subs = [try monthly("Past", day: 5), try monthly("Later", day: 25)]
         let result = summary(try date(2026, 10, 15), subs: subs, limit: 2)
+        let october = try Fixture.month(2026, 10)
+        // Ekim'deki geçmiş 5'i listede yok.
+        #expect(!result.next.contains { $0.title == "Past" && $0.dueDate.month == october })
         #expect(result.next.map(\.title) == ["Later", "Past"])
         #expect(result.next.map(\.daysUntil) == [10, 21])
+        #expect(result.next[1].dueDate.month == (try Fixture.month(2026, 11)))
         #expect(result.next.allSatisfy { $0.daysUntil >= 0 })
     }
 
@@ -229,8 +234,8 @@ struct PaymentSummaryTests {
     func spill(
         _ now: (Int, Int, Int), _ day: Int, _ expected: (Int, Int, Int), _ days: Int
     ) throws {
-        // Sabit bir aboneliğin yalnızca bir kez çekildiği durum: önceki ay bitişli.
-        let sub = try monthly(day: day, last: nil)
+        // Kartsız aylık abonelik: ödeme günü bugünden önceyse ilk satır sonraki aydan gelir.
+        let sub = try monthly(day: day)
         let result = summary(try date(now.0, now.1, now.2), subs: [sub], limit: 1)
         let row = try #require(result.next.first)
         #expect(row.dueDate.month == (try Fixture.month(expected.0, expected.1)))
@@ -287,6 +292,32 @@ struct PaymentSummaryTests {
         let result = summary(try date(2026, 10, 15), subs: [sub], cards: [card], installments: [item], limit: 2)
         #expect(result.next.map(\.title) == ["Rent", "Phone"])
         #expect(result.monthTotal == Money(105))
+    }
+
+    // Kart: ekstre 10, son ödeme 20 (ADR-0002). Tek çekim: ay M-1'de (veya ekstre günü dahil M'de)
+    // çekilir, Ekim ekstresine girer ve 20 Ekim'de ödenir.
+    @Test("Card-backed subscription charged before the due month is due on the statement's due date", arguments: [
+        (25, 9),   // 25 Eylül > ekstre günü 10: Ekim ekstresi, vade 20 Ekim
+        (10, 10),  // 10 Ekim = ekstre günü: dahil, Ekim ekstresi, vade 20 Ekim
+        (5, 10),   // 5 Ekim < ekstre günü: Ekim ekstresi, vade 20 Ekim
+    ])
+    func cardBackedSubscription(_ renewalDay: Int, _ chargeMonth: Int) throws {
+        let card = try Fixture.card()
+        let charge = try Fixture.month(2026, chargeMonth)
+        let sub = try monthly("Cloud", day: renewalDay, amount: 80, first: charge, last: charge)
+        let item = try #require(SubscriptionItem(
+            id: sub.id, title: "Cloud", cardID: card.id, subscription: sub.subscription
+        ))
+        let result = summary(try date(2026, 10, 15), subs: [item], cards: [card], limit: 5)
+        #expect(result.monthTotal == Money(80))
+        #expect(result.remaining == Money(80))
+        #expect(result.remainingCount == 1)
+        // Başka çekim yok: tek satır, 20 Ekim, 5 gün sonra.
+        #expect(result.next.count == 1)
+        #expect(result.next.first?.dueDate.month == (try Fixture.month(2026, 10)))
+        #expect(result.next.first?.dueDate.day == 20)
+        #expect(result.next.first?.daysUntil == 5)
+        #expect(result.next.first?.amount == Money(80))
     }
 
     @Test("Subscription that has ended is not listed")
