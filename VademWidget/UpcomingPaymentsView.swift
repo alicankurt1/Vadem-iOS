@@ -62,6 +62,8 @@ private struct SmallSummaryView: View {
             AmountText(summary.monthTotal)
                 .font(.title2.weight(.bold))
                 .foregroundStyle(Color.vademHeroText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             Spacer(minLength: 4)
             if let next = summary.next.first {
                 NextPaymentView(payment: next)
@@ -88,6 +90,8 @@ private struct MediumSummaryView: View {
                 AmountText(summary.monthTotal)
                     .font(.title2.weight(.bold))
                     .foregroundStyle(Color.vademHeroText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 Spacer(minLength: 4)
                 Text("Left to pay")
                     .font(.caption)
@@ -95,6 +99,8 @@ private struct MediumSummaryView: View {
                 AmountText(summary.remaining)
                     .font(.headline)
                     .foregroundStyle(Color.vademHeroText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
@@ -125,11 +131,17 @@ private struct AccessorySummaryView: View {
                 AmountText(summary.monthTotal)
             }
             .font(.headline)
+            // Başlık ve tutar tek satırda kalır; yer yetmezse küçülür.
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .widgetAccentable()
             if let next = summary.next.first {
                 Text("\(next.title) \(AmountText.format(next.amount)), \(DayText.text(daysUntil: next.daysUntil))")
                     .font(.caption)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                    // VoiceOver "₺" yerine okunabilir tutarı duyar.
+                    .accessibilityLabel(DayText.accessibilityLabel(for: next))
             } else {
                 Text("No upcoming payments")
                     .font(.caption)
@@ -159,12 +171,17 @@ private struct NextPaymentView: View {
                 AmountText(payment.amount)
                     .font(.caption)
                     .foregroundStyle(Color.vademHeroText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 Text(DayText.text(daysUntil: payment.daysUntil))
                     .font(.caption2)
                     .foregroundStyle(Color.vademHeroSecondary)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
+        // Satır VoiceOver'da tek öğe: başlık, okunabilir tutar, gün.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(DayText.accessibilityLabel(for: payment))
     }
 }
 
@@ -189,7 +206,12 @@ private struct UpcomingRowView: View {
             AmountText(payment.amount)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Color.vademHeroText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
+        // Satır VoiceOver'da tek öğe: başlık, okunabilir tutar, gün.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(DayText.accessibilityLabel(for: payment))
     }
 }
 
@@ -213,7 +235,7 @@ private struct MessageView: View {
     }
 }
 
-/// "Today", "Tomorrow" or "in N days".
+/// "Today", "Tomorrow" or "in N days", and the spoken row label built from it.
 enum DayText {
     static func text(daysUntil: Int) -> String {
         switch daysUntil {
@@ -221,6 +243,17 @@ enum DayText {
         case 1: "Tomorrow"
         default: "in \(daysUntil) days"
         }
+    }
+
+    /// The VoiceOver label of a payment row: `"Rent, 25.000,00 Türk lirası, today"` (no "₺").
+    static func accessibilityLabel(for payment: PaymentSummary.Upcoming) -> String {
+        let day: String
+        switch payment.daysUntil {
+        case ...0: day = "today"
+        case 1: day = "tomorrow"
+        default: day = "in \(payment.daysUntil) days"
+        }
+        return "\(payment.title), \(AmountText.spokenLabel(payment.amount)), \(day)"
     }
 }
 
