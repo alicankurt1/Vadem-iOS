@@ -161,8 +161,8 @@ struct ReminderSchedulerTests {
 
     @Test("Payments that are all in the past plan nothing and clear pending")
     func onlyPastPayments() async throws {
-        // Abonelik 2026-01'de başlar ve 12 ay sürmez; ama aylık olduğundan gelecek ay vardır.
-        // Bu yüzden bitmiş taksit kullanılır: tek taksit Ocak 2026.
+        // Aylık abonelik sürekli devam ettiği için gelecekte hep ödemesi olur.
+        // Bu yüzden geçmişte bitmiş bir taksit kullanılır: tek taksit, Ocak 2026 (şimdi: Mart 2026).
         let plan = try #require(InstallmentPlan(total: Money(100), count: 1, firstMonth: YearMonth(year: 2026, month: 1)!))
         let card = try #require(Card(id: UUID(), name: "Bonus", statementDay: 10, dueDay: 20))
         let item = try #require(InstallmentItem(id: UUID(), title: "Old", cardID: card.id, plan: plan))
@@ -222,6 +222,34 @@ struct ReminderSchedulerTests {
         await second.value
         await third.value
         #expect(center.requestCount == 1)
+    }
+
+    @Test("A refresh arriving while a pass is suspended is not lost")
+    func refreshMidPassIsNotLost() async throws {
+        let repository = try Self.repositoryWithPayment()
+        let center = FakeCenter(status: .notDetermined, requestResult: true)
+        center.requestSuspensions = 5
+        let scheduler = Self.scheduler(repository, center)
+
+        let first = Task { await scheduler.refresh() }
+        // İlk tur izin isteğinde askıdayken veri değişir ve izin verilmiş olur.
+        await Task.yield()
+        let gym = SubscriptionItem(
+            id: UUID(), title: "Gym", cardID: nil,
+            subscription: Subscription(
+                amount: Money(250), period: .monthly, renewalDay: 25, firstMonth: YearMonth(year: 2026, month: 1)!
+            )!
+        )!
+        try repository.save(gym)
+        center.status = .allowed
+        let second = Task { await scheduler.refresh() }
+        await first.value
+        await second.value
+
+        let finalPlan = try Self.expectedPlan(repository)
+        #expect(center.requestCount == 1)
+        #expect(center.replaced.last == finalPlan)
+        #expect(finalPlan.contains { $0.entries.contains { $0.title == "Gym" } })
     }
 
     // MARK: Hatalar
