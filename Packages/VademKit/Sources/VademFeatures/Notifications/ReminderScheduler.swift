@@ -1,0 +1,93 @@
+import Foundation
+import VademCore
+
+/// Keeps the pending reminders in step with the saved payments, using ``NotificationPlanner``.
+///
+/// ``refresh()`` plans the reminders and then:
+/// - nothing to plan: clears the pending reminders;
+/// - permission not asked yet: asks once (only when there is something to send), schedules if granted;
+/// - denied: does nothing and never asks again;
+/// - allowed: replaces the pending reminders with the plan.
+///
+/// Reminders are best effort: repository and center errors are ignored.
+@MainActor
+public final class ReminderScheduler {
+    private let repository: any PaymentRepository
+    private let center: any ReminderCenter
+    private let calendar: Calendar
+    private let now: () -> Date
+    private let formatAmount: (Money) -> String
+
+    // Bu oturumda izin bir kez istendi; cevap ne olursa olsun tekrar sorulmaz.
+    private var hasRequestedAuthorization = false
+    // Aynı anda iki yenileme izin penceresini iki kez açmasın: süren yenileme bir tur daha yapar.
+    private var isRefreshing = false
+    private var needsAnotherPass = false
+
+    /// Creates a scheduler; `now` is the clock and `formatAmount` formats the amounts in the body.
+    public init(
+        repository: any PaymentRepository,
+        center: any ReminderCenter,
+        calendar: Calendar = .current,
+        now: @escaping () -> Date = { Date() },
+        formatAmount: @escaping (Money) -> String = AmountText.format
+    ) {
+        self.repository = repository
+        self.center = center
+        self.calendar = calendar
+        self.now = now
+        self.formatAmount = formatAmount
+    }
+
+    /// Plans the reminders from the repository and updates the center (see the type's rules).
+    public func refresh() async {
+        guard !isRefreshing else {
+            needsAnotherPass = true
+            return
+        }
+        isRefreshing = true
+        defer { isRefreshing = false }
+        repeat {
+            needsAnotherPass = false
+            await refreshOnce()
+        } while needsAnotherPass
+    }
+
+    private func refreshOnce() async {
+        let reminders: [PlannedReminder]
+        do {
+            reminders = NotificationPlanner.plan(
+                now: now(),
+                calendar: calendar,
+                cards: try repository.cards(),
+                installments: try repository.installments(),
+                subscriptions: try repository.subscriptions(),
+                formatAmount: formatAmount
+            )
+        } catch {
+            // Veri okunamazsa bekleyen hatırlatmalara dokunulmaz.
+            return
+        }
+
+        // Planlanacak bir şey yoksa izin sorulmaz; eski hatırlatmalar temizlenir.
+        guard !reminders.isEmpty else {
+            try? await center.replacePending([])
+            return
+        }
+
+        switch await center.authorizationStatus() {
+        case .allowed:
+            try? await center.replacePending(reminders)
+        case .denied:
+            // Kullanıcı reddetti: ısrar edilmez.
+            return
+        case .notDetermined:
+            guard !hasRequestedAuthorization else { return }
+            hasRequestedAuthorization = true
+            let granted = (try? await center.requestAuthorization()) ?? false
+            if granted {
+                try? await center.replacePending(reminders)
+            }
+        }
+    }
+}

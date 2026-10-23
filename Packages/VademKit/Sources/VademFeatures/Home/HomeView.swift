@@ -88,7 +88,7 @@ public struct HomeView: View {
         NavigationStack {
             scrollContent
                 // Kart formu kapanınca Home yeniden yüklenir; yeni kart ve "kart ekle" girişi güncellenir.
-                .sheet(item: $addCardModel, onDismiss: { model.reload() }) { addCardModel in
+                .sheet(item: $addCardModel, onDismiss: { model.reloadAfterChange() }) { addCardModel in
                     AddCardView(model: addCardModel)
                 }
                 #if os(iOS)
@@ -100,10 +100,10 @@ public struct HomeView: View {
                 #endif
         }
         // Form kapanınca (kaydedilse de iptal edilse de) Home yeniden yüklenir; yeni ödeme hemen görünür.
-        .sheet(item: $addModel, onDismiss: { model.reload() }) { addModel in
+        .sheet(item: $addModel, onDismiss: { model.reloadAfterChange() }) { addModel in
             AddInstallmentView(model: addModel)
         }
-        .sheet(item: $addSubscriptionModel, onDismiss: { model.reload() }) { addSubscriptionModel in
+        .sheet(item: $addSubscriptionModel, onDismiss: { model.reloadAfterChange() }) { addSubscriptionModel in
             AddSubscriptionView(model: addSubscriptionModel)
         }
     }

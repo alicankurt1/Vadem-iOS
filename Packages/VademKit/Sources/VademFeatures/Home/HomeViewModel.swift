@@ -130,6 +130,8 @@ public final class HomeViewModel {
     public private(set) var hasCards = false
 
     @ObservationIgnored private let repository: any PaymentRepository
+    // Kayıt/silme sonrası çağrılır (ör. hatırlatmaları yeniden planlamak için); nil ise hiçbir şey yapılmaz.
+    @ObservationIgnored private let onDataChanged: (@MainActor () -> Void)?
     // Enjekte edilen bugün: ay ve gün (Card.DueDate dışarıdan kurulamaz).
     @ObservationIgnored private var todayMonth: YearMonth
     @ObservationIgnored private var todayDay: Int
@@ -140,8 +142,17 @@ public final class HomeViewModel {
     @ObservationIgnored private var allRows: [Row] = []
 
     /// Creates the view model for the month that contains `today` in `calendar`'s time zone, and loads it.
-    public init(repository: any PaymentRepository, today: Date, calendar: Calendar) {
+    ///
+    /// `onDataChanged` runs after ``reloadAfterChange()``, i.e. after a form closes
+    /// (e.g. to refresh the reminders); `nil` does nothing.
+    public init(
+        repository: any PaymentRepository,
+        today: Date,
+        calendar: Calendar,
+        onDataChanged: (@MainActor () -> Void)? = nil
+    ) {
         self.repository = repository
+        self.onDataChanged = onDataChanged
         // YearMonth gibi: sadece saat dilimi alınır, gün Gregoryen takvimle hesaplanır.
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
@@ -296,6 +307,12 @@ public final class HomeViewModel {
             hasCards = false
             state = .error(message: Self.loadErrorMessage)
         }
+    }
+
+    /// Reloads after a form closed (the repository may have changed), then runs `onDataChanged`.
+    public func reloadAfterChange() {
+        reload()
+        onDataChanged?()
     }
 
     /// The chip kind of a payment due on `dueDate`, relative to the injected today.
