@@ -449,20 +449,26 @@ struct UpcomingStrip: View {
                     .font(.subheadline.weight(summary.isSelected ? .bold : .regular))
                 AmountText(summary.total)
                     .font(.body.weight(.semibold))
+                    // Seçili çipte tutar ikincil hero rengiyle (hero üzerinde kontrastı testle güvencede).
+                    .foregroundStyle(summary.isSelected ? Color.vademHeroSecondary : Color.vademTextPrimary)
             }
-            .foregroundStyle(Color.vademTextPrimary)
+            // Seçili çip koyu hero zeminde açık yazıyla; seçili olmayan yüzey zeminde birincil metin.
+            .foregroundStyle(summary.isSelected ? Color.vademHeroText : Color.vademTextPrimary)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             // En az 44 pt dokunma alanı.
             .frame(minWidth: 44, minHeight: 44, alignment: .leading)
-            .background(Color.vademSurface, in: .rect(cornerRadius: 12))
+            .background(
+                summary.isSelected ? Color.vademHero : Color.vademSurface,
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
             .overlay {
-                // Seçili ay kalın çerçeveyle ayrılır; renk tek başına anlam taşımaz (yazı da kalın).
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(
-                        summary.isSelected ? Color.vademTextPrimary : Color.vademSeparator,
-                        lineWidth: summary.isSelected ? 2 : 1
-                    )
+                // Seçili olmayan çipte ince ayırıcı çerçeve; seçili ay dolgu ve kalın yazıyla ayrılır
+                // (renk tek başına anlam taşımaz).
+                if !summary.isSelected {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.vademSeparator, lineWidth: 1)
+                }
             }
             .contentShape(.rect)
         }
@@ -508,21 +514,30 @@ struct MonthCalendar: View {
                 .foregroundStyle(Color.vademTextPrimary)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("home.calendar")
-            if dynamicTypeSize.isAccessibilitySize {
-                accessibleGrid
-            } else {
-                weekGrid
+            // Izgara yuvarlak köşeli yüzey kartında (çerçevesiz). Yedi sütunlu görünümde yan pay
+            // 2 pt, sütun arası 2 pt: 375 pt genişlikteki iPhone'larda (SE, mini) bile her sütun
+            // 44 pt'nin üstünde kalır (375 - 2×20 sayfa payı - 2×2 kart payı - 6×2 aralık = 319 → 7 × ~45.6 pt).
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    accessibleGrid
+                } else {
+                    weekGrid
+                }
             }
+            .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 8 : 2)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
 
     // Yedi sütunlu klasik ay görünümü; gün başlıkları VoiceOver'da gizli (her gün kendi tarihini okur).
     private var weekGrid: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 7), spacing: 4) {
             ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
                 Text(symbol)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.vademTextPrimary)
+                    .foregroundStyle(Color.vademTextSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .accessibilityHidden(true)
@@ -552,8 +567,12 @@ struct MonthCalendar: View {
     }
 
     private func dayButton(_ cell: HomeViewModel.CalendarDay, day: Int, showsWeekday: Bool) -> some View {
-        // Seçili gün ters renkli (dolgu birincil metin rengi), böylece iki temada da kontrast korunur.
-        let foreground = cell.isSelected ? Color.vademBackground : Color.vademTextPrimary
+        // Seçili gün hero dolgulu, açık yazılı; iki temada da kontrast hero çiftiyle korunur.
+        let foreground = cell.isSelected ? Color.vademHeroText : Color.vademTextPrimary
+        // Normal ızgarada gün daire; büyük yazıda hücre uzun olduğundan yuvarlak köşeli kutu.
+        let shape = showsWeekday
+            ? AnyShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            : AnyShape(Circle())
         return Button {
             select(day)
         } label: {
@@ -571,19 +590,24 @@ struct MonthCalendar: View {
                     .minimumScaleFactor(0.6)
                 // Ödeme işareti nokta: renk tek başına anlam taşımaz (rakam da kalın).
                 Circle()
-                    .fill(cell.hasPayments ? (cell.isSelected ? Color.vademBackground : Color.vademBrand) : Color.clear)
+                    .fill(cell.hasPayments ? (cell.isSelected ? Color.vademHeroText : Color.vademBrand) : Color.clear)
                     .frame(width: 6, height: 6)
             }
             .foregroundStyle(foreground)
             .padding(.vertical, 4)
             // En az 44 pt dokunma alanı.
             .frame(maxWidth: .infinity, minHeight: 44)
-            .background(cell.isSelected ? Color.vademTextPrimary : Color.clear, in: .rect(cornerRadius: 10))
+            .background {
+                if cell.isSelected {
+                    shape.fill(Color.vademHero)
+                }
+            }
             .overlay {
-                // Bugün çerçeveyle belirtilir.
+                // Bugün marka renginde halkayla belirtilir.
                 if cell.isToday {
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(Color.vademBrand, lineWidth: 2)
+                    // AnyShape içe çizim desteklemez; yarım çizgi kalınlığı kadar içeri alınır.
+                    shape.stroke(Color.vademBrand, lineWidth: 2)
+                        .padding(1)
                 }
             }
             .contentShape(.rect)

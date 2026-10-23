@@ -73,6 +73,32 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testHomeSelectedDay() throws {
+        // Seçili gün (#91): takvimde 15 Ekim (Shopping kartı vadesi) seçilir; hero dairesi ve süzülmüş liste görünür.
+        try capture(
+            screen: "home-selected-day",
+            launchArguments: ["-ui-sample-data"],
+            sections: [
+                .scrolled(to: "home.calendar", named: "calendar"),
+                .scrolled(to: "home.list", named: "list"),
+            ]
+        ) { app, variant in
+            let day = app.descendants(matching: .any)["home.calendar.day.15"]
+            // Büyük metinde takvim ekranın altında kalır; görünene kadar kaydırılır.
+            var attempts = 0
+            while !(day.exists && day.isHittable) && attempts < 12 {
+                app.swipeUp()
+                attempts += 1
+            }
+            XCTAssertTrue(
+                day.exists,
+                "[ui-check] home-selected-day__\(variant.name): day 15 not found"
+            )
+            day.tap()
+        }
+    }
+
+    @MainActor
     func testAddInstallmentForm() throws {
         // Boş ekleme formu (#62): örnek veriyle açılır, kartlar listelenir.
         try capture(
