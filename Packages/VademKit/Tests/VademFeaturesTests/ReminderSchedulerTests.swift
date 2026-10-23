@@ -12,7 +12,8 @@ struct ReminderSchedulerTests {
 
     // Çağrıları kaydeden sahte merkez.
     @MainActor
-    private final class FakeCenter: ReminderCenter {
+    // Diğer test dosyaları da kullanır (SettingsViewModelTests).
+    final class FakeCenter: ReminderCenter {
         var status: ReminderAuthorization
         var requestResult: Bool
         var throwsOnRequest = false
@@ -88,9 +89,30 @@ struct ReminderSchedulerTests {
         return repository
     }
 
-    private static func scheduler(_ repository: any PaymentRepository, _ center: FakeCenter) -> ReminderScheduler {
+    // Gerçek UserDefaults'a hiç dokunmamak için her zaman bellek içi tercih deposu verilir.
+    private static func scheduler(
+        _ repository: any PaymentRepository, _ center: FakeCenter,
+        preferences: ReminderPreferences = .default
+    ) -> ReminderScheduler {
+        scheduler(repository, center, store: InMemoryReminderPreferencesStore(preferences: preferences))
+    }
+
+    private static func scheduler(
+        _ repository: any PaymentRepository, _ center: FakeCenter, store: any ReminderPreferencesStore
+    ) -> ReminderScheduler {
         ReminderScheduler(
-            repository: repository, center: center, calendar: calendar, now: { now }, formatAmount: format
+            repository: repository, center: center, preferences: store,
+            calendar: calendar, now: { now }, formatAmount: format
+        )
+    }
+
+    private static func expectedPlan(
+        _ repository: InMemoryPaymentRepository, kinds: Set<PlannedReminder.Kind>
+    ) throws -> [PlannedReminder] {
+        NotificationPlanner.plan(
+            now: now, calendar: calendar, cards: try repository.cards(),
+            installments: try repository.installments(), subscriptions: try repository.subscriptions(),
+            kinds: kinds, formatAmount: format
         )
     }
 
@@ -250,6 +272,67 @@ struct ReminderSchedulerTests {
         #expect(center.requestCount == 1)
         #expect(center.replaced.last == finalPlan)
         #expect(finalPlan.contains { $0.entries.contains { $0.title == "Gym" } })
+    }
+
+    // MARK: Tercihler
+
+    @Test("Reminders off: pending cleared, no authorization request", arguments: [
+        ReminderAuthorization.notDetermined, .allowed, .denied,
+    ])
+    func disabledClears(status: ReminderAuthorization) async throws {
+        let center = FakeCenter(status: status)
+        let off = ReminderPreferences(isEnabled: false)
+        await Self.scheduler(try Self.repositoryWithPayment(), center, preferences: off).refresh()
+        #expect(center.replaced == [[]])
+        #expect(center.requestCount == 0)
+    }
+
+    @Test("Enabled: the plan uses the timing's kinds", arguments: ReminderTiming.allCases)
+    func enabledTimings(timing: ReminderTiming) async throws {
+        let repository = try Self.repositoryWithPayment()
+        let center = FakeCenter(status: .allowed)
+        let preferences = ReminderPreferences(isEnabled: true, timing: timing)
+        await Self.scheduler(repository, center, preferences: preferences).refresh()
+        let expected = try Self.expectedPlan(repository, kinds: timing.kinds)
+        #expect(!expected.isEmpty)
+        #expect(center.replaced == [expected])
+        // Bağımsız kontrol: yalnızca istenen türler vardır.
+        #expect(Set(expected.map(\.kind)) == timing.kinds)
+    }
+
+    @Test("A preference change followed by refresh replaces pending accordingly")
+    func preferenceChangeThenRefresh() async throws {
+        let repository = try Self.repositoryWithPayment()
+        let center = FakeCenter(status: .allowed)
+        let store = InMemoryReminderPreferencesStore()
+        let scheduler = Self.scheduler(repository, center, store: store)
+
+        await scheduler.refresh()
+        store.save(ReminderPreferences(isEnabled: true, timing: .dueDay))
+        await scheduler.refresh()
+        store.save(ReminderPreferences(isEnabled: false, timing: .dueDay))
+        await scheduler.refresh()
+        store.save(ReminderPreferences(isEnabled: true, timing: .dayBefore))
+        await scheduler.refresh()
+
+        #expect(center.replaced == [
+            try Self.expectedPlan(repository, kinds: [.dayBefore, .dueDay]),
+            try Self.expectedPlan(repository, kinds: [.dueDay]),
+            [],
+            try Self.expectedPlan(repository, kinds: [.dayBefore]),
+        ])
+    }
+
+    @Test("Turning reminders on later asks for permission then")
+    func enablingAsksLater() async throws {
+        let center = FakeCenter(status: .notDetermined, requestResult: true)
+        let store = InMemoryReminderPreferencesStore(preferences: ReminderPreferences(isEnabled: false))
+        let scheduler = Self.scheduler(try Self.repositoryWithPayment(), center, store: store)
+        await scheduler.refresh()
+        #expect(center.requestCount == 0)
+        store.save(ReminderPreferences(isEnabled: true))
+        await scheduler.refresh()
+        #expect(center.requestCount == 1)
     }
 
     // MARK: Hatalar

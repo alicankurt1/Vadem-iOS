@@ -226,6 +226,47 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testSettingsScreen() throws {
+        try capture(
+            screen: "settings",
+            launchArguments: ["-ui-sample-data", "-ui-settings"],
+            sections: [.top]
+        )
+    }
+
+    @MainActor
+    func testSettingsDenied() throws {
+        // İzin reddedilmiş: açıklama ve sistem Ayarları düğmesi görünür.
+        try capture(
+            screen: "settings-denied",
+            launchArguments: ["-ui-sample-data", "-ui-settings-denied"],
+            sections: [.top]
+        )
+    }
+
+    @MainActor
+    func testSettingsTimingList() throws {
+        // Zamanlama seçim listesi (itme ekranı).
+        try capture(
+            screen: "settings-timing-list",
+            launchArguments: ["-ui-sample-data", "-ui-settings"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["settings.timing"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] settings-timing-list__\(variant.name): timing row not found"
+            )
+            if !row.isHittable { app.swipeUp() }
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["settings.timing.option.0"].waitForExistence(timeout: 5),
+                "[ui-check] settings-timing-list__\(variant.name): first option not found"
+            )
+        }
+    }
+
+    @MainActor
     func testAddSubscriptionPeriodList() throws {
         // Yenileme sıklığı seçim listesi (itme ekranı).
         try capture(
