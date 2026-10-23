@@ -215,11 +215,14 @@ struct NotificationPlannerTests {
             now: try date(2026, 12, 20),
             subscriptions: [try monthly(day: 1, first: try Fixture.month(2026, 12))]
         )
-        // Aralık 1 geçmişte; Ocak ve Şubat 1'leri kalır.
+        // Aralık 1 geçmişte; Ocak ve Şubat 1'leri kalır. Mart 1'in gün öncesi (28 Şubat)
+        // taşan ayın tek hatırlatmasıdır.
         #expect(result.map(\.id) == [
             "due-2027-01-01-dayBefore", "due-2027-01-01-today",
             "due-2027-02-01-dayBefore", "due-2027-02-01-today",
+            "due-2027-03-01-dayBefore",
         ])
+        #expect(result[4].fireDate == (try date(2027, 2, 28, 9)))
         #expect(result[0].fireDate == (try date(2026, 12, 31, 9)))
         #expect(result[1].fireDate == (try date(2027, 1, 1, 9)))
         #expect(result[2].fireDate == (try date(2027, 1, 31, 9)))
@@ -325,5 +328,73 @@ struct NotificationPlannerTests {
         #expect(first.map(\.id) == second.map(\.id))
         #expect(first.map(\.fireDate) == second.map(\.fireDate))
         #expect(Set(first.map(\.id)).count == first.count)
+    }
+
+    @Test("Spill-over: the day-before of the 1st after the last scanned month is planned, nothing later")
+    func spillOver() throws {
+        // Yalnızca Aralık taranır; 1 Ocak'ın gün öncesi 31 Aralık 09:00'da çalar.
+        let items = [
+            try monthly("First", day: 1, first: try Fixture.month(2026, 12)),
+            try monthly("Mid", day: 15, first: try Fixture.month(2026, 12)),
+        ]
+        let result = plan(now: try date(2026, 12, 31, 8), subscriptions: items, lookahead: 1)
+        // Aralık'ın hatırlatmaları geçmişte; Ocak 15 ve Ocak 1'in vade günü taşan aydan alınmaz.
+        #expect(result.map(\.id) == ["due-2027-01-01-dayBefore"])
+        #expect(result.first?.fireDate == (try date(2026, 12, 31, 9)))
+        let end = try date(2027, 1, 1)
+        #expect(result.allSatisfy { $0.fireDate < end })
+    }
+
+    @Test("Spill-over never adds later days or due-day reminders of the extra month")
+    func spillOverOnlyDayBefore() throws {
+        let items = [try monthly("A", day: 1), try monthly("B", day: 2), try monthly("C", day: 20)]
+        let result = plan(now: try date(2026, 3, 1), subscriptions: items, lookahead: 1)
+        let end = try date(2026, 4, 1)
+        #expect(result.allSatisfy { $0.fireDate < end })
+        #expect(result.contains { $0.id == "due-2026-04-01-dayBefore" })
+        #expect(!result.contains { $0.id.hasPrefix("due-2026-04") && $0.kind == .dueDay })
+        #expect(!result.contains { $0.id.hasPrefix("due-2026-04-02") || $0.id.hasPrefix("due-2026-04-20") })
+    }
+
+    @Test("Negative lookahead is clamped to zero and plans nothing", arguments: [-1, -12])
+    func negativeLookahead(months: Int) throws {
+        #expect(plan(now: try date(2026, 3, 1), subscriptions: [try monthly(day: 15)], lookahead: months).isEmpty)
+    }
+
+    @Test("DST: due-day reminders keep 09:00 local before and after the 2026 New York transitions")
+    func daylightSaving() throws {
+        var newYork = Calendar(identifier: .gregorian)
+        newYork.timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        func local(_ year: Int, _ month: Int, _ day: Int) throws -> Date {
+            try #require(newYork.date(from: DateComponents(year: year, month: month, day: day, hour: 0)))
+        }
+        func planned(now: Date, days: [Int], lookahead: Int) throws -> [PlannedReminder] {
+            NotificationPlanner.plan(
+                now: now, calendar: newYork, cards: [], installments: [],
+                subscriptions: try days.map { try monthly("Item \($0)", day: $0) },
+                lookaheadMonths: lookahead, formatAmount: { "\($0.amount)" }
+            )
+        }
+        // Mart: 8'i ileri saat geçişi. 5 (öncesi), 8 (geçiş günü), 15 (sonrası).
+        let spring = try planned(now: try local(2026, 3, 1), days: [5, 8, 15], lookahead: 1)
+        // Güz: 1 Kasım geri geçiş. 30 Ekim (öncesi), 1 Kasım (geçiş günü), 15 Kasım (sonrası).
+        let fall = try planned(now: try local(2026, 10, 25), days: [1, 15, 30], lookahead: 2)
+        // Güzde 30. gün hem Ekim hem Kasım'da vadelidir: 4 vade günü hatırlatması.
+        for (reminders, expectedDays, expectedCount) in [(spring, [5, 8, 15], 3), (fall, [30, 1, 15], 4)] {
+            let dueDay = reminders.filter { $0.kind == .dueDay }
+            #expect(dueDay.count == expectedCount)
+            for reminder in dueDay {
+                let parts = newYork.dateComponents([.hour, .minute, .day], from: reminder.fireDate)
+                #expect(parts.hour == 9)
+                #expect(parts.minute == 0)
+                #expect(parts.day == reminder.dueDate.day)
+            }
+            #expect(Set(dueDay.map(\.dueDate.day)) == Set(expectedDays))
+        }
+        // Geçiş boyunca 7 Mart 09:00 -> 8 Mart 09:00 yalnızca 23 saattir; saat kaymaz.
+        let dayBefore = try #require(spring.first { $0.id == "due-2026-03-08-dayBefore" })
+        let dueDay = try #require(spring.first { $0.id == "due-2026-03-08-today" })
+        #expect(dueDay.fireDate.timeIntervalSince(dayBefore.fireDate) == 23 * 3600)
+        #expect(newYork.component(.hour, from: dayBefore.fireDate) == 9)
     }
 }
