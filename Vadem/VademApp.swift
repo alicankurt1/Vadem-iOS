@@ -71,9 +71,13 @@ private struct AppSetup {
         do {
             let container = try VademPersistence.makeContainer(storage: .appGroup)
             let repository = SwiftDataPaymentRepository(container: container)
+            // Zamanlayıcı ve ayarlar sayfası aynı tercih deposunu ve aynı bildirim merkezini kullanır.
+            let center = SystemReminderCenter()
+            let preferences = UserDefaultsReminderPreferencesStore()
             let reminders = ReminderScheduler(
                 repository: repository,
-                center: SystemReminderCenter(),
+                center: center,
+                preferences: preferences,
                 calendar: .current
             )
             let model = HomeViewModel(
@@ -81,7 +85,8 @@ private struct AppSetup {
                 today: Date(),
                 calendar: .current,
                 // Form kapanıp Home yeniden yüklenince hatırlatmalar da yeniden planlanır.
-                onDataChanged: { Task { await reminders.refresh() } }
+                onDataChanged: { Task { await reminders.refresh() } },
+                settings: SettingsDependencies(store: preferences, center: center, scheduler: reminders)
             )
             return AppSetup(root: RootView(model: model), liveModel: model, reminders: reminders)
         } catch {
