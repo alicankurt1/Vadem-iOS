@@ -350,3 +350,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer istedi:** Karta bağlı abonelik testi yoktu (`cardBackedSubscription`, 3 durum eklendi); yanlış test yorumu ve gereksiz argüman düzeltildi. `HomeViewModel` ile çift ay-adı tablosu kabul edildi, `VademCore`'a taşımak isteğe bağlı temizlik.
 - **Metrikler:** 7 dk, 4 verify (0 kırmızı), 1 düzeltme turu; UI'a dokunulmadığı için capture yok.
 - **Ders:** Widget ve Siri aynı mantığı okuyacaksa önce saf bir özet yazmak iki tüketiciyi tek doğruya bağlar; "bugün" gibi sınır günlerinin ürün kararı olarak açıkça yazılması testi netleştirir.
+
+### Koşu #108 — Siri ve Kısayollar için App Intents
+
+- **Ne yapıldı:** `VademFeatures` içinde `PaymentSummaryProvider` (AppIntents import etmez; repository hatasında asla fırlatmaz, sabit hata cümlesi döner) ve uygulama hedefinde ince `MonthTotalIntent`, `NextPaymentIntent`, `VademShortcuts` (PR #109, widget + Siri'nin 2/3'ü). Senkronize grup sayesinde `pbxproj` değişmedi.
+- **Reviewer:** Blocker/major yok. Minor: her intent çağrısı App Group deposunda kendi `ModelContainer`'ını açıyor (uygulamanın kendi container'ıyla aynı süreçte yan yana olabilir); salt okunur olduğu için kabul edildi. Nit: iki cümle doğal soru değil.
+- **Test boşluğu:** Siri cümleleri ve sesli yanıt otomatikleştirilemez. Shortcuts uygulamasında "Monthly total" ve "Next payment" uygulama açıkken ve kapalıyken elle denenmeli; çift depo uyarısı veya eski veri görülürse tek, tembel oluşturulan bir container paylaşılmalı. Yanıtlar İngilizce cümle, tutarlar Türk lirası biçiminde.
+- **Metrikler:** 8 dk, 3 verify (0 kırmızı), 0 düzeltme turu; UI-FUNCTIONAL geçti, UI'a dokunulmadığı için capture yok.
+- **Ders:** Mantığı AppIntents'siz pakette tutup intent'leri ince bırakmak testi kolaylaştırır; sistem entegrasyonunun (Siri, Shortcuts) kendisi ise elle kontrol maddesi olarak PR'a yazılmalı.
