@@ -302,3 +302,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer yakaladı:** 1 major: toolbar "+" kalkınca hata durumunda Add menüsüne ulaşılamıyordu; hero hata durumunda da gösterilerek düzeltildi. Ayrıca 4 minor (ay başlığı iki kez, menü etiketi kaybı, takvimsiz ölü pill, `home.total` identifier'ı).
 - **Metrikler:** 16 dk, 5 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve `home` UI-CHECK geçti.
 - **Ders:** Bir kontrolü kaldırırken onun tüm durumlardaki (hata, boş) erişim yolunu da kontrol et. Açık kalan: hata durumu hero'su ve gizli Calendar hapı için test yok.
+
+### Koşu #88 — Formlara B2b yüzey kartı görünümü
+
+- **Ne yapıldı:** Taksit, abonelik ve kart formları `Form` yerine `ScrollView` + `SurfaceCard` oldu; ortak parçalar `FormRows.swift` içinde (`FormCard`, `FormScroll`, `FormField`, `FormFailureRow`). Seçenek listeleri `List` kaldı. Delete satırı `Color.red` yerine `vademDueToday` kullanıyor, yeni kontrast çifti eklendi (PR #89).
+- **UI capture yakaladı:** Tek kart bölümlü `Form`, "Dynamic Type partially unsupported" ve "Text clipped" verdi (değiştirilmemiş main geçiyor). Her koşuda tek şey değiştirilerek neden `Form` olarak daraltıldı; ScrollView düzeninde 0 hata.
+- **Reviewer:** 5 minor / 2 nit; tap-to-focus ve `ChoiceRow` hit alanı düzeltildi, tap-to-focus için UI testi açık kaldı.
+- **Metrikler:** 84 dk, 5 verify (0 kırmızı), 1 düzeltme turu. `testEditSubscriptionForm` uzun bir koşuda bir kez 3 dk sınırına takıldı, tek başına 30 sn'de geçti.
+- **Ders:** Audit sorununu bulmak için aynı anda tek değişken değiştir. Sistem `Form`'unun denetimle uyumu yapıya bağlı; özel düzen gerekirse erişilebilirlik kimliklerini koruyarak değiştir. Uzun koşularda test süre sınırı takip edilmeli.
