@@ -334,3 +334,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test boşluğu:** Gerçek izin uyarısı UI testiyle otomatikleştirilemez; örnek veri modunda scheduler oluşturulmadığı için uyarı hiç çıkmaz. Elle bir kez denenmeli (ilk ödemeyi kaydet, izni yanıtla, bekleyenleri kontrol et).
 - **Metrikler:** 21 dk, 6 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve `home` UI-CHECK geçti.
 - **Ders:** Yaşam döngüsü tetikleyicileri (sahne aktif, soğuk açılış) ilk değerde çalışıp çalışmadığıyla birlikte test edilmeli; sistem izin diyalogları otomasyon dışında kalır, elle kontrol maddesi olarak PR'a yazılmalı.
+
+### Koşu #101 — Hatırlatma ayarları
+
+- **Ne yapıldı:** `ReminderPreferences` (UserDefaults), planlayıcıya `kinds` parametresi ve Home'daki dişli düğmesiyle açılan `SettingsView` sheet'i: açma/kapama, zamanlama seçimi, izin reddedilmişse "Open Settings" düğmesi (PR #102, bildirimlerin 3/3'ü, Faz 12 bitti).
+- **Reviewer:** Blocker/major yok; tek boşluk Home'daki ayar bağlantısını doğrulayan test eksikliğiydi, aynı PR'da kapatıldı. 1 minor, 2 nit.
+- **Test boşluğu:** Gerçek "izin reddedildi" durumu ve sistem uyarısı otomatikleştirilemez; reddedilmiş capture'ı sahte bir durum (`-ui-settings-denied`) sürer. Gerçek cihazda elle bir kez denenmeli.
+- **Metrikler:** 23 dk, 4 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve UI-CHECK (home, root, settings; açık/koyu) geçti, 0 a11y bulgusu.
+- **Ders:** Yeni bir ekranı bağlayan kod ayrı bir bağlantı testi ister; ekranın kendi testi bağlantıyı kanıtlamaz. Sahte durumla alınan capture gerçek sistem davranışının yerine geçmez.
