@@ -54,10 +54,14 @@ public enum NotificationPlanner {
     /// - Parameters:
     ///   - now: The current moment; reminders firing at or before it are dropped.
     ///   - calendar: Its time zone sets the local 09:00 and the current month.
-    ///   - lookaheadMonths: Months to scan, starting with `now`'s month; `0` plans nothing.
+    ///   - lookaheadMonths: The number of months scanned, starting with `now`'s month. Every
+    ///     reminder fires within these months, and every payment due in them is planned.
+    ///     One more month is also read, only for the day-before reminder of a payment due
+    ///     on its 1st, which fires at 09:00 on the last day of the last scanned month. No
+    ///     other reminder of that extra month is planned. Months after 9999-12 are skipped.
+    ///     A negative value counts as `0`, and `0` plans nothing.
     ///   - formatAmount: Formats an amount for the body (e.g. the app's lira formatter).
     /// - Returns: At most ``windowSize`` reminders, sorted by fire date, then id.
-    /// - Precondition: `lookaheadMonths >= 0`.
     public static func plan(
         now: Date,
         calendar: Calendar,
@@ -67,24 +71,33 @@ public enum NotificationPlanner {
         lookaheadMonths: Int = NotificationPlanner.defaultLookaheadMonths,
         formatAmount: (Money) -> String
     ) -> [PlannedReminder] {
-        precondition(lookaheadMonths >= 0, "lookaheadMonths must not be negative: \(lookaheadMonths)")
+        // Negatif değer sıfır sayılır; sıfır ay taranırsa plan boştur.
+        let scannedMonths = max(0, lookaheadMonths)
+        guard scannedMonths > 0 else { return [] }
         // Tarihler YearMonth gibi Gregoryen; cihaz takviminden yalnızca saat dilimi alınır.
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
 
         let upcoming = UpcomingMonths(
             start: YearMonth(date: now, calendar: calendar),
-            count: lookaheadMonths,
+            // Bir ay fazlası: sonraki ayın 1'inin gün öncesi hatırlatması taranan son günde çalar.
+            // UpcomingMonths 9999-12 sonrasını zaten kırpar.
+            count: scannedMonths + 1,
             cards: cards,
             installments: installments,
             subscriptions: subscriptions
         )
 
         var reminders: [PlannedReminder] = []
-        for schedule in upcoming.schedules {
+        for (index, schedule) in upcoming.schedules.enumerated() {
+            let isSpillOver = index == scannedMonths
             for day in schedule.days {
+                // Ek aydan yalnızca 1'inin gün öncesi alınır; böylece hiçbir hatırlatma
+                // taranan ayların son gününden sonra çalmaz.
+                if isSpillOver && day.day != 1 { continue }
                 let dueDate = Card.DueDate(month: schedule.month, day: day.day)
                 for kind in PlannedReminder.Kind.allCases {
+                    if isSpillOver && kind != .dayBefore { continue }
                     // Geçmişte (veya tam şimdi) çalacak hatırlatma kurulamaz; atlanır.
                     guard let fireDate = fireDate(of: kind, for: dueDate, in: gregorian),
                           fireDate > now else { continue }
