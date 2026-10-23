@@ -342,3 +342,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test boşluğu:** Gerçek "izin reddedildi" durumu ve sistem uyarısı otomatikleştirilemez; reddedilmiş capture'ı sahte bir durum (`-ui-settings-denied`) sürer. Gerçek cihazda elle bir kez denenmeli.
 - **Metrikler:** 23 dk, 4 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve UI-CHECK (home, root, settings; açık/koyu) geçti, 0 a11y bulgusu.
 - **Ders:** Yeni bir ekranı bağlayan kod ayrı bir bağlantı testi ister; ekranın kendi testi bağlantıyı kanıtlamaz. Sahte durumla alınan capture gerçek sistem davranışının yerine geçmez.
+
+### Koşu #105 — Ödeme özeti (PaymentSummary)
+
+- **Ne yapıldı:** `VademCore` içinde saf `PaymentSummary`: ay toplamı, kalan tutar, sıradaki ödemeler ve Siri için okunacak cümleler (PR #106, widget + Siri'nin 1/3'ü; App Intents ve widget hedefi sonra). WidgetKit/AppIntents yok, UI yok.
+- **Ürün kararları:** Bugün vadesi gelen ödeme "kalan" sayılır, geçmiş günler sayılmaz; Siri yalnızca ilk satırı okur; cümle kalıpları sabit ("You pay X in ..., Y still to go.", "Next: ..., today / tomorrow / in N days / on 3 November."). Tutar biçimleyici dışarıdan verilir, çünkü `AmountText` `VademFeatures`'ta.
+- **Reviewer istedi:** Karta bağlı abonelik testi yoktu (`cardBackedSubscription`, 3 durum eklendi); yanlış test yorumu ve gereksiz argüman düzeltildi. `HomeViewModel` ile çift ay-adı tablosu kabul edildi, `VademCore`'a taşımak isteğe bağlı temizlik.
+- **Metrikler:** 7 dk, 4 verify (0 kırmızı), 1 düzeltme turu; UI'a dokunulmadığı için capture yok.
+- **Ders:** Widget ve Siri aynı mantığı okuyacaksa önce saf bir özet yazmak iki tüketiciyi tek doğruya bağlar; "bugün" gibi sınır günlerinin ürün kararı olarak açıkça yazılması testi netleştirir.
