@@ -310,3 +310,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer:** 5 minor / 2 nit; tap-to-focus ve `ChoiceRow` hit alanı düzeltildi, tap-to-focus için UI testi açık kaldı.
 - **Metrikler:** 84 dk, 5 verify (0 kırmızı), 1 düzeltme turu. `testEditSubscriptionForm` uzun bir koşuda bir kez 3 dk sınırına takıldı, tek başına 30 sn'de geçti.
 - **Ders:** Audit sorununu bulmak için aynı anda tek değişken değiştir. Sistem `Form`'unun denetimle uyumu yapıya bağlı; özel düzen gerekirse erişilebilirlik kimliklerini koruyarak değiştir. Uzun koşularda test süre sınırı takip edilmeli.
+
+### Koşu #91 — Yükleme çipleri ve takvim için B2b görünümü
+
+- **Ne yapıldı:** `UpcomingStrip` ve `MonthCalendar` yeni görünüme taşındı (seçili çip ve gün hero dolgusu, takvim yüzey kartında); view model'lere dokunulmadı (PR #92). Tasarım yenilemesinin 5. ve son adımı.
+- **Reviewer yakaladı:** 1 major: 375 pt genişlikli iPhone'larda takvim sütunları yaklaşık 42 pt, yani 44 pt hit alanının altında; iPhone 17 bunu gizliyordu. Coder düzeltti ve geçici bir iPhone SE simülatöründe doğruladı (sütun ~45,6 pt). Ayrıca 1 minor (seçili çip tutarı `heroSecondary` olmalı).
+- **Test boşluğu:** Seçili gün hiçbir capture'da yoktu; test writer `testHomeSelectedDay` ekledi. Seçili durumu assert etmediği için nit olarak açık.
+- **Metrikler:** 31 dk, 4 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve UI-CHECK (açık/koyu) geçti.
+- **Ders:** Tek bir cihaz boyutunda geçen yerleşim kanıt değildir; en dar desteklenen genişlikte de doğrula. Yeni bir durum (seçili gün) için ayrı capture yoksa denetim o durumu hiç görmez.
