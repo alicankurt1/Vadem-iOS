@@ -45,55 +45,56 @@ public struct AddSubscriptionView: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
+            FormScroll {
                 if let message = model.failureMessage {
-                    Section {
-                        Label(message, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(Color.vademTextPrimary)
+                    FormCard {
+                        FormFailureRow(message: message)
                             .accessibilityIdentifier("addSubscription.failure")
                     }
-                    .listRowBackground(Color.vademSurface)
                 }
-                field(.title) {
-                    TextField("Title", text: $model.title, prompt: Text("e.g. Music"))
-                        #if os(iOS)
-                        .textInputAutocapitalization(.sentences)
-                        #endif
-                        .accessibilityIdentifier("addSubscription.title")
-                }
-                field(.amount) {
-                    // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
-                    // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır.
-                    TextField("Amount", text: $model.amountText, prompt: Text("Amount (₺)"), axis: .vertical)
-                        #if os(iOS)
-                        .keyboardType(.decimalPad)
-                        #endif
-                        .accessibilityHint("In Turkish lira")
-                        .accessibilityIdentifier("addSubscription.amount")
-                }
-                field(.card) {
-                    // Kart isteğe bağlı; "No card" da bir seçenek.
-                    ChoiceRow(title: "Card", value: cardTitle) { choice = .card }
-                        .accessibilityIdentifier("addSubscription.card")
-                }
-                field(.period) {
-                    ChoiceRow(title: "Repeats", value: AddSubscriptionViewModel.title(of: model.period)) {
-                        choice = .period
+                // Tüm alanlar tek kartta, ince çizgilerle ayrılmış satırlar olarak durur.
+                FormCard {
+                    field(.title) {
+                        TextField("Title", text: $model.title, prompt: Text("e.g. Music"))
+                            #if os(iOS)
+                            .textInputAutocapitalization(.sentences)
+                            #endif
+                            .accessibilityIdentifier("addSubscription.title")
                     }
-                    .accessibilityIdentifier("addSubscription.period")
-                }
-                field(.renewalDay) {
-                    Stepper(value: $model.renewalDay, in: Subscription.supportedRenewalDays) {
-                        Text("Renews on day \(model.renewalDay)")
-                            .foregroundStyle(Color.vademTextPrimary)
+                    field(.amount) {
+                        // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
+                        // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır.
+                        TextField("Amount", text: $model.amountText, prompt: Text("Amount (₺)"), axis: .vertical)
+                            #if os(iOS)
+                            .keyboardType(.decimalPad)
+                            #endif
+                            .accessibilityHint("In Turkish lira")
+                            .accessibilityIdentifier("addSubscription.amount")
                     }
-                    .accessibilityIdentifier("addSubscription.renewalDay")
-                }
-                field(.firstMonth) {
-                    ChoiceRow(title: "First charge month", value: model.title(of: model.firstMonth)) {
-                        choice = .firstMonth
+                    field(.card) {
+                        // Kart isteğe bağlı; "No card" da bir seçenek.
+                        ChoiceRow(title: "Card", value: cardTitle) { choice = .card }
+                            .accessibilityIdentifier("addSubscription.card")
                     }
-                    .accessibilityIdentifier("addSubscription.firstMonth")
+                    field(.period) {
+                        ChoiceRow(title: "Repeats", value: AddSubscriptionViewModel.title(of: model.period)) {
+                            choice = .period
+                        }
+                        .accessibilityIdentifier("addSubscription.period")
+                    }
+                    field(.renewalDay) {
+                        Stepper(value: $model.renewalDay, in: Subscription.supportedRenewalDays) {
+                            Text("Renews on day \(model.renewalDay)")
+                                .foregroundStyle(Color.vademTextPrimary)
+                        }
+                        .accessibilityIdentifier("addSubscription.renewalDay")
+                    }
+                    field(.firstMonth) {
+                        ChoiceRow(title: "First charge month", value: model.title(of: model.firstMonth)) {
+                            choice = .firstMonth
+                        }
+                        .accessibilityIdentifier("addSubscription.firstMonth")
+                    }
                 }
                 if model.isEditing {
                     DeleteSection(
@@ -102,7 +103,6 @@ public struct AddSubscriptionView: View {
                     )
                 }
             }
-            .scrollContentBackground(.hidden)
             .deleteConfirmation(
                 isPresented: $isConfirmingDelete,
                 title: "Delete this subscription?",
@@ -114,7 +114,6 @@ public struct AddSubscriptionView: View {
                     dismiss()
                 }
             }
-            .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
             .navigationDestination(item: $choice) { choice in
@@ -190,9 +189,9 @@ public struct AddSubscriptionView: View {
         model.firstMonthOptions.map { .init(value: $0, title: model.title(of: $0)) }
     }
 
-    // Alan ve (varsa) altındaki hata metni aynı bölümde durur.
+    // Alan ve (varsa) altındaki hata metni aynı satırda, alt alta durur.
     private func field(_ field: SubscriptionDraft.Field, @ViewBuilder content: () -> some View) -> some View {
-        FormFieldSection(
+        FormField(
             errorMessage: model.errorMessage(for: field),
             errorIdentifier: "\(Self.identifierPrefix).\(Self.identifier(of: field)).error",
             content: content

@@ -44,58 +44,47 @@ public struct AddCardView: View {
     public var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
-                Form {
+                FormScroll {
                     if let message = model.failureMessage {
-                        Section {
-                            // Label yerine düz metin + gizli simge: Label'ın sabit simge sütunu uzun
-                            // mesajı denetimde "kırpılmış" gösteriyordu; düz metin satırları sarılarak büyür.
-                            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .accessibilityHidden(true)
-                                Text(message)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .font(.body)
-                            .foregroundStyle(Color.vademTextPrimary)
-                            .multilineTextAlignment(.leading)
-                            .accessibilityElement(children: .combine)
-                            .accessibilityIdentifier("addCard.failure")
-                            .id(Self.failureID)
+                        FormCard {
+                            FormFailureRow(message: message)
+                                .accessibilityIdentifier("addCard.failure")
+                                .id(Self.failureID)
                         }
-                        .listRowBackground(Color.vademSurface)
                     }
-                    // Alan adı bölüm başlığında (sarılabilen düz metin); yer tutucular AX5'te de
-                    // sığacak kadar kısa. Dikey eksen: yazılan metin kırpılmaz, sarılır.
-                    field(.name, title: "Card name") {
-                        TextField("Card name", text: nameBinding, prompt: Text("e.g. Everyday"), axis: .vertical)
-                            #if os(iOS)
-                            .textInputAutocapitalization(.words)
-                            #endif
-                            .accessibilityIdentifier("addCard.name")
-                    }
-                    field(.statementDay, title: "Statement day") {
-                        TextField("Statement day", text: $model.statementDayText, prompt: Text("1–31"), axis: .vertical)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                            .accessibilityHint("The day of the month the statement is cut")
-                            .accessibilityIdentifier("addCard.statementDay")
-                    }
-                    field(.dueDay, title: "Due day") {
-                        TextField("Due day", text: $model.dueDayText, prompt: Text("1–31"), axis: .vertical)
-                            #if os(iOS)
-                            .keyboardType(.numberPad)
-                            #endif
-                            .accessibilityHint("The day of the month the payment is due")
-                            .accessibilityIdentifier("addCard.dueDay")
+                    // Alanlar tek kartta. Alan adı alanın üstünde (sarılabilen düz metin); yer tutucular
+                    // AX5'te de sığacak kadar kısa. Dikey eksen: yazılan metin kırpılmaz, sarılır.
+                    FormCard {
+                        field(.name, title: "Card name") {
+                            TextField("Card name", text: nameBinding, prompt: Text("e.g. Everyday"), axis: .vertical)
+                                #if os(iOS)
+                                .textInputAutocapitalization(.words)
+                                #endif
+                                .accessibilityIdentifier("addCard.name")
+                        }
+                        field(.statementDay, title: "Statement day") {
+                            TextField("Statement day", text: $model.statementDayText, prompt: Text("1–31"), axis: .vertical)
+                                #if os(iOS)
+                                .keyboardType(.numberPad)
+                                #endif
+                                .accessibilityHint("The day of the month the statement is cut")
+                                .accessibilityIdentifier("addCard.statementDay")
+                        }
+                        field(.dueDay, title: "Due day") {
+                            TextField("Due day", text: $model.dueDayText, prompt: Text("1–31"), axis: .vertical)
+                                #if os(iOS)
+                                .keyboardType(.numberPad)
+                                #endif
+                                .accessibilityHint("The day of the month the payment is due")
+                                .accessibilityIdentifier("addCard.dueDay")
+                        }
                     }
                     if model.isEditing {
                         // Kullanımdaki kart silinmez; neden formun üstündeki hata satırında gösterilir.
                         DeleteSection(title: "Delete card", identifierPrefix: "addCard", isConfirming: $isConfirmingDelete)
                     }
                 }
-                .scrollContentBackground(.hidden)
-                .deleteConfirmation(
+                    .deleteConfirmation(
                     isPresented: $isConfirmingDelete,
                     title: "Delete this card?",
                     message: "Cards used by installments or subscriptions cannot be deleted.",
@@ -114,7 +103,6 @@ public struct AddCardView: View {
                     AccessibilityNotification.Announcement(message).post()
                 }
             }
-            .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
             .navigationTitle(model.isEditing ? "Edit card" : "New card")
@@ -154,24 +142,14 @@ public struct AddCardView: View {
         )
     }
 
-    // Alan, başlığı ve (varsa) altındaki hata metni aynı bölümde durur.
+    // Alan, başlığı ve (varsa) altındaki hata metni aynı satırda, alt alta durur.
     private func field(_ field: CardDraft.Field, title: String, @ViewBuilder content: () -> some View) -> some View {
-        Section {
-            content()
-            if let message = model.errorMessage(for: field) {
-                // Hata yalnızca renkle değil, simge ve metinle de belirtilir.
-                Label(message, systemImage: "exclamationmark.circle")
-                    .font(.footnote)
-                    .foregroundStyle(Color.vademTextPrimary)
-                    .accessibilityIdentifier("addCard.\(Self.identifier(of: field)).error")
-            }
-        } header: {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(Color.vademTextSecondary)
-                .textCase(nil)
-        }
-        .listRowBackground(Color.vademSurface)
+        FormField(
+            title: title,
+            errorMessage: model.errorMessage(for: field),
+            errorIdentifier: "addCard.\(Self.identifier(of: field)).error",
+            content: content
+        )
     }
 
     private static func identifier(of field: CardDraft.Field) -> String {

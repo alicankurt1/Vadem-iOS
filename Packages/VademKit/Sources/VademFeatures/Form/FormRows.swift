@@ -1,24 +1,104 @@
 import SwiftUI
 
-// Formlarda ortak satırlar: alan bölümü (+ hata metni) ve seçim listesini açan satır.
+// Formlarda ortak parçalar: kart (bölüm), alan satırı (+ hata metni) ve seçim listesini açan satır.
 
-/// Bir alanı ve (varsa) altındaki hata metnini aynı bölümde gösterir.
-/// Hata kimliği `<errorIdentifier>` olur (ör. `addInstallment.title.error`).
+// Form ekranlarının ortak ölçüleri.
+enum FormLayout {
+    // Dokunulan satırların en küçük yüksekliği (dokunma alanı).
+    static let minRowHeight: CGFloat = 44
+    // Kart içinde satırın üst/alt boşluğu; 44 pt satırla birlikte ~52 pt'lik form satırı verir.
+    static let rowVerticalPadding: CGFloat = 4
+    // Kartlar arasındaki ve ekran kenarındaki boşluk (Home ile aynı yan boşluk).
+    static let spacing: CGFloat = 20
+}
+
+/// Formda bir kart: satırları ``SurfaceCard`` ile `vademSurface` zeminde, aralarında ince
+/// `vademSeparator` çizgileriyle gösterir.
 @MainActor
-struct FormFieldSection<Content: View>: View {
+struct FormCard<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        SurfaceCard(rowVerticalPadding: FormLayout.rowVerticalPadding) {
+            content
+        }
+    }
+}
+
+/// Form ekranının kaydırılan gövdesi: kartlar alt alta, `vademBackground` zeminde.
+/// Form/List yerine ScrollView: alanlar tek bir Form bölümüne toplanınca denetim, ekranın
+/// ortasına düşen son satırları (sil düğmesi, ilk ay) "Dynamic Type kısmen desteklenmiyor"
+/// sayıyordu; ScrollView'da bu bulgu yok. ScrollView klavye açılınca içeriği kendiliğinden kaydırır.
+@MainActor
+struct FormScroll<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: FormLayout.spacing) {
+                content
+            }
+            // Yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
+            .padding(FormLayout.spacing)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .background(Color.vademBackground.ignoresSafeArea())
+    }
+}
+
+/// Bir alanı ve (varsa) altındaki hata metnini bir ``FormCard`` içinde tek satır olarak gösterir;
+/// alan en az 44 pt yüksekliğindedir. `title` verilirse alanın üstünde küçük bir başlık durur.
+/// Hata alanla aynı satırda olduğundan aralarında çizgi yoktur. Hata kimliği `<errorIdentifier>`
+/// olur (ör. `addInstallment.title.error`).
+@MainActor
+struct FormField<Content: View>: View {
+    var title: String?
     let errorMessage: String?
     let errorIdentifier: String
     @ViewBuilder let content: Content
 
     var body: some View {
-        Section {
+        VStack(alignment: .leading, spacing: 0) {
+            if let title {
+                // Başlık sarılabilen düz metin: AX5'te de kırpılmadan büyür.
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.vademTextSecondary)
+                    .accessibilityAddTraits(.isHeader)
+                    .padding(.top, 8)
+            }
+            // Alan en az 44 pt yüksekliğinde; metin dikeyde ortalanır.
             content
+                .frame(minHeight: FormLayout.minRowHeight, alignment: .leading)
             if let errorMessage {
                 FieldErrorLabel(message: errorMessage)
                     .accessibilityIdentifier(errorIdentifier)
+                    .padding(.bottom, 8)
             }
         }
-        .listRowBackground(Color.vademSurface)
+    }
+}
+
+/// Formun üstündeki kaydetme/silme hatası satırı (``FormCard`` içinde).
+@MainActor
+struct FormFailureRow: View {
+    let message: String
+
+    var body: some View {
+        // Label yerine düz metin + gizli simge: Label'ın sabit simge sütunu uzun
+        // mesajı denetimde "kırpılmış" gösteriyordu; düz metin satırları sarılarak büyür.
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .accessibilityHidden(true)
+            Text(message)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.body)
+        .foregroundStyle(Color.vademTextPrimary)
+        .multilineTextAlignment(.leading)
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -28,10 +108,18 @@ struct FieldErrorLabel: View {
     let message: String
 
     var body: some View {
-        // Hata yalnızca renkle değil, simge ve metinle de belirtilir.
-        Label(message, systemImage: "exclamationmark.circle")
-            .font(.footnote)
-            .foregroundStyle(Color.vademTextPrimary)
+        // Hata yalnızca renkle değil, simge ve metinle de belirtilir. Label yerine düz metin + gizli
+        // simge: alanla aynı satırda Label'ın sabit simge sütunu denetimde metni "kırpılmış" gösteriyordu.
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: "exclamationmark.circle")
+                .accessibilityHidden(true)
+            Text(message)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.footnote)
+        .foregroundStyle(Color.vademTextPrimary)
+        .multilineTextAlignment(.leading)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -52,7 +140,7 @@ struct ChoiceRow: View {
                 label
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Color.vademTextSecondary)
+                    .foregroundStyle(Color.vademBrand)
                     .accessibilityHidden(true)
             }
         }
@@ -80,11 +168,12 @@ struct ChoiceRow: View {
                 .frame(maxWidth: stacked ? .infinity : nil, alignment: .leading)
         }
         .multilineTextAlignment(.leading)
+        .frame(minHeight: FormLayout.minRowHeight)
         .contentShape(Rectangle())
     }
 }
 
-/// Düzenleme formunun en altındaki silme bölümü: dokununca `isConfirming` açılır.
+/// Düzenleme formunun en altındaki silme kartı: dokununca `isConfirming` açılır.
 /// Onay uyarısı formun kendisine ``SwiftUI/View/deleteConfirmation(isPresented:title:message:identifierPrefix:onDelete:)``
 /// ile bağlanır. Kimlik: düğme `<identifierPrefix>.delete`.
 @MainActor
@@ -94,7 +183,7 @@ struct DeleteSection: View {
     @Binding var isConfirming: Bool
 
     var body: some View {
-        Section {
+        FormCard {
             // Label yerine düz metin + gizli simge: Label'ın sabit simge sütunu denetimde metni
             // "kırpılmış" gösteriyordu. ChoiceRow gibi düz stil ve açık renk: Form'un hazır yıkıcı
             // düğme stili denetimde "Dynamic Type kısmen desteklenmiyor" sayılıyordu.
@@ -109,14 +198,15 @@ struct DeleteSection: View {
                         .font(.body)
                         .accessibilityHidden(true)
                 }
-                .foregroundStyle(Color.red)
+                // Yıkıcı eylem token kırmızısıyla (dueToday); vurgu rengi metinde kullanılmaz.
+                .foregroundStyle(Color.vademDueToday)
                 .multilineTextAlignment(.leading)
+                .frame(minHeight: FormLayout.minRowHeight)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("\(identifierPrefix).delete")
         }
-        .listRowBackground(Color.vademSurface)
     }
 }
 

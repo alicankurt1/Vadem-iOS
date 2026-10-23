@@ -44,47 +44,48 @@ public struct AddInstallmentView: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
+            FormScroll {
                 if let message = model.failureMessage {
-                    Section {
-                        Label(message, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(Color.vademTextPrimary)
+                    FormCard {
+                        FormFailureRow(message: message)
                             .accessibilityIdentifier("addInstallment.failure")
                     }
-                    .listRowBackground(Color.vademSurface)
                 }
-                field(.title) {
-                    TextField("Title", text: $model.title, prompt: Text("e.g. Laptop"))
-                        #if os(iOS)
-                        .textInputAutocapitalization(.sentences)
-                        #endif
-                        .accessibilityIdentifier("addInstallment.title")
-                }
-                field(.card) {
-                    // Satır bizim çizdiğimiz bir düğme (ChoiceRow); seçim itilen listede (OptionList) yapılır.
-                    ChoiceRow(title: "Card", value: cardTitle) { choice = .card }
-                        .accessibilityIdentifier("addInstallment.card")
-                }
-                field(.amount) {
-                    // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
-                    // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır; kısa yer tutucu AX5'te de sığar.
-                    TextField("Total amount", text: $model.amountText, prompt: Text("Amount (₺)"), axis: .vertical)
-                        #if os(iOS)
-                        .keyboardType(.decimalPad)
-                        #endif
-                        .accessibilityHint("In Turkish lira")
-                        .accessibilityIdentifier("addInstallment.amount")
-                }
-                field(.count) {
-                    Stepper(value: $model.count, in: InstallmentPlan.supportedCounts) {
-                        Text("Installments: \(model.count)")
-                            .foregroundStyle(Color.vademTextPrimary)
+                // Tüm alanlar tek kartta, ince çizgilerle ayrılmış satırlar olarak durur.
+                FormCard {
+                    field(.title) {
+                        TextField("Title", text: $model.title, prompt: Text("e.g. Laptop"))
+                            #if os(iOS)
+                            .textInputAutocapitalization(.sentences)
+                            #endif
+                            .accessibilityIdentifier("addInstallment.title")
                     }
-                    .accessibilityIdentifier("addInstallment.count")
-                }
-                field(.firstMonth) {
-                    ChoiceRow(title: "First due month", value: model.title(of: model.firstMonth)) { choice = .firstMonth }
-                        .accessibilityIdentifier("addInstallment.firstMonth")
+                    field(.card) {
+                        // Satır bizim çizdiğimiz bir düğme (ChoiceRow); seçim itilen listede (OptionList) yapılır.
+                        ChoiceRow(title: "Card", value: cardTitle) { choice = .card }
+                            .accessibilityIdentifier("addInstallment.card")
+                    }
+                    field(.amount) {
+                        // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
+                        // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır; kısa yer tutucu AX5'te de sığar.
+                        TextField("Total amount", text: $model.amountText, prompt: Text("Amount (₺)"), axis: .vertical)
+                            #if os(iOS)
+                            .keyboardType(.decimalPad)
+                            #endif
+                            .accessibilityHint("In Turkish lira")
+                            .accessibilityIdentifier("addInstallment.amount")
+                    }
+                    field(.count) {
+                        Stepper(value: $model.count, in: InstallmentPlan.supportedCounts) {
+                            Text("Installments: \(model.count)")
+                                .foregroundStyle(Color.vademTextPrimary)
+                        }
+                        .accessibilityIdentifier("addInstallment.count")
+                    }
+                    field(.firstMonth) {
+                        ChoiceRow(title: "First due month", value: model.title(of: model.firstMonth)) { choice = .firstMonth }
+                            .accessibilityIdentifier("addInstallment.firstMonth")
+                    }
                 }
                 if model.isEditing {
                     DeleteSection(
@@ -93,7 +94,6 @@ public struct AddInstallmentView: View {
                     )
                 }
             }
-            .scrollContentBackground(.hidden)
             .deleteConfirmation(
                 isPresented: $isConfirmingDelete,
                 title: "Delete this installment?",
@@ -105,7 +105,6 @@ public struct AddInstallmentView: View {
                     dismiss()
                 }
             }
-            .background(Color.vademBackground.ignoresSafeArea())
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
             .navigationDestination(item: $choice) { choice in
@@ -181,9 +180,9 @@ public struct AddInstallmentView: View {
         model.firstMonthOptions.map { .init(value: $0, title: model.title(of: $0)) }
     }
 
-    // Alan ve (varsa) altındaki hata metni aynı bölümde durur.
+    // Alan ve (varsa) altındaki hata metni aynı satırda, alt alta durur.
     private func field(_ field: InstallmentDraft.Field, @ViewBuilder content: () -> some View) -> some View {
-        FormFieldSection(
+        FormField(
             errorMessage: model.errorMessage(for: field),
             errorIdentifier: "\(Self.identifierPrefix).\(Self.identifier(of: field)).error",
             content: content
