@@ -25,6 +25,8 @@ public struct AddSubscriptionView: View {
     @State private var model: AddSubscriptionViewModel
     // Silme onayı açık mı.
     @State private var isConfirmingDelete = false
+    // Odaktaki metin alanı; satırın boş yerine dokununca o satırın alanı odaklanır.
+    @FocusState private var focusedField: SubscriptionDraft.Field?
     @State private var choice: Choice?
     private let onSaved: () -> Void
     private let onDeleted: () -> Void
@@ -60,6 +62,7 @@ public struct AddSubscriptionView: View {
                             .textInputAutocapitalization(.sentences)
                             #endif
                             .accessibilityIdentifier("addSubscription.title")
+                            .focused($focusedField, equals: .title)
                     }
                     field(.amount) {
                         // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
@@ -70,6 +73,7 @@ public struct AddSubscriptionView: View {
                             #endif
                             .accessibilityHint("In Turkish lira")
                             .accessibilityIdentifier("addSubscription.amount")
+                            .focused($focusedField, equals: .amount)
                     }
                     field(.card) {
                         // Kart isteğe bağlı; "No card" da bir seçenek.
@@ -194,9 +198,13 @@ public struct AddSubscriptionView: View {
         FormField(
             errorMessage: model.errorMessage(for: field),
             errorIdentifier: "\(Self.identifierPrefix).\(Self.identifier(of: field)).error",
+            onTapRow: Self.textFields.contains(field) ? { focusedField = field } : nil,
             content: content
         )
     }
+
+    // Metin alanı olan alanlar; bunların satırına dokunmak alanı odaklar.
+    private static let textFields: Set<SubscriptionDraft.Field> = [.title, .amount]
 
     private static func identifier(of field: SubscriptionDraft.Field) -> String {
         switch field {

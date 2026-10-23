@@ -22,6 +22,8 @@ public struct AddInstallmentView: View {
     @State private var model: AddInstallmentViewModel
     // Silme onayı açık mı.
     @State private var isConfirmingDelete = false
+    // Odaktaki metin alanı; satırın boş yerine dokununca o satırın alanı odaklanır.
+    @FocusState private var focusedField: InstallmentDraft.Field?
     @State private var choice: Choice?
     // Kart listesinden açılan kart formunun modeli; nil iken sayfa kapalı.
     @State private var addCardModel: AddCardViewModel?
@@ -59,6 +61,7 @@ public struct AddInstallmentView: View {
                             .textInputAutocapitalization(.sentences)
                             #endif
                             .accessibilityIdentifier("addInstallment.title")
+                            .focused($focusedField, equals: .title)
                     }
                     field(.card) {
                         // Satır bizim çizdiğimiz bir düğme (ChoiceRow); seçim itilen listede (OptionList) yapılır.
@@ -74,6 +77,7 @@ public struct AddInstallmentView: View {
                             #endif
                             .accessibilityHint("In Turkish lira")
                             .accessibilityIdentifier("addInstallment.amount")
+                            .focused($focusedField, equals: .amount)
                     }
                     field(.count) {
                         Stepper(value: $model.count, in: InstallmentPlan.supportedCounts) {
@@ -185,9 +189,13 @@ public struct AddInstallmentView: View {
         FormField(
             errorMessage: model.errorMessage(for: field),
             errorIdentifier: "\(Self.identifierPrefix).\(Self.identifier(of: field)).error",
+            onTapRow: Self.textFields.contains(field) ? { focusedField = field } : nil,
             content: content
         )
     }
+
+    // Metin alanı olan alanlar; bunların satırına dokunmak alanı odaklar.
+    private static let textFields: Set<InstallmentDraft.Field> = [.title, .amount]
 
     private static func identifier(of field: InstallmentDraft.Field) -> String {
         switch field {

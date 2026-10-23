@@ -24,6 +24,8 @@ public struct AddCardView: View {
     @State private var model: AddCardViewModel
     // Silme onayı açık mı.
     @State private var isConfirmingDelete = false
+    // Odaktaki metin alanı; satırın boş yerine dokununca o satırın alanı odaklanır.
+    @FocusState private var focusedField: CardDraft.Field?
     private let onSaved: (Card) -> Void
     private let onDeleted: () -> Void
 
@@ -46,11 +48,13 @@ public struct AddCardView: View {
             ScrollViewReader { proxy in
                 FormScroll {
                     if let message = model.failureMessage {
+                        // Kaydırma hedefi kartın kendisi: SurfaceCard'ın satırları yeniden sardığı içerikte
+                        // değil, ScrollView'un doğrudan alt görünümünde durur.
                         FormCard {
                             FormFailureRow(message: message)
                                 .accessibilityIdentifier("addCard.failure")
-                                .id(Self.failureID)
                         }
+                        .id(Self.failureID)
                     }
                     // Alanlar tek kartta. Alan adı alanın üstünde (sarılabilen düz metin); yer tutucular
                     // AX5'te de sığacak kadar kısa. Dikey eksen: yazılan metin kırpılmaz, sarılır.
@@ -61,6 +65,7 @@ public struct AddCardView: View {
                                 .textInputAutocapitalization(.words)
                                 #endif
                                 .accessibilityIdentifier("addCard.name")
+                                .focused($focusedField, equals: .name)
                         }
                         field(.statementDay, title: "Statement day") {
                             TextField("Statement day", text: $model.statementDayText, prompt: Text("1–31"), axis: .vertical)
@@ -69,6 +74,7 @@ public struct AddCardView: View {
                                 #endif
                                 .accessibilityHint("The day of the month the statement is cut")
                                 .accessibilityIdentifier("addCard.statementDay")
+                                .focused($focusedField, equals: .statementDay)
                         }
                         field(.dueDay, title: "Due day") {
                             TextField("Due day", text: $model.dueDayText, prompt: Text("1–31"), axis: .vertical)
@@ -77,6 +83,7 @@ public struct AddCardView: View {
                                 #endif
                                 .accessibilityHint("The day of the month the payment is due")
                                 .accessibilityIdentifier("addCard.dueDay")
+                                .focused($focusedField, equals: .dueDay)
                         }
                     }
                     if model.isEditing {
@@ -84,7 +91,7 @@ public struct AddCardView: View {
                         DeleteSection(title: "Delete card", identifierPrefix: "addCard", isConfirming: $isConfirmingDelete)
                     }
                 }
-                    .deleteConfirmation(
+                .deleteConfirmation(
                     isPresented: $isConfirmingDelete,
                     title: "Delete this card?",
                     message: "Cards used by installments or subscriptions cannot be deleted.",
@@ -148,9 +155,13 @@ public struct AddCardView: View {
             title: title,
             errorMessage: model.errorMessage(for: field),
             errorIdentifier: "addCard.\(Self.identifier(of: field)).error",
+            onTapRow: Self.textFields.contains(field) ? { focusedField = field } : nil,
             content: content
         )
     }
+
+    // Metin alanı olan alanlar; bunların satırına dokunmak alanı odaklar.
+    private static let textFields: Set<CardDraft.Field> = [.name, .statementDay, .dueDay]
 
     private static func identifier(of field: CardDraft.Field) -> String {
         switch field {

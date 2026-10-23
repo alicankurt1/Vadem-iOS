@@ -49,13 +49,15 @@ struct FormScroll<Content: View>: View {
 
 /// Bir alanı ve (varsa) altındaki hata metnini bir ``FormCard`` içinde tek satır olarak gösterir;
 /// alan en az 44 pt yüksekliğindedir. `title` verilirse alanın üstünde küçük bir başlık durur.
-/// Hata alanla aynı satırda olduğundan aralarında çizgi yoktur. Hata kimliği `<errorIdentifier>`
-/// olur (ör. `addInstallment.title.error`).
+/// Hata alanla aynı satırda olduğundan aralarında çizgi yoktur. `onTapRow` verilirse satırın boş
+/// yerine dokunmak onu çalıştırır. Hata kimliği `<errorIdentifier>` olur (ör. `addInstallment.title.error`).
 @MainActor
 struct FormField<Content: View>: View {
     var title: String?
     let errorMessage: String?
     let errorIdentifier: String
+    // Verilirse satırın boş yerine dokunmak bunu çalıştırır (metin alanına odaklanmak için).
+    var onTapRow: (() -> Void)?
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -75,6 +77,16 @@ struct FormField<Content: View>: View {
                 FieldErrorLabel(message: errorMessage)
                     .accessibilityIdentifier(errorIdentifier)
                     .padding(.bottom, 8)
+            }
+        }
+        .background {
+            // Arka plan yalnızca içeriğin boş bıraktığı yerlere dokunulunca çalışır; metin alanı ve
+            // düğmeler kendi dokunuşlarını alır. Erişilebilirlikte görünmez (yeni öğe eklemez).
+            if let onTapRow {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: onTapRow)
+                    .accessibilityHidden(true)
             }
         }
     }
@@ -143,6 +155,8 @@ struct ChoiceRow: View {
                     .foregroundStyle(Color.vademBrand)
                     .accessibilityHidden(true)
             }
+            // Dokunma alanı ok ve aradaki boşluk dahil tüm satır.
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens a list")
