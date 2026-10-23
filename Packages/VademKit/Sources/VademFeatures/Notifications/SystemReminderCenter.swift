@@ -40,18 +40,26 @@ public final class SystemReminderCenter: ReminderCenter {
         let staleIDs = pending.map(\.identifier).filter { $0.hasPrefix(Self.idPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: staleIDs)
 
+        var firstError: (any Error)?
         for reminder in reminders {
             let content = UNMutableNotificationContent()
             content.title = reminder.title
             content.body = reminder.body
             content.sound = .default
-            // Takvim tetikleyicisi yerel saatle çalar (ör. 09:00), tekrarlamaz.
+            // Takvim tetikleyicisi yerel saatle çalar (ör. 09:00), tekrarlamaz. Bileşenler enjekte edilen
+            // takvimden gelir ama tetikleyicide açık saat dilimi yoktur: cihazın o anki diliminde çalar.
             let components = calendar.dateComponents(
                 [.year, .month, .day, .hour, .minute], from: reminder.fireDate
             )
             let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             let request = UNNotificationRequest(identifier: reminder.id, content: content, trigger: trigger)
-            try await center.add(request)
+            do {
+                try await center.add(request)
+            } catch {
+                // Biri eklenemezse diğerleri yine kurulur; ilk hata sonda iletilir.
+                firstError = firstError ?? error
+            }
         }
+        if let firstError { throw firstError }
     }
 }

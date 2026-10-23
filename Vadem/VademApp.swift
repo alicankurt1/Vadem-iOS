@@ -4,6 +4,11 @@ import VademCore
 import VademFeatures
 import VademPersistence
 
+#if DEBUG
+// UI kontrolünün tasarım galerisini açan başlatma argümanı; kök ekran ve kurulum aynı değeri kullanır.
+private let galleryLaunchArgument = "-ui-gallery"
+#endif
+
 // Uygulama giriş noktası; ekranlar VademFeatures modülünden gelir.
 @main
 struct VademApp: App {
@@ -16,7 +21,7 @@ struct VademApp: App {
             Group {
                 #if DEBUG
                 // UI kontrolü `-ui-gallery` ile açınca kök ekran yerine tasarım galerisi gösterilir.
-                if ProcessInfo.processInfo.arguments.contains("-ui-gallery") {
+                if ProcessInfo.processInfo.arguments.contains(galleryLaunchArgument) {
                     DesignGalleryView()
                 } else {
                     setup.root
@@ -27,7 +32,9 @@ struct VademApp: App {
             }
             // Uygulama öne geldiğinde "bugün" yenilenir (gece yarısı / ay dönümü sonrası
             // çipler ve başlangıç ayı eskimesin). Örnek veride sabit bugün değişmez.
-            .onChange(of: scenePhase) { _, phase in
+            // `initial: true`: soğuk açılışta da bir kez çalışır, hatırlatmalar açılışta da planlanır;
+            // açılıştaki updateToday aynı günle yalnızca bir kez daha yükler, zararsızdır.
+            .onChange(of: scenePhase, initial: true) { _, phase in
                 if phase == .active {
                     setup.liveModel?.updateToday(Date())
                     // Öne gelince hatırlatmalar da yenilenir (pencere kayar, izin Ayarlar'da değişmiş olabilir).
@@ -57,7 +64,7 @@ private struct AppSetup {
             return AppSetup(root: RootView(model: HomeSampleData.makeViewModel()), liveModel: nil, reminders: nil)
         }
         // Galeri gerçek depoya dokunmaz ve hatırlatma kurmaz.
-        if ProcessInfo.processInfo.arguments.contains("-ui-gallery") {
+        if ProcessInfo.processInfo.arguments.contains(galleryLaunchArgument) {
             return AppSetup(root: RootView.unavailable(), liveModel: nil, reminders: nil)
         }
         #endif
