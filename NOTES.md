@@ -326,3 +326,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Açık:** `lookaheadMonths: .max` taşar (çağıran yok, 2/3'te gerekirse sınırlanacak).
 - **Metrikler:** 9 dk, 5 verify (1 kırmızı: eski davranışı sabitleyen test, bilerek), 1 düzeltme turu.
 - **Ders:** Pencere kenarları zaman mantığında hata üretir; sınırın hemen dışındaki öğenin etkisini ayrıca test et. Zaman dilimi ve DST'yi saf fonksiyonda, takvim enjekte ederek test etmek kolaydır.
+
+### Koşu #98 — Hatırlatmaları zamanlama ve izin akışı
+
+- **Ne yapıldı:** `ReminderCenter` protokolü, `UserNotifications` import eden tek dosya `SystemReminderCenter` ve `ReminderScheduler`; form kapanışlarına ve sahne aktifleşmesine bağlandı (PR #99, bildirimlerin 2/3'ü). İzin yalnızca `notDetermined` iken ve gönderilecek bir şey varken, scheduler başına bir kez istenir; örtüşen yenilemeler tek ek geçişte birleşir.
+- **Reviewer yakaladı:** Sahne-aktif yenilemesi soğuk açılışta çalışmayabilirdi (`onChange` ilk değerde tetiklenmez); `onChange(of:initial: true)` ile düzeltildi. Ayrıca geçiş sırasında gelen yenileme için test yoktu (eklendi) ve tek bir başarısız `add` kalanları atlıyordu.
+- **Test boşluğu:** Gerçek izin uyarısı UI testiyle otomatikleştirilemez; örnek veri modunda scheduler oluşturulmadığı için uyarı hiç çıkmaz. Elle bir kez denenmeli (ilk ödemeyi kaydet, izni yanıtla, bekleyenleri kontrol et).
+- **Metrikler:** 21 dk, 6 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve `home` UI-CHECK geçti.
+- **Ders:** Yaşam döngüsü tetikleyicileri (sahne aktif, soğuk açılış) ilk değerde çalışıp çalışmadığıyla birlikte test edilmeli; sistem izin diyalogları otomasyon dışında kalır, elle kontrol maddesi olarak PR'a yazılmalı.
