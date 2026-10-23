@@ -19,6 +19,7 @@ struct TokenContrastTests {
     // oturduğu düz zeminler.
     static let pairs: [Pair] = [
         Pair(foreground: "dueToday", background: "dueTodayBackground"),
+        Pair(foreground: "dueToday", background: "surface"),  // Silme satırı (#88)
         Pair(foreground: "dueSoon", background: "dueSoonBackground"),
         Pair(foreground: "dueLater", background: "dueLaterBackground"),
         Pair(foreground: "textPrimary", background: "background"),
