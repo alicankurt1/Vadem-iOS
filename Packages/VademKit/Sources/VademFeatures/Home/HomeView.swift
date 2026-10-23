@@ -449,6 +449,8 @@ struct UpcomingStrip: View {
                     .font(.subheadline.weight(summary.isSelected ? .bold : .regular))
                 AmountText(summary.total)
                     .font(.body.weight(.semibold))
+                    // Seçili çipte tutar ikincil hero rengiyle (hero üzerinde kontrastı testle güvencede).
+                    .foregroundStyle(summary.isSelected ? Color.vademHeroSecondary : Color.vademTextPrimary)
             }
             // Seçili çip koyu hero zeminde açık yazıyla; seçili olmayan yüzey zeminde birincil metin.
             .foregroundStyle(summary.isSelected ? Color.vademHeroText : Color.vademTextPrimary)
@@ -512,8 +514,9 @@ struct MonthCalendar: View {
                 .foregroundStyle(Color.vademTextPrimary)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("home.calendar")
-            // Izgara yuvarlak köşeli yüzey kartında (çerçevesiz); yan pay dar tutulur ki
-            // yedi sütunun her biri en az 44 pt genişlikte kalsın.
+            // Izgara yuvarlak köşeli yüzey kartında (çerçevesiz). Yedi sütunlu görünümde yan pay
+            // 2 pt, sütun arası 2 pt: 375 pt genişlikteki iPhone'larda (SE, mini) bile her sütun
+            // 44 pt'nin üstünde kalır (375 - 2×20 sayfa payı - 2×2 kart payı - 6×2 aralık = 319 → 7 × ~45.6 pt).
             Group {
                 if dynamicTypeSize.isAccessibilitySize {
                     accessibleGrid
@@ -521,7 +524,7 @@ struct MonthCalendar: View {
                     weekGrid
                 }
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 8 : 2)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -530,7 +533,7 @@ struct MonthCalendar: View {
 
     // Yedi sütunlu klasik ay görünümü; gün başlıkları VoiceOver'da gizli (her gün kendi tarihini okur).
     private var weekGrid: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 7), spacing: 4) {
             ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
                 Text(symbol)
                     .font(.caption.weight(.semibold))
