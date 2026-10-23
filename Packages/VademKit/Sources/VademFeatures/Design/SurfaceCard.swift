@@ -5,11 +5,14 @@ import SwiftUI
 @MainActor
 public struct SurfaceCard<Content: View>: View {
     private let content: Content
+    private let rowVerticalPadding: CGFloat
 
     @Environment(\.displayScale) private var displayScale
 
-    /// Creates a card; every top-level view in `content` becomes one row.
-    public init(@ViewBuilder content: () -> Content) {
+    /// Creates a card; every top-level view in `content` becomes one row, padded by
+    /// `rowVerticalPadding` above and below (forms use less, their rows bring a 44 pt minimum).
+    public init(rowVerticalPadding: CGFloat = 12, @ViewBuilder content: () -> Content) {
+        self.rowVerticalPadding = rowVerticalPadding
         self.content = content()
     }
 
@@ -23,7 +26,7 @@ public struct SurfaceCard<Content: View>: View {
                     }
                     row
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, rowVerticalPadding)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
