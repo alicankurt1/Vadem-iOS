@@ -318,3 +318,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test boşluğu:** Seçili gün hiçbir capture'da yoktu; test writer `testHomeSelectedDay` ekledi. Seçili durumu assert etmediği için nit olarak açık.
 - **Metrikler:** 31 dk, 4 verify (0 kırmızı), 1 düzeltme turu; UI-FUNCTIONAL ve UI-CHECK (açık/koyu) geçti.
 - **Ders:** Tek bir cihaz boyutunda geçen yerleşim kanıt değildir; en dar desteklenen genişlikte de doğrula. Yeni bir durum (seçili gün) için ayrı capture yoksa denetim o durumu hiç görmez.
+
+### Koşu #95 — Hatırlatma planlayıcısı (NotificationPlanner)
+
+- **Ne yapıldı:** `VademCore` içinde saf `NotificationPlanner`; UI ve `UserNotifications` yok (PR #96, bildirimlerin 1/3'ü). Ürün kararları: vadeden bir gün önce ve vade günü 09:00, aynı gün ödemeler (vade günü, tür) başına gruplanır, iOS'un 64 bekleyen bildirim sınırından 63'ü kullanılır (1 yedek). Tutar biçimleyici dışarıdan verilir, çünkü `AmountText` `VademFeatures`'ta.
+- **Reviewer yakaladı:** Tarama penceresinin kenarında, ayın 1'ine denk gelen ödemenin "yarın" hatırlatması düşüyordu. Düzeltme: fazladan aylık taramada yalnızca 1. günün gün-önce hatırlatması planlanır (spill-over kuralı). Ayrıca DST testi yoktu; New York'ta iki geçiş için eklendi, negatif lookahead 0'a sabitlendi.
+- **Açık:** `lookaheadMonths: .max` taşar (çağıran yok, 2/3'te gerekirse sınırlanacak).
+- **Metrikler:** 9 dk, 5 verify (1 kırmızı: eski davranışı sabitleyen test, bilerek), 1 düzeltme turu.
+- **Ders:** Pencere kenarları zaman mantığında hata üretir; sınırın hemen dışındaki öğenin etkisini ayrıca test et. Zaman dilimi ve DST'yi saf fonksiyonda, takvim enjekte ederek test etmek kolaydır.
