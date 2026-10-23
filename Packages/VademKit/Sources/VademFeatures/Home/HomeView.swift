@@ -8,6 +8,7 @@ import VademCore
 /// (`home.add`) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
+/// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
 public struct HomeView: View {
@@ -18,6 +19,8 @@ public struct HomeView: View {
     @State private var addCardModel: AddCardViewModel?
     // Açık abonelik formunun modeli; nil iken sayfa kapalı.
     @State private var addSubscriptionModel: AddSubscriptionViewModel?
+    // Açık ayarlar sayfasının modeli; nil iken sayfa kapalı.
+    @State private var settingsModel: SettingsViewModel?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -36,12 +39,14 @@ public struct HomeView: View {
     /// for the add-subscription form (errors: ``AddSubscriptionView/errorsLaunchArgument``).
     /// ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument`` and
     /// ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
-    /// month in its edit form.
+    /// month in its edit form. ``SettingsView/launchArgument`` (or ``SettingsView/deniedLaunchArgument``)
+    /// opens the settings sheet.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddModel: AddInstallmentViewModel?
         var initialAddCardModel: AddCardViewModel?
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
+        var initialSettingsModel: SettingsViewModel?
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AddInstallmentView.launchArgument) {
@@ -76,11 +81,15 @@ public struct HomeView: View {
                 .first
         } else if arguments.contains(AddCardView.editLaunchArgument) {
             initialAddCardModel = model.cardSubtotals.first.flatMap { model.makeEditCardModel(id: $0.id) }
+        } else if arguments.contains(SettingsView.launchArgument)
+                    || arguments.contains(SettingsView.deniedLaunchArgument) {
+            initialSettingsModel = model.makeSettingsModel()
         }
         #endif
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
+        _settingsModel = State(initialValue: initialSettingsModel)
     }
 
     public var body: some View {
@@ -106,13 +115,17 @@ public struct HomeView: View {
         .sheet(item: $addSubscriptionModel, onDismiss: { model.reloadAfterChange() }) { addSubscriptionModel in
             AddSubscriptionView(model: addSubscriptionModel)
         }
+        // Ayarlar veriyi değiştirmez; zamanlayıcı her tercih değişikliğinde zaten yenilenir.
+        .sheet(item: $settingsModel) { settingsModel in
+            SettingsView(model: settingsModel)
+        }
     }
 
     private var scrollContent: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    AppHeader()
+                    AppHeader { settingsButton }
                     monthBar
                     // Hata durumunda da görünür (toplam sıfır): ekleme menüsü her zaman erişilebilir.
                     hero(proxy)
@@ -192,6 +205,22 @@ public struct HomeView: View {
         }
         .accessibilityLabel("Add payment")
         .accessibilityIdentifier("home.add")
+    }
+
+    // Başlığın yanındaki dişli: ayarlar sayfasını açar.
+    private var settingsButton: some View {
+        Button {
+            settingsModel = model.makeSettingsModel()
+        } label: {
+            Image(systemName: "gearshape")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.vademTextPrimary)
+                // En az 44 pt dokunma alanı.
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel("Settings")
+        .accessibilityIdentifier("home.settings")
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
@@ -620,20 +649,34 @@ struct MonthCalendar: View {
     }
 }
 
-/// The "Vadem" title with the app version below it.
+/// The "Vadem" title with the app version below it; `trailing` (e.g. a button) sits on the title's line.
 @MainActor
-struct AppHeader: View {
+struct AppHeader<Trailing: View>: View {
+    @ViewBuilder var trailing: Trailing
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Vadem")
-                .font(.largeTitle.weight(.bold))
-                .foregroundStyle(Color.vademTextPrimary)
-                .accessibilityAddTraits(.isHeader)
+            // Sağdaki öğe yalnızca başlık satırında; sürüm etiketi tüm genişliği kullanır.
+            HStack(alignment: .center, spacing: 8) {
+                Text("Vadem")
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 0)
+                trailing
+            }
             // Sürüm etiketi başlığın altında, daha küçük; ayrı erişilebilirlik etiketi yok.
             Text("Version \(VademCore.version)")
                 .font(.subheadline)
                 .foregroundStyle(Color.vademTextPrimary)
         }
+    }
+}
+
+extension AppHeader where Trailing == EmptyView {
+    /// The header without a trailing item.
+    init() {
+        self.init { EmptyView() }
     }
 }
 

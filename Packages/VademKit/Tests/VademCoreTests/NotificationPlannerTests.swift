@@ -397,4 +397,51 @@ struct NotificationPlannerTests {
         #expect(dueDay.fireDate.timeIntervalSince(dayBefore.fireDate) == 23 * 3600)
         #expect(newYork.component(.hour, from: dayBefore.fireDate) == 9)
     }
+
+    // MARK: Türler (kinds)
+
+    private func plan(now: Date, subscriptions: [SubscriptionItem], kinds: Set<PlannedReminder.Kind>, lookahead: Int = 3) -> [PlannedReminder] {
+        NotificationPlanner.plan(
+            now: now, calendar: calendar, cards: [], installments: [], subscriptions: subscriptions,
+            lookaheadMonths: lookahead, kinds: kinds, formatAmount: { "TRY \($0.amount)" }
+        )
+    }
+
+    @Test("Kinds: dayBefore only plans only day-before reminders")
+    func kindsDayBeforeOnly() throws {
+        let result = plan(now: try date(2026, 3, 10, 12), subscriptions: [try monthly(day: 15)], kinds: [.dayBefore])
+        #expect(result.map(\.id) == ["due-2026-03-15-dayBefore", "due-2026-04-15-dayBefore", "due-2026-05-15-dayBefore"])
+        #expect(result.allSatisfy { $0.kind == .dayBefore })
+    }
+
+    @Test("Kinds: dueDay only plans only due-day reminders")
+    func kindsDueDayOnly() throws {
+        let result = plan(now: try date(2026, 3, 10, 12), subscriptions: [try monthly(day: 15)], kinds: [.dueDay])
+        #expect(result.map(\.id) == ["due-2026-03-15-today", "due-2026-04-15-today", "due-2026-05-15-today"])
+        #expect(result.first?.fireDate == (try date(2026, 3, 15, 9)))
+    }
+
+    @Test("Kinds: both equals the default")
+    func kindsBothIsDefault() throws {
+        let items = [try monthly(day: 15), try monthly("Gym", day: 1, amount: 50)]
+        let now = try date(2026, 3, 10, 12)
+        #expect(plan(now: now, subscriptions: items, kinds: [.dayBefore, .dueDay]) == plan(now: now, subscriptions: items))
+    }
+
+    @Test("Kinds: an empty set plans nothing")
+    func kindsEmpty() throws {
+        #expect(plan(now: try date(2026, 3, 10, 12), subscriptions: [try monthly(day: 15)], kinds: []).isEmpty)
+    }
+
+    @Test("Kinds: spill-over reminder only when dayBefore is requested")
+    func kindsSpillOver() throws {
+        // Yalnızca Mart taranır; 1 Nisan'ın gün öncesi 31 Mart 09:00'da çalar.
+        let items = [try monthly("First", day: 1)]
+        let now = try date(2026, 3, 1)
+        let dueOnly = plan(now: now, subscriptions: items, kinds: [.dueDay], lookahead: 1)
+        #expect(!dueOnly.contains { $0.id.hasPrefix("due-2026-04") })
+        let before = plan(now: now, subscriptions: items, kinds: [.dayBefore], lookahead: 1)
+        #expect(before.contains { $0.id == "due-2026-04-01-dayBefore" })
+        #expect(before.allSatisfy { $0.kind == .dayBefore })
+    }
 }

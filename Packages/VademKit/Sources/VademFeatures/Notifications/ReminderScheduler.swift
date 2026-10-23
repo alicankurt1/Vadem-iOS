@@ -3,7 +3,8 @@ import VademCore
 
 /// Keeps the pending reminders in step with the saved payments, using ``NotificationPlanner``.
 ///
-/// ``refresh()`` plans the reminders and then:
+/// ``refresh()`` first reads the ``ReminderPreferences``: when reminders are off it clears the
+/// pending reminders and never asks for permission. Otherwise it plans the timing's kinds and then:
 /// - nothing to plan: clears the pending reminders;
 /// - permission not asked yet: asks once (only when there is something to send), schedules if granted;
 /// - denied: does nothing and never asks again;
@@ -14,6 +15,7 @@ import VademCore
 public final class ReminderScheduler {
     private let repository: any PaymentRepository
     private let center: any ReminderCenter
+    private let preferences: any ReminderPreferencesStore
     private let calendar: Calendar
     private let now: () -> Date
     private let formatAmount: (Money) -> String
@@ -24,16 +26,19 @@ public final class ReminderScheduler {
     private var isRefreshing = false
     private var needsAnotherPass = false
 
-    /// Creates a scheduler; `now` is the clock and `formatAmount` formats the amounts in the body.
+    /// Creates a scheduler; `preferences` is read on every ``refresh()`` (default: the
+    /// `UserDefaults` store), `now` is the clock and `formatAmount` formats the amounts in the body.
     public init(
         repository: any PaymentRepository,
         center: any ReminderCenter,
+        preferences: any ReminderPreferencesStore = UserDefaultsReminderPreferencesStore(),
         calendar: Calendar = .current,
         now: @escaping () -> Date = { Date() },
         formatAmount: @escaping (Money) -> String = AmountText.format
     ) {
         self.repository = repository
         self.center = center
+        self.preferences = preferences
         self.calendar = calendar
         self.now = now
         self.formatAmount = formatAmount
@@ -54,6 +59,14 @@ public final class ReminderScheduler {
     }
 
     private func refreshOnce() async {
+        // Tercihler her turda okunur: ayar değişince bir sonraki yenileme hemen uyar.
+        let settings = preferences.load()
+        guard settings.isEnabled else {
+            // Hatırlatmalar kapalı: bekleyenler temizlenir, izin hiç sorulmaz.
+            try? await center.replacePending([])
+            return
+        }
+
         let reminders: [PlannedReminder]
         do {
             reminders = NotificationPlanner.plan(
@@ -62,6 +75,7 @@ public final class ReminderScheduler {
                 cards: try repository.cards(),
                 installments: try repository.installments(),
                 subscriptions: try repository.subscriptions(),
+                kinds: settings.timing.kinds,
                 formatAmount: formatAmount
             )
         } catch {

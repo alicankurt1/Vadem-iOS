@@ -69,8 +69,17 @@ public enum HomeSampleData {
     }
 
     /// A view model on ``makeRepository()`` with the fixed ``today`` and ``calendar``.
+    ///
+    /// Settings use an in-memory store and no scheduler; under ``SettingsView/deniedLaunchArgument``
+    /// the permission reads as denied.
     public static func makeViewModel() -> HomeViewModel {
-        HomeViewModel(repository: makeRepository(), today: today, calendar: calendar)
+        // Zamanlayıcı yok: sistem izin penceresi çıkmaz. Reddedilmiş izin sahte merkezle gösterilir.
+        let isDenied = ProcessInfo.processInfo.arguments.contains(SettingsView.deniedLaunchArgument)
+        let settings = SettingsDependencies(
+            store: InMemoryReminderPreferencesStore(),
+            center: isDenied ? FixedStatusReminderCenter(status: .denied) : nil
+        )
+        return HomeViewModel(repository: makeRepository(), today: today, calendar: calendar, settings: settings)
     }
 
     private static func id(_ number: Int) -> UUID {

@@ -60,6 +60,8 @@ public enum NotificationPlanner {
     ///     on its 1st, which fires at 09:00 on the last day of the last scanned month. No
     ///     other reminder of that extra month is planned. Months after 9999-12 are skipped.
     ///     A negative value counts as `0`, and `0` plans nothing.
+    ///   - kinds: The kinds planned (default: both). The extra month's day-before reminder is
+    ///     planned only when ``PlannedReminder/Kind/dayBefore`` is requested; an empty set plans nothing.
     ///   - formatAmount: Formats an amount for the body (e.g. the app's lira formatter).
     /// - Returns: At most ``windowSize`` reminders, sorted by fire date, then id.
     public static func plan(
@@ -69,11 +71,12 @@ public enum NotificationPlanner {
         installments: [InstallmentItem],
         subscriptions: [SubscriptionItem],
         lookaheadMonths: Int = NotificationPlanner.defaultLookaheadMonths,
+        kinds: Set<PlannedReminder.Kind> = [.dayBefore, .dueDay],
         formatAmount: (Money) -> String
     ) -> [PlannedReminder] {
-        // Negatif değer sıfır sayılır; sıfır ay taranırsa plan boştur.
+        // Negatif değer sıfır sayılır; sıfır ay taranırsa plan boştur. Tür istenmezse de plan boştur.
         let scannedMonths = max(0, lookaheadMonths)
-        guard scannedMonths > 0 else { return [] }
+        guard scannedMonths > 0, !kinds.isEmpty else { return [] }
         // Tarihler YearMonth gibi Gregoryen; cihaz takviminden yalnızca saat dilimi alınır.
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
@@ -96,7 +99,8 @@ public enum NotificationPlanner {
                 // taranan ayların son gününden sonra çalmaz.
                 if isSpillOver && day.day != 1 { continue }
                 let dueDate = Card.DueDate(month: schedule.month, day: day.day)
-                for kind in PlannedReminder.Kind.allCases {
+                // Yalnızca istenen türler planlanır; ek ay yalnızca gün öncesi istenirse katkı verir.
+                for kind in PlannedReminder.Kind.allCases where kinds.contains(kind) {
                     if isSpillOver && kind != .dayBefore { continue }
                     // Geçmişte (veya tam şimdi) çalacak hatırlatma kurulamaz; atlanır.
                     guard let fireDate = fireDate(of: kind, for: dueDate, in: gregorian),

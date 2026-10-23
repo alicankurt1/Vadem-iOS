@@ -95,6 +95,46 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testSettingsTogglesRemindersAndPicksTiming() throws {
+        let app = launchHome()
+
+        let gear = app.buttons["home.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
+        gear.tap()
+
+        // Açılışta hatırlatmalar açık ve zamanlama satırı görünür.
+        let toggle = app.switches["settings.reminders"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "reminders toggle not found")
+        XCTAssertEqual(toggle.value as? String, "1", "reminders must start on")
+        XCTAssertTrue(element("settings.timing", in: app).exists, "timing row must show while reminders are on")
+
+        // Kapatınca zamanlama satırı kaybolur, açınca geri gelir.
+        toggle.tap()
+        XCTAssertEqual(toggle.value as? String, "0", "reminders must turn off")
+        XCTAssertFalse(element("settings.timing", in: app).waitForExistence(timeout: 2), "timing row must hide while off")
+        toggle.tap()
+        XCTAssertEqual(toggle.value as? String, "1", "reminders must turn on again")
+        let timing = element("settings.timing", in: app)
+        XCTAssertTrue(timing.waitForExistence(timeout: 5), "timing row must return when reminders are on")
+
+        // Zamanlama listesi: 2. seçenek seçilince liste kapanır, ayarlar ekranına dönülür.
+        timing.tap()
+        let option = element("settings.timing.option.1", in: app)
+        XCTAssertTrue(option.waitForExistence(timeout: 5), "timing option not found")
+        option.tap()
+        XCTAssertTrue(
+            element("settings.timing", in: app).waitForExistence(timeout: 5),
+            "must return to Settings after picking a timing"
+        )
+        XCTAssertFalse(element("settings.timing.option.1", in: app).exists, "option list must close after picking")
+
+        // Bitti: sayfa kapanır ve Home görünür.
+        app.buttons["settings.done"].tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after Done")
+        XCTAssertFalse(app.switches["settings.reminders"].exists, "Settings must be dismissed")
+    }
+
+    @MainActor
     func testCancelAddInstallmentLeavesHomeUnchanged() throws {
         let app = launchHome()
 

@@ -132,6 +132,8 @@ public final class HomeViewModel {
     @ObservationIgnored private let repository: any PaymentRepository
     // Kayıt/silme sonrası çağrılır (ör. hatırlatmaları yeniden planlamak için); nil ise hiçbir şey yapılmaz.
     @ObservationIgnored private let onDataChanged: (@MainActor () -> Void)?
+    // Ayarlar sayfasının bağımlılıkları; verilmezse bellek içi depo (zamanlayıcı yok), açılışlar arasında korunur.
+    @ObservationIgnored private let settings: SettingsDependencies
     // Enjekte edilen bugün: ay ve gün (Card.DueDate dışarıdan kurulamaz).
     @ObservationIgnored private var todayMonth: YearMonth
     @ObservationIgnored private var todayDay: Int
@@ -144,15 +146,18 @@ public final class HomeViewModel {
     /// Creates the view model for the month that contains `today` in `calendar`'s time zone, and loads it.
     ///
     /// `onDataChanged` runs after ``reloadAfterChange()``, i.e. after a form closes
-    /// (e.g. to refresh the reminders); `nil` does nothing.
+    /// (e.g. to refresh the reminders); `nil` does nothing. `settings` backs the settings sheet
+    /// (``makeSettingsModel()``); `nil` uses an in-memory store without a scheduler.
     public init(
         repository: any PaymentRepository,
         today: Date,
         calendar: Calendar,
-        onDataChanged: (@MainActor () -> Void)? = nil
+        onDataChanged: (@MainActor () -> Void)? = nil,
+        settings: SettingsDependencies? = nil
     ) {
         self.repository = repository
         self.onDataChanged = onDataChanged
+        self.settings = settings ?? .inMemory()
         // YearMonth gibi: sadece saat dilimi alınır, gün Gregoryen takvimle hesaplanır.
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
@@ -178,6 +183,11 @@ public final class HomeViewModel {
     /// The selected day as `"12 October"`, or `nil` when no day is selected.
     public var selectedDayText: String? {
         selectedDay.map { Self.dayText(day: $0, of: month) }
+    }
+
+    /// A new settings sheet model on the injected ``SettingsDependencies``.
+    public func makeSettingsModel() -> SettingsViewModel {
+        SettingsViewModel(dependencies: settings)
     }
 
     /// A new add-installment form on the same repository, starting at the selected ``month``.
