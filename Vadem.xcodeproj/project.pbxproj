@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		D8A0000000000000000000A5 /* VademFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = D8A0000000000000000000A4 /* VademFeatures */; };
+		D8A0000000000000000B000F /* VademCore in Frameworks */ = {isa = PBXBuildFile; productRef = D8A0000000000000000B000C /* VademCore */; };
+		D8A0000000000000000B0010 /* VademPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = D8A0000000000000000B000D /* VademPersistence */; };
+		D8A0000000000000000B0011 /* VademFeatures in Frameworks */ = {isa = PBXBuildFile; productRef = D8A0000000000000000B000E /* VademFeatures */; };
+		D8A0000000000000000B0012 /* VademWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D8A0000000000000000B0001 /* VademWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,7 +29,28 @@
 			remoteGlobalIDString = D89CF0B5308634850062F685;
 			remoteInfo = Vadem;
 		};
+		D8A0000000000000000B0014 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D89CF0AE308634850062F685 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D8A0000000000000000B0005;
+			remoteInfo = VademWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D8A0000000000000000B0013 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D8A0000000000000000B0012 /* VademWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		D89CF0B6308634850062F685 /* Vadem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vadem.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -34,6 +59,10 @@
 		D8A0000000000000000000A6 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
 		D8A0000000000000000000A7 /* Vadem.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Vadem.entitlements; sourceTree = "<group>"; };
 		D8A0000000000000000000A1 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
+		D8A0000000000000000B0001 /* VademWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VademWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8A0000000000000000B0003 /* Widget.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Widget.xcconfig; sourceTree = "<group>"; };
+		D8A0000000000000000B0004 /* VademWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VademWidget.entitlements; sourceTree = "<group>"; };
+		D8A0000000000000000B0016 /* VademWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "VademWidget-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -50,6 +79,11 @@
 		D89CF0D0308634860062F685 /* VademUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = VademUITests;
+			sourceTree = "<group>";
+		};
+		D8A0000000000000000B0002 /* VademWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VademWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -77,6 +111,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D8A0000000000000000B0007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D8A0000000000000000B000F /* VademCore in Frameworks */,
+				D8A0000000000000000B0010 /* VademPersistence in Frameworks */,
+				D8A0000000000000000B0011 /* VademFeatures in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -85,6 +129,7 @@
 			children = (
 				D8A0000000000000000000A2 /* Config */,
 				D89CF0B8308634850062F685 /* Vadem */,
+				D8A0000000000000000B0002 /* VademWidget */,
 				D89CF0C6308634860062F685 /* VademTests */,
 				D89CF0D0308634860062F685 /* VademUITests */,
 				D89CF0B7308634850062F685 /* Products */,
@@ -97,6 +142,7 @@
 				D89CF0B6308634850062F685 /* Vadem.app */,
 				D89CF0C3308634860062F685 /* VademTests.xctest */,
 				D89CF0CD308634860062F685 /* VademUITests.xctest */,
+				D8A0000000000000000B0001 /* VademWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -107,6 +153,9 @@
 				D8A0000000000000000000A6 /* App.xcconfig */,
 				D8A0000000000000000000A1 /* Shared.xcconfig */,
 				D8A0000000000000000000A7 /* Vadem.entitlements */,
+				D8A0000000000000000B0004 /* VademWidget.entitlements */,
+				D8A0000000000000000B0016 /* VademWidget-Info.plist */,
+				D8A0000000000000000B0003 /* Widget.xcconfig */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -121,10 +170,12 @@
 				D89CF0B2308634850062F685 /* Sources */,
 				D89CF0B3308634850062F685 /* Frameworks */,
 				D89CF0B4308634850062F685 /* Resources */,
+				D8A0000000000000000B0013 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				D8A0000000000000000B0015 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				D89CF0B8308634850062F685 /* Vadem */,
@@ -183,6 +234,31 @@
 			productReference = D89CF0CD308634860062F685 /* VademUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		D8A0000000000000000B0005 /* VademWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D8A0000000000000000B0009 /* Build configuration list for PBXNativeTarget "VademWidget" */;
+			buildPhases = (
+				D8A0000000000000000B0006 /* Sources */,
+				D8A0000000000000000B0007 /* Frameworks */,
+				D8A0000000000000000B0008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D8A0000000000000000B0002 /* VademWidget */,
+			);
+			name = VademWidget;
+			packageProductDependencies = (
+				D8A0000000000000000B000C /* VademCore */,
+				D8A0000000000000000B000D /* VademPersistence */,
+				D8A0000000000000000B000E /* VademFeatures */,
+			);
+			productName = VademWidget;
+			productReference = D8A0000000000000000B0001 /* VademWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -203,6 +279,9 @@
 					D89CF0CC308634860062F685 = {
 						CreatedOnToolsVersion = 26.1.1;
 						TestTargetID = D89CF0B5308634850062F685;
+					};
+					D8A0000000000000000B0005 = {
+						CreatedOnToolsVersion = 26.1.1;
 					};
 				};
 			};
@@ -226,6 +305,7 @@
 				D89CF0B5308634850062F685 /* Vadem */,
 				D89CF0C2308634860062F685 /* VademTests */,
 				D89CF0CC308634860062F685 /* VademUITests */,
+				D8A0000000000000000B0005 /* VademWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -246,6 +326,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D89CF0CB308634860062F685 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D8A0000000000000000B0008 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -276,6 +363,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D8A0000000000000000B0006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -288,6 +382,11 @@
 			isa = PBXTargetDependency;
 			target = D89CF0B5308634850062F685 /* Vadem */;
 			targetProxy = D89CF0CE308634860062F685 /* PBXContainerItemProxy */;
+		};
+		D8A0000000000000000B0015 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D8A0000000000000000B0005 /* VademWidget */;
+			targetProxy = D8A0000000000000000B0014 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -533,6 +632,48 @@
 			};
 			name = Release;
 		};
+		D8A0000000000000000B000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D8A0000000000000000B0003 /* Widget.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Vadem;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.Vadem.VademWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D8A0000000000000000B000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D8A0000000000000000B0003 /* Widget.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Vadem;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alicankurt.Vadem.VademWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -572,6 +713,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		D8A0000000000000000B0009 /* Build configuration list for PBXNativeTarget "VademWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8A0000000000000000B000A /* Debug */,
+				D8A0000000000000000B000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -583,6 +733,18 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		D8A0000000000000000000A4 /* VademFeatures */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VademFeatures;
+		};
+		D8A0000000000000000B000C /* VademCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VademCore;
+		};
+		D8A0000000000000000B000D /* VademPersistence */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VademPersistence;
+		};
+		D8A0000000000000000B000E /* VademFeatures */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VademFeatures;
 		};

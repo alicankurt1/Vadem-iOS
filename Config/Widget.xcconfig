@@ -1,0 +1,10 @@
+// Widget extension target only: shared settings plus the extension's signing and Info.plist.
+
+#include "Shared.xcconfig"
+
+// App Group shared with the app: the widget reads the same store.
+// Must match VademPersistence.appGroupIdentifier and Config/Vadem.entitlements.
+CODE_SIGN_ENTITLEMENTS = Config/VademWidget.entitlements
+
+// NSExtension keys have no INFOPLIST_KEY_ equivalent; the rest of Info.plist is generated.
+INFOPLIST_FILE = Config/VademWidget-Info.plist
