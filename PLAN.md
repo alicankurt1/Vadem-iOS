@@ -54,11 +54,11 @@ Principles:
 - [x] **Design refresh (B2b, between phases 11 and 12)**: teal palette, bold hero panel. Tokens (#77, PRs #78, #79), `Design/` components (#82, PR #83), Home (#85, PR #86), forms (#88, PR #89), upcoming chips and calendar (#91, PR #92).
 - [x] **Phase 12 — Notifications**: pure planner with the rolling 63 of 64 window (#95, PR #96), scheduler and permission flow (#98, PR #99), settings sheet with toggle and timing (#101, PR #102). The real permission alert is only checked by hand.
 - [x] **Phase 13 — Widget + App Intents (Siri)**: pure payment summary (#105, PR #106), App Intents and Siri shortcuts (#108, PR #109), home-screen widget extension (#111, PR #112). The App Group for the widget's bundle id and the Siri/widget behaviour are only checked by hand on a device.
-- [ ] **Phase 14 — Swift Charts analytics**.
+- [x] **Phase 14 — Swift Charts analytics**: pure spending analytics (#115, PR #118), monthly totals bar chart screen (#116, PR #119), card breakdown donut and debt-free insight (#117, PR #122). Chart rendering and VoiceOver reading are only checked by hand on a device.
 - [ ] **Phase 15 — On-device AI assistant**: Foundation Models, read-only tool calling, data/instruction separation, tests.
 - [ ] **Phase 16 — Polish & release**: TR/EN, accessibility, icon, privacy manifest + policy, screenshots, App Store submission.
 
 ## Next up
 
 1. Loose ends, small: a card list screen (an unused card cannot be deleted from the UI, found in #67); a subscription flow in `FunctionalFlowTests`; the Phase 6 screen recording.
-2. Phase 14: Swift Charts analytics; write the issues, then `/ship` them. Also try the reminder permission flow and the widget once by hand on a device.
+2. Phase 15: on-device AI assistant (Foundation Models); write the issues, then `/ship` them. Also try the reminder permission flow and the widget once by hand on a device.
