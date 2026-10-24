@@ -380,3 +380,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test yakaladı:** `lastPaymentThisMonth` birim testi, hâlâ ödenmemiş bir taksit için "Paid off" döndüğünü kırmızıya çevirdi.
 - **UI kapısı yakaladı:** %1-3'lük küçük dilimler 44 pt dokunma alanı denetiminden geçemedi; donut tek erişilebilirlik öğesi yapıldı, kart ayrıntıları etiketli açıklama satırlarına taşındı. Ardından `analytics.donut`/`analytics.legend` kimlikleri bulunamadı ve fonksiyonel testteki grafik sorgusu belirsizdi; ikisi de düzeltildi.
 - **Ders:** Çok küçük dokunulabilir öğeler (grafik dilimleri) erişilebilirlik denetimini bozar; grafiği tek öğe yapıp ayrıntıyı satırlara koymak çözüm oldu. Kabul edilen risk: fonksiyonel test çubuğu uzun basışla seçiyor (`chartXSelection` kısa dokunuşu yok sayıyor), titrerse düzeltilecek.
+
+### Koşu #125 — Asistan sorguları ve PromptSafeText
+
+- **Ne yapıldı:** `VademCore`'a salt okunur `AssistantQueries` (ay toplamı, ödemeler en çok 20, sıradaki ödeme, kart toplamı, borçsuz ay) ve model komutuna girecek kullanıcı metnini temizleyen `PromptSafeText` eklendi (PR #128, Faz 15). Yeni para hesabı yok, mevcut `MonthlySchedule`/`PaymentSummary`/`SpendingAnalytics` üzerine kuruldu.
+- **Reviewer:** Blocker/major yok. Minor: `cardTotal` modelin gördüğü temizlenmiş ve kısaltılmış kart adıyla eşleşmiyordu; `.format` kategorisi ZWJ/ZWNJ'yi de siliyordu. İkisi tek turda düzeltildi, testleri eklendi.
+- **Metrikler:** 169 dk (üç rol görünür oturumlarda), 4 verify (0 kırmızı), 1 düzeltme turu; UI'a dokunulmadığı için capture atlandı.
+- **Ders:** Modele giden metni temizlediysen, modelin geri sorabileceği tanımlayıcıları (kart adı) da aynı temizlenmiş biçimle eşleştir; yoksa araç "bulunamadı" döner. Unicode "format" karakterlerini toptan silmek ZWJ/ZWNJ gibi meşru karakterleri bozar.
