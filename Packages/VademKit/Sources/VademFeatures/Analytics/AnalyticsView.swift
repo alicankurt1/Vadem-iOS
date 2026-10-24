@@ -23,6 +23,7 @@ public struct AnalyticsView: View {
     private let onAddPayment: (() -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
 
@@ -124,22 +125,32 @@ public struct AnalyticsView: View {
                 angularInset: 1.5
             )
             .foregroundStyle(Self.color(of: share))
-            .accessibilityLabel(share.accessibilityLabel)
         }
         .chartLegend(.hidden)
         .frame(height: 220)
         .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: shares)
+        // Küçük dilimler 44 pt altı ayrı öğeler olmasın: halka tek öğe, ayrıntılar açıklama satırlarında.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "Spending by card: " + shares.map(\.accessibilityLabel).joined(separator: "; ")
+        )
         .accessibilityIdentifier("analytics.donut")
     }
 
     private func legend(_ shares: [AnalyticsViewModel.CardShareRow]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach(shares) { share in
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Circle().fill(Self.color(of: share)).frame(width: 10, height: 10).accessibilityHidden(true)
-                    Text(share.name).foregroundStyle(Color.vademTextPrimary)
-                    Spacer(minLength: 8)
-                    VStack(alignment: .trailing, spacing: 2) {
+                // En büyük yazı boyutunda satır dikey dizilir; metin kırpılmaz.
+                let layout = dynamicTypeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+                    : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 8))
+                layout {
+                    HStack(spacing: 8) {
+                        Circle().fill(Self.color(of: share)).frame(width: 10, height: 10).accessibilityHidden(true)
+                        Text(share.name).foregroundStyle(Color.vademTextPrimary)
+                    }
+                    if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
+                    VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
                         AmountText(share.amount).foregroundStyle(Color.vademTextPrimary)
                         Text("\(share.percent)%").font(.subheadline).foregroundStyle(Color.vademTextSecondary)
                     }
@@ -149,6 +160,7 @@ public struct AnalyticsView: View {
                 .accessibilityLabel(share.accessibilityLabel)
             }
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("analytics.legend")
     }
 
