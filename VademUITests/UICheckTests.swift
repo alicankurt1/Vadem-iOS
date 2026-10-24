@@ -227,11 +227,16 @@ final class UICheckTests: XCTestCase {
 
     @MainActor
     func testAnalyticsScreen() throws {
-        // Grafik ekranı doğrudan açılır; örnek veride özet kartı ve 12 çubuk görünür.
+        // Grafik ekranı doğrudan açılır: üstte özet kartı ve 12 çubuk, aşağıda halka grafik, açıklama ve son taksit içgörüsü.
         try capture(
             screen: "analytics",
             launchArguments: ["-ui-sample-data", "-ui-analytics"],
-            sections: [.top]
+            sections: [
+                .top,
+                .scrolled(to: "analytics.breakdown", named: "donut"),
+                .scrolled(to: "analytics.legend", named: "legend"),
+                .scrolled(to: "analytics.insight", named: "insight"),
+            ]
         )
     }
 

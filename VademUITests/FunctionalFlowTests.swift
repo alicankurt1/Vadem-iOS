@@ -114,6 +114,34 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testAnalyticsSelectingBarChangesDonut() throws {
+        let app = launchHome()
+        let button = app.buttons["home.analytics"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "analytics button not found on Home")
+        button.tap()
+        XCTAssertTrue(element("analytics.screen", in: app).waitForExistence(timeout: 10), "Analytics screen must show")
+
+        // Örnek veride Ekim 2026'da Everyday kartının Laptop taksidi var: halka ve açıklama kartı gösterir.
+        XCTAssertTrue(element("analytics.donut", in: app).waitForExistence(timeout: 5), "donut must show")
+        XCTAssertTrue(element("analytics.legend", in: app).exists, "legend must show")
+        let everyday = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Everyday card,"))
+        XCTAssertTrue(everyday.firstMatch.waitForExistence(timeout: 5), "Everyday card must be in the October breakdown")
+        XCTAssertFalse(element("analytics.donut.empty", in: app).exists)
+
+        // Sağdaki çubuklardan birini seç (Ağustos/Eylül 2027): Laptop taksidi Temmuz 2027'de biter,
+        // bu yüzden Everyday kartı dağılımdan çıkar ve halka değişir.
+        let chart = element("analytics.chart", in: app)
+        XCTAssertTrue(chart.waitForExistence(timeout: 5), "chart must show")
+        chart.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+
+        let gone = NSPredicate(format: "exists == false")
+        let change = XCTNSPredicateExpectation(predicate: gone, object: everyday.firstMatch)
+        XCTAssertEqual(XCTWaiter().wait(for: [change], timeout: 5), .completed, "donut must change after selecting a bar")
+        XCTAssertTrue(element("analytics.donut", in: app).exists, "donut still shows the remaining cards")
+    }
+
+    @MainActor
     func testSettingsTogglesRemindersAndPicksTiming() throws {
         let app = launchHome()
 
