@@ -373,3 +373,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapılar:** Reviewer blocker/major bulmadı (3 minor, 2 nit; örn. yerelleştirilemeyen dizgiler, kabul edildi). `UI-CHECK` light/dark/AX5'te 0 bulgu. Test yazarı ilk commit'te iki UI testini atlamıştı, ikinci commit'te eklendi.
 - **Yığılmış PR sorunu:** #119, #118'in dalına (`issue/115-spending-analytics`) bağlıydı. #118 `main`'e girdikten sonra #119 `main` yerine o ara dala birleşti; Analytics ekranı `main`'e hiç ulaşmadı. #120 yalnızca #119'un commit'lerini yeniden taşıdı.
 - **Ders:** Yığılmış PR'larda alttaki PR birleşince üsttekinin tabanı `main`'e dönmeden birleştirme yapılmamalı; birleştirmeden önce PR'ın taban dalını kontrol et ve birleştirdikten sonra değişikliğin `main`'de olduğunu doğrula. Ayrıca #116 `Closes` ile kapanmadı çünkü PR `main`'e değil ara dala birleşti; issue elle kapatılmalı.
+
+### Koşu #117 — Kart dağılımı halkası (donut)
+
+- **Ne yapıldı:** Analytics ekranına seçili ayın kartlara göre `SectorMark` donut'u, açıklama satırları ve "Last installment payment" kartı eklendi; yüzdeler en büyük kalan yöntemiyle 100'e tamamlanıyor (PR #122, Faz 14). 35 dk, 6 verify (1 kırmızı), 2 düzeltme turu.
+- **Test yakaladı:** `lastPaymentThisMonth` birim testi, hâlâ ödenmemiş bir taksit için "Paid off" döndüğünü kırmızıya çevirdi.
+- **UI kapısı yakaladı:** %1-3'lük küçük dilimler 44 pt dokunma alanı denetiminden geçemedi; donut tek erişilebilirlik öğesi yapıldı, kart ayrıntıları etiketli açıklama satırlarına taşındı. Ardından `analytics.donut`/`analytics.legend` kimlikleri bulunamadı ve fonksiyonel testteki grafik sorgusu belirsizdi; ikisi de düzeltildi.
+- **Ders:** Çok küçük dokunulabilir öğeler (grafik dilimleri) erişilebilirlik denetimini bozar; grafiği tek öğe yapıp ayrıntıyı satırlara koymak çözüm oldu. Kabul edilen risk: fonksiyonel test çubuğu uzun basışla seçiyor (`chartXSelection` kısa dokunuşu yok sayıyor), titrerse düzeltilecek.
