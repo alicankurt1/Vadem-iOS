@@ -190,6 +190,13 @@ public final class HomeViewModel {
         SettingsViewModel(dependencies: settings)
     }
 
+    /// A new Analytics screen model on the same repository, starting at the current month.
+    ///
+    /// It loads when its screen appears; call ``AnalyticsViewModel/reload()`` after a form closes.
+    public func makeAnalyticsModel() -> AnalyticsViewModel {
+        AnalyticsViewModel(repository: repository, currentMonth: todayMonth)
+    }
+
     /// A new add-installment form on the same repository, starting at the selected ``month``.
     ///
     /// Call ``reload()`` after it saves, so the new payment shows.

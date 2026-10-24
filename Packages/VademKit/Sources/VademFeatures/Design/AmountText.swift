@@ -45,7 +45,7 @@ public struct AmountText: View {
     }
 
     // Mutlak değer, tr_TR biçiminde: "1.234,56".
-    private nonisolated static func formattedMagnitude(_ money: Money) -> String {
+    nonisolated static func formattedMagnitude(_ money: Money) -> String {
         // NumberFormatter/ICU sürüme göre işaret ve boşluk değiştirebilir; biçim elle kurulur.
         let magnitude = money.isNegative ? -money.amount : money.amount
         let plain = NSDecimalNumber(decimal: magnitude)

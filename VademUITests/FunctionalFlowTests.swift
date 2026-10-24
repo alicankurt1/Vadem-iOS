@@ -95,6 +95,25 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testAnalyticsOpensFromHomeAndGoesBack() throws {
+        let app = launchHome()
+
+        // Araç çubuğundaki grafik düğmesi Analytics ekranını iter.
+        let button = app.buttons["home.analytics"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "analytics button not found on Home")
+        button.tap()
+        XCTAssertTrue(element("analytics.screen", in: app).waitForExistence(timeout: 10), "Analytics screen must show")
+        XCTAssertTrue(element("analytics.summary", in: app).waitForExistence(timeout: 5), "summary card must show")
+        XCTAssertTrue(element("analytics.chart", in: app).exists, "chart must show")
+        XCTAssertFalse(element("analytics.empty", in: app).exists, "sample data is not empty")
+
+        // Geri düğmesi Home'a döner.
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after going back")
+        XCTAssertFalse(element("analytics.screen", in: app).exists, "Analytics must be popped")
+    }
+
+    @MainActor
     func testSettingsTogglesRemindersAndPicksTiming() throws {
         let app = launchHome()
 
