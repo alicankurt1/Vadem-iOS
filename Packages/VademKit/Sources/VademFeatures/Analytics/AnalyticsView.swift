@@ -104,6 +104,8 @@ public struct AnalyticsView: View {
             Text("By card")
                 .font(.headline)
                 .foregroundStyle(Color.vademTextPrimary)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("analytics.breakdown")
             if shares.isEmpty {
                 Text("Nothing is due this month.")
                     .font(.body)
@@ -114,7 +116,6 @@ public struct AnalyticsView: View {
                 legend(shares)
             }
         }
-        .accessibilityIdentifier("analytics.breakdown")
     }
 
     private func donut(_ shares: [AnalyticsViewModel.CardShareRow]) -> some View {
