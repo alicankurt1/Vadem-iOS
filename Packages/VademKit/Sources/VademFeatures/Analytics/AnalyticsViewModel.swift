@@ -58,7 +58,7 @@ public final class AnalyticsViewModel {
     public struct Insight: Sendable, Hashable {
         /// `"Last installment payment: May 2027"`.
         public let title: String
-        /// `"12 months remaining"`, or `"Paid off"` when the last payment is in the past.
+        /// `"12 months remaining"`, `"Last payment this month"`, or `"Paid off"` when the last payment is in the past.
         public let remaining: String
         /// The months from the current month to the last payment, never negative.
         public let monthsRemaining: Int
@@ -163,9 +163,11 @@ public final class AnalyticsViewModel {
             )
             self.analytics = analytics
             insight = analytics.lastPaymentMonth.map { last in
-                let remaining = max(0, currentMonth.months(until: last))
-                let text = switch remaining {
-                case 0: "Paid off"
+                let signed = currentMonth.months(until: last)
+                let remaining = max(0, signed)
+                let text = switch signed {
+                case ..<0: "Paid off"
+                case 0: "Last payment this month"
                 case 1: "1 month remaining"
                 default: "\(remaining) months remaining"
                 }
