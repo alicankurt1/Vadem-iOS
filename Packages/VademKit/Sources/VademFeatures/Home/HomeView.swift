@@ -21,6 +21,8 @@ public struct HomeView: View {
     @State private var addSubscriptionModel: AddSubscriptionViewModel?
     // Açık ayarlar sayfasının modeli; nil iken sayfa kapalı.
     @State private var settingsModel: SettingsViewModel?
+    // Açık Analytics ekranının modeli; nil iken ekran itilmemiştir.
+    @State private var analyticsModel: AnalyticsViewModel?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -40,15 +42,19 @@ public struct HomeView: View {
     /// ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument`` and
     /// ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
     /// month in its edit form. ``SettingsView/launchArgument`` (or ``SettingsView/deniedLaunchArgument``)
-    /// opens the settings sheet.
+    /// opens the settings sheet. ``AnalyticsView/launchArgument`` pushes the Analytics screen.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddModel: AddInstallmentViewModel?
         var initialAddCardModel: AddCardViewModel?
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
         var initialSettingsModel: SettingsViewModel?
+        var initialAnalyticsModel: AnalyticsViewModel?
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains(AnalyticsView.launchArgument) {
+            initialAnalyticsModel = model.makeAnalyticsModel()
+        }
         if arguments.contains(AddInstallmentView.launchArgument) {
             let addModel = model.makeAddInstallmentModel()
             if arguments.contains(AddInstallmentView.errorsLaunchArgument) {
@@ -90,14 +96,24 @@ public struct HomeView: View {
         _addCardModel = State(initialValue: initialAddCardModel)
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
         _settingsModel = State(initialValue: initialSettingsModel)
+        _analyticsModel = State(initialValue: initialAnalyticsModel)
     }
 
     public var body: some View {
         // NavigationStack çubuğu verir; içerik saatin altına girmez.
         NavigationStack {
             scrollContent
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) { analyticsButton }
+                }
+                // Grafik ekranı itilir (sekme değil); geri düğmesi Home'a döner.
+                .navigationDestination(isPresented: analyticsPresented) {
+                    if let analyticsModel {
+                        AnalyticsView(model: analyticsModel, onAddPayment: addPaymentFromAnalytics)
+                    }
+                }
                 // Kart formu kapanınca Home yeniden yüklenir; yeni kart ve "kart ekle" girişi güncellenir.
-                .sheet(item: $addCardModel, onDismiss: { model.reloadAfterChange() }) { addCardModel in
+                .sheet(item: $addCardModel, onDismiss: reloadAfterForm) { addCardModel in
                     AddCardView(model: addCardModel)
                 }
                 #if os(iOS)
@@ -109,16 +125,53 @@ public struct HomeView: View {
                 #endif
         }
         // Form kapanınca (kaydedilse de iptal edilse de) Home yeniden yüklenir; yeni ödeme hemen görünür.
-        .sheet(item: $addModel, onDismiss: { model.reloadAfterChange() }) { addModel in
+        .sheet(item: $addModel, onDismiss: reloadAfterForm) { addModel in
             AddInstallmentView(model: addModel)
         }
-        .sheet(item: $addSubscriptionModel, onDismiss: { model.reloadAfterChange() }) { addSubscriptionModel in
+        .sheet(item: $addSubscriptionModel, onDismiss: reloadAfterForm) { addSubscriptionModel in
             AddSubscriptionView(model: addSubscriptionModel)
         }
         // Ayarlar veriyi değiştirmez; zamanlayıcı her tercih değişikliğinde zaten yenilenir.
         .sheet(item: $settingsModel) { settingsModel in
             SettingsView(model: settingsModel)
         }
+    }
+
+    // Form kapanınca Home ve (açıksa) Analytics yeniden yüklenir.
+    private func reloadAfterForm() {
+        model.reloadAfterChange()
+        analyticsModel?.reload()
+    }
+
+    private var analyticsPresented: Binding<Bool> {
+        Binding(
+            get: { analyticsModel != nil },
+            set: { if !$0 { analyticsModel = nil } }
+        )
+    }
+
+    // Boş grafik ekranından ödeme ekleme: kart yoksa önce kart formu açılır. Sayfa Analytics'in üstünde açılır.
+    private func addPaymentFromAnalytics() {
+        if model.hasCards {
+            addModel = model.makeAddInstallmentModel()
+        } else {
+            addCardModel = model.makeAddCardModel()
+        }
+    }
+
+    // Araç çubuğundaki grafik düğmesi: Analytics ekranını açar.
+    private var analyticsButton: some View {
+        Button {
+            analyticsModel = model.makeAnalyticsModel()
+        } label: {
+            Image(systemName: "chart.bar")
+                .foregroundStyle(Color.vademTextPrimary)
+                // En az 44 pt dokunma alanı.
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel("Analytics")
+        .accessibilityIdentifier("home.analytics")
     }
 
     private var scrollContent: some View {
