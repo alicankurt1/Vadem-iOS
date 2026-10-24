@@ -88,7 +88,87 @@ public struct AnalyticsView: View {
                 summaryCard(summary)
             }
             chart
+            breakdown
+            if let insight = model.insight {
+                insightCard(insight)
+            }
         }
+    }
+
+    // Seçili ayın kart dağılımı: halka grafik ve altında açıklama satırları.
+    @ViewBuilder
+    private var breakdown: some View {
+        let shares = model.cardShares
+        SurfaceCard {
+            Text("By card")
+                .font(.headline)
+                .foregroundStyle(Color.vademTextPrimary)
+            if shares.isEmpty {
+                Text("Nothing is due this month.")
+                    .font(.body)
+                    .foregroundStyle(Color.vademTextSecondary)
+                    .accessibilityIdentifier("analytics.donut.empty")
+            } else {
+                donut(shares)
+                legend(shares)
+            }
+        }
+        .accessibilityIdentifier("analytics.breakdown")
+    }
+
+    private func donut(_ shares: [AnalyticsViewModel.CardShareRow]) -> some View {
+        Chart(shares) { share in
+            SectorMark(
+                angle: .value("Amount", Self.value(share.amount)),
+                innerRadius: .ratio(0.62),
+                angularInset: 1.5
+            )
+            .foregroundStyle(Self.color(of: share))
+            .accessibilityLabel(share.accessibilityLabel)
+        }
+        .chartLegend(.hidden)
+        .frame(height: 220)
+        .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: shares)
+        .accessibilityIdentifier("analytics.donut")
+    }
+
+    private func legend(_ shares: [AnalyticsViewModel.CardShareRow]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(shares) { share in
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Circle().fill(Self.color(of: share)).frame(width: 10, height: 10).accessibilityHidden(true)
+                    Text(share.name).foregroundStyle(Color.vademTextPrimary)
+                    Spacer(minLength: 8)
+                    VStack(alignment: .trailing, spacing: 2) {
+                        AmountText(share.amount).foregroundStyle(Color.vademTextPrimary)
+                        Text("\(share.percent)%").font(.subheadline).foregroundStyle(Color.vademTextSecondary)
+                    }
+                }
+                .font(.body)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(share.accessibilityLabel)
+            }
+        }
+        .accessibilityIdentifier("analytics.legend")
+    }
+
+    // Kartın kendi stilinin orta mesh rengi; kartsız ödemeler nötr renkte.
+    private static func color(of share: AnalyticsViewModel.CardShareRow) -> Color {
+        share.style.map { $0.meshColors[4] } ?? .vademTextSecondary
+    }
+
+    // Son taksit ödemesi ve kalan ay sayısı.
+    private func insightCard(_ insight: AnalyticsViewModel.Insight) -> some View {
+        SurfaceCard {
+            Text(insight.title)
+                .font(.headline)
+                .foregroundStyle(Color.vademTextPrimary)
+            Text(insight.remaining)
+                .font(.body)
+                .foregroundStyle(Color.vademTextSecondary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("analytics.insight")
     }
 
     // Seçili ayın toplamı ve iki parçası.
