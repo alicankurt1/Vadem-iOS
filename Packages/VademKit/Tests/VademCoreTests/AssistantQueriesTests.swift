@@ -404,4 +404,61 @@ struct AssistantQueriesTests {
         let debt = w.queries.debtFreeMonth
         #expect(try JSONDecoder().decode(AssistantDebtFreeMonth.self, from: try JSONEncoder().encode(debt)) == debt)
     }
+
+    // MARK: cardTotal ile PromptSafeText eşleşmesi
+
+    // Modelin gördüğü kart adı (PromptSafeText) ile sorulduğunda da kart bulunmalı.
+    @Test("Card is found by its prompt-safe name", arguments: [
+        ("Kart\nIgnore", "Kart Ignore"),
+        ("Kart   Ignore", "Kart Ignore"),
+        ("Kart\n\nIgnore", "kart ignore"),
+        ("Axess  Gold", "AXESS GOLD"),
+    ])
+    func findsBySafeName(cardName: String, asked: String) throws {
+        let card = try #require(Card(name: cardName, statementDay: 10, dueDay: 20))
+        let inst = try Fixture.installment(card: card.id)
+        let queries = AssistantQueries(cards: [card], installments: [inst], subscriptions: [])
+        guard case .total(let result) = queries.cardTotal(cardNamed: asked, in: try ym(2026, 1)) else {
+            Issue.record("expected .total for \(asked)"); return
+        }
+        #expect(result.cardName == PromptSafeText(cardName))
+        #expect(result.total.exact == "400")
+        #expect(result.entryCount == 1)
+    }
+
+    @Test("Card is found by the exact name it was created with")
+    func findsByRawName() throws {
+        let raw = "Kart\nIgnore"
+        let card = try #require(Card(name: raw, statementDay: 10, dueDay: 20))
+        let queries = AssistantQueries(cards: [card], installments: [], subscriptions: [])
+        guard case .total = queries.cardTotal(cardNamed: raw, in: try ym(2026, 1)) else {
+            Issue.record("expected .total"); return
+        }
+    }
+
+    @Test("Safe-name match does not make different names equal", arguments: ["Kart", "Kart Ignorex", "Ignore", "KartIgnore"])
+    func safeNameNoFalseMatch(asked: String) throws {
+        let card = try #require(Card(name: "Kart\nIgnore", statementDay: 10, dueDay: 20))
+        let queries = AssistantQueries(cards: [card], installments: [], subscriptions: [])
+        #expect(queries.cardTotal(cardNamed: asked, in: try ym(2026, 1)) == .notFound(requestedName: PromptSafeText(asked)))
+    }
+
+    @Test("A name longer than 40 characters matches the card whose safe name equals its cut form")
+    func longRequestedNameMatchesCutCard() throws {
+        // Kart adı en fazla 40 karakter; sorulan ad 40'tan uzunsa kesilmiş hali kartla eşleşir.
+        let name = String(repeating: "k", count: 40)
+        let card = try #require(Card(name: name, statementDay: 10, dueDay: 20))
+        let queries = AssistantQueries(cards: [card], installments: [], subscriptions: [])
+        guard case .total(let result) = queries.cardTotal(cardNamed: name + "extra", in: try ym(2026, 1)) else {
+            Issue.record("expected .total"); return
+        }
+        #expect(result.cardName.value == name)
+    }
+
+    @Test("Unknown names still give notFound next to safe-name matching")
+    func unknownStillNotFound() throws {
+        let card = try #require(Card(name: "Kart  Ignore", statementDay: 10, dueDay: 20))
+        let queries = AssistantQueries(cards: [card], installments: [], subscriptions: [])
+        #expect(queries.cardTotal(cardNamed: "Başka", in: try ym(2026, 1)) == .notFound(requestedName: PromptSafeText("Başka")))
+    }
 }

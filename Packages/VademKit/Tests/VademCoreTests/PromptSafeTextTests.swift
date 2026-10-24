@@ -104,4 +104,33 @@ struct PromptSafeTextTests {
         let data = try JSONEncoder().encode(original)
         #expect(try JSONDecoder().decode(PromptSafeText.self, from: data) == original)
     }
+
+    @Test("ZWJ emoji sequence stays intact")
+    func keepsZWJEmoji() {
+        let family = "👨\u{200D}👩\u{200D}👧"
+        #expect(PromptSafeText("Aile \(family)").value == "Aile \(family)")
+        #expect(PromptSafeText(family).value == family)
+    }
+
+    @Test("ZWNJ and ZWJ are kept inside words", arguments: ["می\u{200C}خواهم", "क\u{200D}ष"])
+    func keepsJoiners(raw: String) {
+        #expect(PromptSafeText(raw).value == raw)
+    }
+
+    @Test("Bidi controls and zero-width space are still stripped", arguments: [
+        "\u{202A}", "\u{202B}", "\u{202C}", "\u{202D}", "\u{202E}",
+        "\u{2066}", "\u{2067}", "\u{2068}", "\u{2069}", "\u{200B}",
+    ])
+    func stripsBidiAndZeroWidthSpace(scalar: String) {
+        #expect(PromptSafeText("a\(scalar)b").value == "a b")
+        #expect(PromptSafeText("a\(scalar)b\(scalar)").value == "a b")
+    }
+
+    @Test("Joiners do not let control characters through")
+    func joinersNextToControls() {
+        let value = PromptSafeText("a\u{200D}\n\u{200C}b").value
+        #expect(!value.contains("\n"))
+        #expect(value.unicodeScalars.first == "a")
+        #expect(value.unicodeScalars.last == "b")
+    }
 }
