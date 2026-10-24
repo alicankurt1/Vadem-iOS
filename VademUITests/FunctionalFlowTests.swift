@@ -131,9 +131,10 @@ final class FunctionalFlowTests: XCTestCase {
 
         // Sağdaki çubuklardan birini seç (Ağustos/Eylül 2027): Laptop taksidi Temmuz 2027'de biter,
         // bu yüzden Everyday kartı dağılımdan çıkar ve halka değişir.
-        let chart = element("analytics.chart", in: app)
+        // Aynı kimliği paylaşan birden çok öğe olabilir; ilkini (kapsayıcıyı) kullan.
+        let chart = element("analytics.chart", in: app).firstMatch
         XCTAssertTrue(chart.waitForExistence(timeout: 5), "chart must show")
-        chart.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).tap()
+        chart.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).press(forDuration: 0.3) // Kısa dokunuş grafik seçimini tetiklemiyor; basılı tutmak tetikliyor.
 
         let gone = NSPredicate(format: "exists == false")
         let change = XCTNSPredicateExpectation(predicate: gone, object: everyday.firstMatch)
