@@ -52,7 +52,7 @@ Principles:
 - [x] **Phase 10 — Home**: design system, this month's payments, upcoming months, calendar (#33, #36, #45, #50, #53).
 - [x] **Phase 11 — Forms**: add installment (#62), add card (#65), add subscription (#66), edit and delete (#67, PR #74).
 - [x] **Design refresh (B2b, between phases 11 and 12)**: teal palette, bold hero panel. Tokens (#77, PRs #78, #79), `Design/` components (#82, PR #83), Home (#85, PR #86), forms (#88, PR #89), upcoming chips and calendar (#91, PR #92).
-- [ ] **Phase 12 — Notifications**: rolling window (iOS 64 pending limit). Not started; needs issues.
+- [x] **Phase 12 — Notifications**: pure planner with the rolling 63 of 64 window (#95, PR #96), scheduler and permission flow (#98, PR #99), settings sheet with toggle and timing (#101, PR #102). The real permission alert is only checked by hand.
 - [ ] **Phase 13 — Widget + App Intents (Siri)**.
 - [ ] **Phase 14 — Swift Charts analytics**.
 - [ ] **Phase 15 — On-device AI assistant**: Foundation Models, read-only tool calling, data/instruction separation, tests.
@@ -61,4 +61,4 @@ Principles:
 ## Next up
 
 1. Loose ends, small: a card list screen (an unused card cannot be deleted from the UI, found in #67); a subscription flow in `FunctionalFlowTests`; the Phase 6 screen recording.
-2. Phase 12: write the first issues (schedule notifications, permission flow, rolling window), then `/ship` them.
+2. Phase 13: widget and App Intents (Siri); write the first issues, then `/ship` them. Also try the reminder permission flow once by hand on a device.
