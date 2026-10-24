@@ -358,3 +358,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test boşluğu:** Siri cümleleri ve sesli yanıt otomatikleştirilemez. Shortcuts uygulamasında "Monthly total" ve "Next payment" uygulama açıkken ve kapalıyken elle denenmeli; çift depo uyarısı veya eski veri görülürse tek, tembel oluşturulan bir container paylaşılmalı. Yanıtlar İngilizce cümle, tutarlar Türk lirası biçiminde.
 - **Metrikler:** 8 dk, 3 verify (0 kırmızı), 0 düzeltme turu; UI-FUNCTIONAL geçti, UI'a dokunulmadığı için capture yok.
 - **Ders:** Mantığı AppIntents'siz pakette tutup intent'leri ince bırakmak testi kolaylaştırır; sistem entegrasyonunun (Siri, Shortcuts) kendisi ise elle kontrol maddesi olarak PR'a yazılmalı.
+
+### Koşu #111 — Ana ekran widget'ı
+
+- **Ne yapıldı:** Yeni `VademWidget` WidgetKit hedefi (small, medium, kilit ekranı), pure `WidgetTimelineBuilder` (şimdi + sonraki üç gece yarısı için girdiler, hata durumunda tek "unavailable" girdi ve 1 saat sonra yeniden deneme) ve uygulamadan yenileme için `AppRefresh`/`WidgetReloading` (PR #112, widget + Siri'nin 3/3'ü, Faz 13).
+- **Reviewer:** Blocker/major yok. Minor: widget satırları VoiceOver için birleştirilmemişti ve tutarlar tek satıra sınırlı değildi (ikisi de düzeltildi); her timeline çağrısı kendi `ModelContainer`'ını açıyor (kabul edildi, elle kontrol maddesi).
+- **Test boşluğu:** WidgetKit çizimi, imzalama (yeni bundle id için App Group) ve eklentinin depoyu uygulama çalışırken okuması otomatikleştirilemez; cihazda elle denenmeli. Hedef `pbxproj`'a elle eklendi, `verify.sh` onu derleyip gömdüğünü doğruluyor.
+- **Metrikler:** 20 dk, 4 verify (0 kırmızı), 1 düzeltme turu; 22 yeni paket testi, UI-FUNCTIONAL geçti.
+- **Ders:** Zaman bağımlı metinler ("Bugün/Yarın") için zaman çizelgesini saf bir yapıcıya koymak gün sınırı ve DST testlerini mümkün kılar; eklenti hedefinin imza/yetki ayarları kod kapılarının görmediği bir risktir ve PR'da açıkça listelenmeli.
