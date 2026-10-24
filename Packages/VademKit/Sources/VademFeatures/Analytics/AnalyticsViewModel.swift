@@ -35,6 +35,37 @@ public final class AnalyticsViewModel {
         public let subscriptions: Money
     }
 
+    /// One slice of the selected month's card breakdown, ready to display.
+    public struct CardShareRow: Sendable, Hashable, Identifiable {
+        /// The card's id, or `"no-card"` for payments without a card.
+        public let id: String
+        /// The card's name, or "No card".
+        public let name: String
+        /// What the card is due in the month.
+        public let amount: Money
+        /// The whole-number share of the month's total; all rows sum to exactly 100.
+        public let percent: Int
+        /// The card's own style (`nil` for payments without a card).
+        public let style: CardStyle?
+
+        /// The row as one VoiceOver label: `"Night, 1.200,00 TL, 40 percent"`.
+        public var accessibilityLabel: String {
+            "\(name), \(AmountText.formattedMagnitude(amount)) TL, \(percent) percent"
+        }
+    }
+
+    /// The last installment payment, ready to display.
+    public struct Insight: Sendable, Hashable {
+        /// `"Last installment payment: May 2027"`.
+        public let title: String
+        /// `"12 months remaining"`, `"Last payment this month"`, or `"Paid off"` when the last payment is in the past.
+        public let remaining: String
+        /// The months from the current month to the last payment, never negative.
+        public let monthsRemaining: Int
+    }
+
+    /// The id of the ``CardShareRow`` of payments without a card.
+    public nonisolated static let noCardID = "no-card"
     /// The number of months the chart shows.
     public nonisolated static let monthCount = 12
     /// The message of the ``State/error(message:)`` state.
@@ -49,6 +80,10 @@ public final class AnalyticsViewModel {
     /// The month that contains the injected today.
     public let currentMonth: YearMonth
 
+    /// The last installment payment; `nil` when there are no installments (the insight is hidden).
+    public private(set) var insight: Insight?
+
+    @ObservationIgnored private var analytics: SpendingAnalytics?
     @ObservationIgnored private let repository: any PaymentRepository
 
     /// Creates the view model for the month that contains `today` in `calendar`'s time zone.
@@ -71,6 +106,45 @@ public final class AnalyticsViewModel {
         )
     }
 
+    /// The selected month's card breakdown, largest first; empty when nothing is due that month.
+    public var cardShares: [CardShareRow] {
+        guard let analytics else { return [] }
+        let shares = analytics.cardBreakdown(in: selectedMonth)
+        let percents = Self.percentages(of: shares.map(\.total))
+        return zip(shares, percents).map { share, percent in
+            CardShareRow(
+                id: share.card?.id.uuidString ?? Self.noCardID,
+                name: share.card?.name ?? "No card",
+                amount: share.total,
+                percent: percent,
+                style: share.card.map { CardStyle.default(for: $0.id) }
+            )
+        }
+    }
+
+    /// Whole-number percentages of `amounts` in their total, by the largest-remainder method.
+    ///
+    /// The result has one entry per amount and sums to exactly 100 (all zeros when the total is
+    /// not positive). Ties in the remainder go to the earlier amount.
+    public nonisolated static func percentages(of amounts: [Money]) -> [Int] {
+        let values = amounts.map { max($0.amount, 0) }
+        let total = values.reduce(Decimal(0), +)
+        guard total > 0 else { return values.map { _ in 0 } }
+        let exact = values.map { $0 * 100 / total }
+        var floors = exact.map { value -> Int in
+            var rounded = Decimal()
+            var source = value
+            NSDecimalRound(&rounded, &source, 0, .down)
+            return NSDecimalNumber(decimal: rounded).intValue
+        }
+        let order = exact.indices.sorted { lhs, rhs in
+            let (a, b) = (exact[lhs] - Decimal(floors[lhs]), exact[rhs] - Decimal(floors[rhs]))
+            return a != b ? a > b : lhs < rhs
+        }
+        for index in order.prefix(max(0, 100 - floors.reduce(0, +))) { floors[index] += 1 }
+        return floors
+    }
+
     /// Selects `month` for the summary; a month that is not one of ``months`` is ignored.
     public func select(month: YearMonth) {
         guard months.contains(where: { $0.month == month }) else { return }
@@ -87,12 +161,29 @@ public final class AnalyticsViewModel {
                 installments: try repository.installments(),
                 subscriptions: try repository.subscriptions()
             )
+            self.analytics = analytics
+            insight = analytics.lastPaymentMonth.map { last in
+                let signed = currentMonth.months(until: last)
+                let remaining = max(0, signed)
+                let text = switch signed {
+                case ..<0: "Paid off"
+                case 0: "Last payment this month"
+                case 1: "1 month remaining"
+                default: "\(remaining) months remaining"
+                }
+                return Insight(
+                    title: "Last installment payment: \(Self.title(of: last))", remaining: text,
+                    monthsRemaining: remaining
+                )
+            }
             months = analytics.monthlyTotals(from: currentMonth, count: Self.monthCount)
             if !months.contains(where: { $0.month == selectedMonth }) { selectedMonth = currentMonth }
             state = months.allSatisfy { $0.total.isZero } ? .empty : .loaded
         } catch {
             // Hata sessizce boş grafik olmaz; ekranda hata durumu gösterilir.
             months = []
+            analytics = nil
+            insight = nil
             selectedMonth = currentMonth
             state = .error(message: Self.loadErrorMessage)
         }
