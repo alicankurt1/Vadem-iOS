@@ -21,6 +21,12 @@ public struct PromptSafeText: Sendable, Hashable, Codable {
     public init(_ raw: String) {
         var scalars = String.UnicodeScalarView()
         for scalar in raw.unicodeScalars {
+            // ZWJ/ZWNJ (U+200D/U+200C) kalır: Türkçe dışı yazılarda ve emoji dizilerinde anlam taşır.
+            // Çift yönlü kontroller, sıfır genişlikli boşluk ve diğer biçim karakterleri boşluğa döner.
+            if scalar.value == 0x200C || scalar.value == 0x200D {
+                scalars.append(scalar)
+                continue
+            }
             switch scalar.properties.generalCategory {
             case .control, .format, .lineSeparator, .paragraphSeparator:
                 scalars.append(" ")
@@ -37,11 +43,13 @@ public struct PromptSafeText: Sendable, Hashable, Codable {
         self.value = cut.isEmpty ? PromptSafeText.fallback : cut
     }
 
+    /// Decodes a string and cleans it like ``init(_:)``.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.init(try container.decode(String.self))
     }
 
+    /// Encodes ``value`` as a plain string.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(value)

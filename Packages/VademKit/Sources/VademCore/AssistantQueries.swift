@@ -63,6 +63,7 @@ public struct AssistantQueries: Sendable {
         guard let next = summary.next.first else { return nil }
         // Kart adı ve tür özetten gelmez; aynı ayın takviminden kalem ve gün ile bulunur.
         let entries = schedule(for: next.dueDate.month).entries
+        // Girdi her zaman bulunur (özet aynı takvimden üretilir); nil dalı ulaşılamaz.
         guard let entry = entries.first(where: { $0.itemID == next.itemID && $0.dueDate == next.dueDate && $0.amount == next.amount })
         else { return nil }
         return AssistantNextPayment(
@@ -77,8 +78,11 @@ public struct AssistantQueries: Sendable {
     /// payments are added up. An unknown name returns ``AssistantCardResult/notFound(requestedName:)``.
     public func cardTotal(cardNamed name: String, in month: YearMonth) -> AssistantCardResult {
         let wanted = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Model kart adını yalnızca temizlenmiş/kısaltılmış haliyle görür; o hal de eşleşir.
+        let safeWanted = PromptSafeText(name).value
         let matches = cards.filter {
             $0.name.trimmingCharacters(in: .whitespacesAndNewlines).caseInsensitiveCompare(wanted) == .orderedSame
+                || PromptSafeText($0.name).value.caseInsensitiveCompare(safeWanted) == .orderedSame
         }
         guard let first = matches.first else {
             return .notFound(requestedName: PromptSafeText(name))

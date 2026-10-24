@@ -36,7 +36,9 @@ public struct AssistantAmount: Sendable, Hashable, Codable {
 public struct AssistantPayment: Sendable, Hashable, Codable {
     /// What kind of item the payment comes from.
     public enum Kind: String, Sendable, Hashable, Codable {
+        /// A payment of an installment plan.
         case installment
+        /// A subscription charge.
         case subscription
     }
 
