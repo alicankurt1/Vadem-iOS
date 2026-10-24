@@ -15,6 +15,14 @@ public struct SpendingAnalytics: Sendable, Hashable {
         public let subscriptions: Money
         /// ``installments`` + ``subscriptions``; equals ``MonthlySchedule/total`` of the month.
         public let total: Money
+
+        /// Creates a month's figures; ``total`` is always ``installments`` + ``subscriptions``.
+        public init(month: YearMonth, installments: Money, subscriptions: Money) {
+            self.month = month
+            self.installments = installments
+            self.subscriptions = subscriptions
+            self.total = installments + subscriptions
+        }
     }
 
     /// What one card (or no card) is due in one month.
@@ -26,6 +34,12 @@ public struct SpendingAnalytics: Sendable, Hashable {
 
         /// `true` for the share of payments that have no card.
         public var isNoCard: Bool { card == nil }
+
+        /// Creates a share of `total` for `card` (`nil` for payments without a card).
+        public init(card: Card?, total: Money) {
+            self.card = card
+            self.total = total
+        }
     }
 
     private let cards: [Card]
@@ -63,10 +77,7 @@ public struct SpendingAnalytics: Sendable, Hashable {
                 }
             }
             // Toplam, parçaların toplamıdır; yuvarlama kayması olamaz.
-            return MonthTotal(
-                month: month, installments: installmentsSum, subscriptions: subscriptionsSum,
-                total: installmentsSum + subscriptionsSum
-            )
+            return MonthTotal(month: month, installments: installmentsSum, subscriptions: subscriptionsSum)
         }
     }
 
