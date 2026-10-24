@@ -366,3 +366,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test boşluğu:** WidgetKit çizimi, imzalama (yeni bundle id için App Group) ve eklentinin depoyu uygulama çalışırken okuması otomatikleştirilemez; cihazda elle denenmeli. Hedef `pbxproj`'a elle eklendi, `verify.sh` onu derleyip gömdüğünü doğruluyor.
 - **Metrikler:** 20 dk, 4 verify (0 kırmızı), 1 düzeltme turu; 22 yeni paket testi, UI-FUNCTIONAL geçti.
 - **Ders:** Zaman bağımlı metinler ("Bugün/Yarın") için zaman çizelgesini saf bir yapıcıya koymak gün sınırı ve DST testlerini mümkün kılar; eklenti hedefinin imza/yetki ayarları kod kapılarının görmediği bir risktir ve PR'da açıkça listelenmeli.
+
+### Koşu #120 — Analytics ekranı ve yığılmış (stacked) PR dersi
+
+- **Ne yapıldı:** #116 için Analytics ekranı (`AnalyticsViewModel`, `AnalyticsView`, Home araç çubuğunda grafik düğmesi). İş PR #119'da yapıldı, `main`'e PR #120 ile taşındı (21 dk, 4 verify, 0 kırmızı, 0 düzeltme turu).
+- **Kapılar:** Reviewer blocker/major bulmadı (3 minor, 2 nit; örn. yerelleştirilemeyen dizgiler, kabul edildi). `UI-CHECK` light/dark/AX5'te 0 bulgu. Test yazarı ilk commit'te iki UI testini atlamıştı, ikinci commit'te eklendi.
+- **Yığılmış PR sorunu:** #119, #118'in dalına (`issue/115-spending-analytics`) bağlıydı. #118 `main`'e girdikten sonra #119 `main` yerine o ara dala birleşti; Analytics ekranı `main`'e hiç ulaşmadı. #120 yalnızca #119'un commit'lerini yeniden taşıdı.
+- **Ders:** Yığılmış PR'larda alttaki PR birleşince üsttekinin tabanı `main`'e dönmeden birleştirme yapılmamalı; birleştirmeden önce PR'ın taban dalını kontrol et ve birleştirdikten sonra değişikliğin `main`'de olduğunu doğrula. Ayrıca #116 `Closes` ile kapanmadı çünkü PR `main`'e değil ara dala birleşti; issue elle kapatılmalı.
