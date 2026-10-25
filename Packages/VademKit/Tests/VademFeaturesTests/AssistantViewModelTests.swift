@@ -260,3 +260,51 @@ struct AssistantViewModelTests {
         #expect(AssistantViewModel.readOnlyNote.contains("read"))
     }
 }
+
+/// Kullanılabilirliği sonradan değişen motor (model indirmesi bitince): yenileme testi için.
+private final class MutableAvailabilityEngine: AssistantEngine, @unchecked Sendable {
+    private let lock = NSLock()
+    private var current: AssistantAvailability
+
+    init(_ availability: AssistantAvailability) { current = availability }
+
+    var availability: AssistantAvailability {
+        get { lock.withLock { current } }
+        set { lock.withLock { current = newValue } }
+    }
+
+    func respond(to question: String) async throws -> AssistantReply { .text("OK") }
+}
+
+@MainActor
+@Suite("Assistant view model availability refresh")
+struct AssistantAvailabilityRefreshTests {
+    @Test("Refresh picks up modelNotReady to available")
+    func modelBecomesReady() {
+        let engine = MutableAvailabilityEngine(.unavailable(.modelNotReady))
+        let model = AssistantViewModel(engine: engine)
+        #expect(model.availability == .unavailable(.modelNotReady))
+
+        engine.availability = .available
+        // Yenilemeden önce eski değer korunur.
+        #expect(model.availability == .unavailable(.modelNotReady))
+        model.refreshAvailability()
+        #expect(model.availability == .available)
+    }
+
+    @Test("Refresh picks up available to unavailable")
+    func modelBecomesUnavailable() {
+        let engine = MutableAvailabilityEngine(.available)
+        let model = AssistantViewModel(engine: engine)
+        engine.availability = .unavailable(.appleIntelligenceDisabled)
+        model.refreshAvailability()
+        #expect(model.availability == .unavailable(.appleIntelligenceDisabled))
+    }
+
+    @Test("Refresh without a change keeps the value")
+    func unchanged() {
+        let model = AssistantViewModel(engine: MutableAvailabilityEngine(.unsupportedOS))
+        model.refreshAvailability()
+        #expect(model.availability == .unsupportedOS)
+    }
+}
