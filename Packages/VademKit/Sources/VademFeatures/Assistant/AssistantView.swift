@@ -83,14 +83,22 @@ public struct AssistantView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: model.messages.count) {
-                // Yeni mesaj görünür olsun; Reduce Motion veya -ui-static-motion açıkken animasyonsuz.
-                withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
-                    proxy.scrollTo(Self.bottomAnchor, anchor: .bottom)
-                }
+                scrollToBottom(proxy)
+            }
+            .onChange(of: model.isResponding) {
+                // "Thinking…" satırı da görünür olsun.
+                scrollToBottom(proxy)
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             inputBar
+        }
+    }
+
+    // Yeni mesaj görünür olsun; Reduce Motion veya -ui-static-motion açıkken animasyonsuz.
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+            proxy.scrollTo(Self.bottomAnchor, anchor: .bottom)
         }
     }
 

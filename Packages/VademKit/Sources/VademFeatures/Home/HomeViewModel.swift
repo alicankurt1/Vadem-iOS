@@ -136,6 +136,8 @@ public final class HomeViewModel {
     @ObservationIgnored private let settings: SettingsDependencies
     // Asistan motoru; nil ise işletim sisteminin sunduğu motor bu deponun verisiyle kurulur.
     @ObservationIgnored private let assistantEngineOverride: (any AssistantEngine)?
+    // İlk kullanımda kurulan sistem motoru; her gövde değerlendirmesinde yeniden kurulmaz.
+    @ObservationIgnored private var systemAssistantEngine: (any AssistantEngine)?
     // Enjekte edilen bugün: ay ve gün (Card.DueDate dışarıdan kurulamaz).
     @ObservationIgnored private var todayMonth: YearMonth
     @ObservationIgnored private var todayDay: Int
@@ -214,13 +216,17 @@ public final class HomeViewModel {
         AssistantViewModel(engine: assistantEngine)
     }
 
-    // Verilen motor, yoksa işletim sisteminin motoru; her soruda depodan taze anlık görüntü alınır.
+    // Verilen motor, yoksa işletim sisteminin motoru (bir kez kurulur, sonra yeniden kullanılır);
+    // her soruda depodan taze anlık görüntü alınır.
     private var assistantEngine: any AssistantEngine {
         if let assistantEngineOverride { return assistantEngineOverride }
-        return AssistantEngineFactory.makeSystemEngine { @MainActor [weak self] in
+        if let systemAssistantEngine { return systemAssistantEngine }
+        let engine = AssistantEngineFactory.makeSystemEngine { @MainActor [weak self] in
             guard let self else { throw CancellationError() }
             return try self.assistantQueries()
         }
+        systemAssistantEngine = engine
+        return engine
     }
 
     private func assistantQueries() throws -> AssistantQueries {
