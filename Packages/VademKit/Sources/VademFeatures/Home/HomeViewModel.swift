@@ -134,6 +134,8 @@ public final class HomeViewModel {
     @ObservationIgnored private let onDataChanged: (@MainActor () -> Void)?
     // Ayarlar sayfasının bağımlılıkları; verilmezse bellek içi depo (zamanlayıcı yok), açılışlar arasında korunur.
     @ObservationIgnored private let settings: SettingsDependencies
+    // Asistan motoru; nil ise işletim sisteminin sunduğu motor bu deponun verisiyle kurulur.
+    @ObservationIgnored private let assistantEngineOverride: (any AssistantEngine)?
     // Enjekte edilen bugün: ay ve gün (Card.DueDate dışarıdan kurulamaz).
     @ObservationIgnored private var todayMonth: YearMonth
     @ObservationIgnored private var todayDay: Int
@@ -148,16 +150,20 @@ public final class HomeViewModel {
     /// `onDataChanged` runs after ``reloadAfterChange()``, i.e. after a form closes
     /// (e.g. to refresh the reminders); `nil` does nothing. `settings` backs the settings sheet
     /// (``makeSettingsModel()``); `nil` uses an in-memory store without a scheduler.
+    /// `assistant` answers in the assistant chat (``makeAssistantModel()``); `nil` uses the engine
+    /// the OS offers (``AssistantEngineFactory/makeSystemEngine(snapshot:)``) on this repository.
     public init(
         repository: any PaymentRepository,
         today: Date,
         calendar: Calendar,
         onDataChanged: (@MainActor () -> Void)? = nil,
-        settings: SettingsDependencies? = nil
+        settings: SettingsDependencies? = nil,
+        assistant: (any AssistantEngine)? = nil
     ) {
         self.repository = repository
         self.onDataChanged = onDataChanged
         self.settings = settings ?? .inMemory()
+        self.assistantEngineOverride = assistant
         // YearMonth gibi: sadece saat dilimi alınır, gün Gregoryen takvimle hesaplanır.
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
@@ -195,6 +201,34 @@ public final class HomeViewModel {
     /// It loads when its screen appears; call ``AnalyticsViewModel/reload()`` after a form closes.
     public func makeAnalyticsModel() -> AnalyticsViewModel {
         AnalyticsViewModel(repository: repository, currentMonth: todayMonth)
+    }
+
+    /// `true` when Home offers the assistant: the engine's availability is not
+    /// ``AssistantAvailability/unsupportedOS`` (an unavailable model still opens its explanation).
+    public var showsAssistant: Bool {
+        assistantEngine.availability != .unsupportedOS
+    }
+
+    /// A new assistant chat model with an empty conversation; every question reads the repository afresh.
+    public func makeAssistantModel() -> AssistantViewModel {
+        AssistantViewModel(engine: assistantEngine)
+    }
+
+    // Verilen motor, yoksa işletim sisteminin motoru; her soruda depodan taze anlık görüntü alınır.
+    private var assistantEngine: any AssistantEngine {
+        if let assistantEngineOverride { return assistantEngineOverride }
+        return AssistantEngineFactory.makeSystemEngine { @MainActor [weak self] in
+            guard let self else { throw CancellationError() }
+            return try self.assistantQueries()
+        }
+    }
+
+    private func assistantQueries() throws -> AssistantQueries {
+        AssistantQueries(
+            cards: try repository.cards(),
+            installments: try repository.installments(),
+            subscriptions: try repository.subscriptions()
+        )
     }
 
     /// A new add-installment form on the same repository, starting at the selected ``month``.

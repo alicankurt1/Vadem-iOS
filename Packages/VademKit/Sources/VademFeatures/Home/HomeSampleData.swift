@@ -79,11 +79,48 @@ public enum HomeSampleData {
             store: InMemoryReminderPreferencesStore(),
             center: isDenied ? FixedStatusReminderCenter(status: .denied) : nil
         )
-        return HomeViewModel(repository: makeRepository(), today: today, calendar: calendar, settings: settings)
+        return HomeViewModel(
+            repository: makeRepository(), today: today, calendar: calendar, settings: settings,
+            assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments)
+        )
     }
+
+    /// The assistant for the sample data: ``AssistantView/unavailableLaunchArgument`` gives an
+    /// unavailable one (Apple Intelligence off), ``AssistantView/scriptedLaunchArgument`` a scripted
+    /// one with ``assistantAnswers``; otherwise `nil` (the OS engine on the sample repository).
+    public static func makeAssistantEngine(arguments: [String]) -> (any AssistantEngine)? {
+        // Gerçek model gerekmez: CI'da cevaplar sabittir.
+        if arguments.contains(AssistantView.unavailableLaunchArgument) {
+            return ScriptedAssistantEngine(availability: .unavailable(.appleIntelligenceDisabled))
+        }
+        if arguments.contains(AssistantView.scriptedLaunchArgument) {
+            return SampleAssistantEngine()
+        }
+        return nil
+    }
+
+    /// The scripted answers to ``AssistantViewModel/suggestions``, in the same order (12 October 2026).
+    public nonisolated static let assistantAnswers = [
+        "You pay ₺26,549.99 in October 2026 across 4 payments.",
+        "Your next payment is Gym, ₺900.00 on the Travel card, due today (12 October).",
+        "Your last installment, Laptop 12/12, is due in July 2027. After that you only have subscriptions.",
+    ]
+
+    /// The answer to a question that is not a suggestion.
+    public nonisolated static let assistantFallbackAnswer = "This is a sample answer from the scripted assistant."
 
     private static func id(_ number: Int) -> UUID {
         UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", number))!
+    }
+}
+
+// Öneri çiplerine hangi sırayla dokunulursa dokunulsun aynı sabit cevabı verir.
+private struct SampleAssistantEngine: AssistantEngine {
+    var availability: AssistantAvailability { .available }
+
+    func respond(to question: String) async throws -> AssistantReply {
+        let index = AssistantViewModel.suggestions.firstIndex(of: question)
+        return .text(index.map { HomeSampleData.assistantAnswers[$0] } ?? HomeSampleData.assistantFallbackAnswer)
     }
 }
 #endif
