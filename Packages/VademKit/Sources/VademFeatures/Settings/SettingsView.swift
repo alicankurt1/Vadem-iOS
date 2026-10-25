@@ -18,7 +18,9 @@ public struct SettingsView: View {
     public nonisolated static let deniedLaunchArgument = "-ui-settings-denied"
 
     /// The explanation shown when the system permission is denied.
-    public nonisolated static let permissionDeniedMessage = "Notifications are turned off for Vadem in Settings."
+    public nonisolated static var permissionDeniedMessage: String {
+        String(localized: "Notifications are turned off for Vadem in Settings.", bundle: .module)
+    }
 
     @State private var model: SettingsViewModel
     @State private var isChoosingTiming = false
@@ -38,7 +40,7 @@ public struct SettingsView: View {
             FormScroll {
                 FormCard {
                     FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
-                        Toggle("Payment reminders", isOn: Binding(
+                        Toggle(String(localized: "Payment reminders", bundle: .module), isOn: Binding(
                             get: { model.isEnabled },
                             set: { model.setEnabled($0) }
                         ))
@@ -48,7 +50,7 @@ public struct SettingsView: View {
                     // Hatırlatmalar kapalıyken zamanlama seçilemez; satır gizlenir.
                     if model.showsTiming {
                         FormField(errorMessage: nil, errorIdentifier: "settings.timing.error") {
-                            ChoiceRow(title: "Remind me", value: SettingsViewModel.title(of: model.timing)) {
+                            ChoiceRow(title: String(localized: "Remind me", bundle: .module), value: SettingsViewModel.title(of: model.timing)) {
                                 isChoosingTiming = true
                             }
                             .accessibilityIdentifier("settings.timing")
@@ -63,12 +65,12 @@ public struct SettingsView: View {
             .tint(Color.vademBrand)
             .navigationDestination(isPresented: $isChoosingTiming) {
                 OptionList(
-                    title: "Remind me", identifierPrefix: "settings.timing",
+                    title: String(localized: "Remind me", bundle: .module), identifierPrefix: "settings.timing",
                     options: timingOptions,
                     selection: Binding(get: { model.timing }, set: { model.setTiming($0) })
                 )
             }
-            .navigationTitle("Settings")
+            .navigationTitle(Text("Settings", bundle: .module))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // Formlar gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -78,7 +80,7 @@ public struct SettingsView: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(String(localized: "Done", bundle: .module)) { dismiss() }
                         .accessibilityIdentifier("settings.done")
                 }
             }
@@ -108,7 +110,7 @@ public struct SettingsView: View {
                 model.openSystemSettings()
             } label: {
                 HStack(spacing: 8) {
-                    Text("Open Settings")
+                    Text("Open Settings", bundle: .module)
                         .font(.body)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Image(systemName: "arrow.up.forward.app")

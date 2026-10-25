@@ -92,9 +92,11 @@ public final class HomeViewModel {
     }
 
     /// The text shown for a payment that is not charged to a card.
-    public nonisolated static let noCardText = "No card"
+    public nonisolated static var noCardText: String { String(localized: "No card", bundle: .module) }
     /// The message of the ``State/error(message:)`` state.
-    public nonisolated static let loadErrorMessage = "Your payments could not be loaded."
+    public nonisolated static var loadErrorMessage: String {
+        String(localized: "Your payments could not be loaded.", bundle: .module)
+    }
     /// A payment due within this many days after today is ``DueChip/Kind/soon``.
     public nonisolated static let soonDays = 3
 
@@ -185,7 +187,8 @@ public final class HomeViewModel {
 
     /// Short weekday names for the grid's header, starting at the calendar's first weekday (e.g. `"Mon"`).
     public var calendarWeekdaySymbols: [String] {
-        (0..<7).map { Self.weekdaySymbols[(firstWeekday - 1 + $0) % 7] }
+        let symbols = VademLocalization.shortWeekdaySymbols()
+        return (0..<7).map { symbols[(firstWeekday - 1 + $0) % 7] }
     }
 
     /// The selected day as `"12 October"`, or `nil` when no day is selected.
@@ -449,7 +452,7 @@ public final class HomeViewModel {
             // Ödemesiz gün sadece tarihi okur.
             let label = count == 0
                 ? date
-                : "\(date), \(count) \(count == 1 ? "payment" : "payments"), \(AmountText.spokenLabel(total))"
+                : Self.listText([date, Self.paymentCountText(count), AmountText.spokenLabel(total)])
             cells.append(CalendarDay(
                 id: blanks + day - 1, day: day, total: total, paymentCount: count,
                 isToday: schedule.month == todayMonth && day == todayDay,
@@ -474,7 +477,7 @@ public final class HomeViewModel {
             total: schedule.total,
             isSelected: schedule.month == month,
             // Satırlarla aynı: "₺" yerine okunabilir tutar.
-            accessibilityLabel: "\(title), \(AmountText.spokenLabel(schedule.total))"
+            accessibilityLabel: Self.listText([title, AmountText.spokenLabel(schedule.total)])
         )
     }
 
@@ -485,7 +488,10 @@ public final class HomeViewModel {
         switch entry.kind {
         case .installment(let number, let count):
             installmentText = "\(number)/\(count)"
-            spokenInstallment = "installment \(number) of \(count)"
+            spokenInstallment = String(
+                localized: "installment \(number) of \(count)", bundle: .module,
+                comment: "Spoken installment number in a payment row, e.g. installment 3 of 12"
+            )
         case .subscription:
             installmentText = nil
             spokenInstallment = nil
@@ -495,7 +501,8 @@ public final class HomeViewModel {
         let dueText = Self.dayText(day: entry.dueDate.day, of: entry.dueDate.month)
         // VoiceOver satırı tek öğe olarak okur; "₺" yerine okunabilir tutar kullanılır.
         let parts = [entry.title, spokenInstallment, AmountText.spokenLabel(entry.amount),
-                     "due \(dueText)", cardText, chipText].compactMap { $0 }
+                     String(localized: "due \(dueText)", bundle: .module, comment: "Spoken due date, e.g. due 15 October"),
+                     cardText, chipText].compactMap { $0 }
         return Row(
             id: "\(index)-\(entry.itemID.uuidString)",
             entry: entry,
@@ -506,18 +513,20 @@ public final class HomeViewModel {
             dueText: dueText,
             chipKind: kind,
             chipText: chipText,
-            accessibilityLabel: parts.joined(separator: ", ")
+            accessibilityLabel: Self.listText(parts)
         )
     }
 
     private func chipText(for kind: DueChip.Kind, dueDate: Card.DueDate) -> String {
         switch kind {
-        case .overdue: return "Overdue"
-        case .today: return "Today"
+        case .overdue: return String(localized: "Overdue", bundle: .module, comment: "Due chip")
+        case .today: return String(localized: "Today", bundle: .module, comment: "Due chip")
         case .soon:
             let days = daysFromToday(to: dueDate)
-            return days == 1 ? "Tomorrow" : "In \(days) days"
-        case .later: return "Later"
+            return days == 1
+                ? String(localized: "Tomorrow", bundle: .module, comment: "Due chip")
+                : String(localized: "In \(days) days", bundle: .module, comment: "Due chip, 2 or more days ahead")
+        case .later: return String(localized: "Later", bundle: .module, comment: "Due chip")
         }
     }
 
@@ -533,21 +542,27 @@ public final class HomeViewModel {
     }
 
     // "12 October" biçimi; satırlar, takvim ve seçili gün aynı metni kullanır.
+    // Ay adları ekran metinlerinin dilinden gelir (VademLocalization.locale).
     private nonisolated static func dayText(day: Int, of month: YearMonth) -> String {
-        "\(day) \(monthNames[month.month - 1])"
+        VademLocalization.dayTitle(day: day, of: month)
     }
 
     // Ekleme formu da aynı ay başlığını kullanır.
     nonisolated static func title(of month: YearMonth) -> String {
-        "\(monthNames[month.month - 1]) \(month.year)"
+        VademLocalization.monthTitle(month)
     }
 
-    // Ay adları sabit (İngilizce); cihaz diline bağlı değil, ekran metinleriyle uyumlu.
-    private nonisolated static let monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December",
-    ]
+    // "1 payment" / "4 payments": katalogdaki çoğul varyasyonlarından. Derlenmiş katalog yokken
+    // (`swift test`) Foundation'ın otomatik dil bilgisi uyumu ("inflect") İngilizce çoğulu kurar.
+    nonisolated static func paymentCountText(_ count: Int) -> String {
+        String(AttributedString(
+            localized: "^[\(count) payment](inflect: true)", bundle: .module,
+            comment: "Number of payments on a calendar day; plural variations in the catalog"
+        ).characters)
+    }
 
-    // Calendar.weekday sırası: indeks 0 = Pazar (weekday 1).
-    private nonisolated static let weekdaySymbols = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    // VoiceOver etiketinin parçaları virgülle birleşir.
+    nonisolated static func listText(_ parts: [String]) -> String {
+        parts.joined(separator: ", ")
+    }
 }

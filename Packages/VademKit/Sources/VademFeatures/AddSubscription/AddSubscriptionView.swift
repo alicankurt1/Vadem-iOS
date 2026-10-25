@@ -57,7 +57,10 @@ public struct AddSubscriptionView: View {
                 // Tüm alanlar tek kartta, ince çizgilerle ayrılmış satırlar olarak durur.
                 FormCard {
                     field(.title) {
-                        TextField("Title", text: $model.title, prompt: Text("e.g. Music"))
+                        TextField(
+                            String(localized: "Title", bundle: .module),
+                            text: $model.title, prompt: Text("e.g. Music", bundle: .module)
+                        )
                             #if os(iOS)
                             .textInputAutocapitalization(.sentences)
                             #endif
@@ -67,34 +70,37 @@ public struct AddSubscriptionView: View {
                     field(.amount) {
                         // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
                         // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır.
-                        TextField("Amount", text: $model.amountText, prompt: Text("Amount (₺)"), axis: .vertical)
+                        TextField(
+                            String(localized: "Amount", bundle: .module),
+                            text: $model.amountText, prompt: Text("Amount (₺)", bundle: .module), axis: .vertical
+                        )
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                            .accessibilityHint("In Turkish lira")
+                            .accessibilityHint(Text("In Turkish lira", bundle: .module))
                             .accessibilityIdentifier("addSubscription.amount")
                             .focused($focusedField, equals: .amount)
                     }
                     field(.card) {
                         // Kart isteğe bağlı; "No card" da bir seçenek.
-                        ChoiceRow(title: "Card", value: cardTitle) { choice = .card }
+                        ChoiceRow(title: String(localized: "Card", bundle: .module), value: cardTitle) { choice = .card }
                             .accessibilityIdentifier("addSubscription.card")
                     }
                     field(.period) {
-                        ChoiceRow(title: "Repeats", value: AddSubscriptionViewModel.title(of: model.period)) {
+                        ChoiceRow(title: String(localized: "Repeats", bundle: .module), value: AddSubscriptionViewModel.title(of: model.period)) {
                             choice = .period
                         }
                         .accessibilityIdentifier("addSubscription.period")
                     }
                     field(.renewalDay) {
                         Stepper(value: $model.renewalDay, in: Subscription.supportedRenewalDays) {
-                            Text("Renews on day \(model.renewalDay)")
+                            Text("Renews on day \(model.renewalDay)", bundle: .module)
                                 .foregroundStyle(Color.vademTextPrimary)
                         }
                         .accessibilityIdentifier("addSubscription.renewalDay")
                     }
                     field(.firstMonth) {
-                        ChoiceRow(title: "First charge month", value: model.title(of: model.firstMonth)) {
+                        ChoiceRow(title: String(localized: "First charge month", bundle: .module), value: model.title(of: model.firstMonth)) {
                             choice = .firstMonth
                         }
                         .accessibilityIdentifier("addSubscription.firstMonth")
@@ -102,15 +108,15 @@ public struct AddSubscriptionView: View {
                 }
                 if model.isEditing {
                     DeleteSection(
-                        title: "Delete subscription", identifierPrefix: Self.identifierPrefix,
+                        title: String(localized: "Delete subscription", bundle: .module), identifierPrefix: Self.identifierPrefix,
                         isConfirming: $isConfirmingDelete
                     )
                 }
             }
             .deleteConfirmation(
                 isPresented: $isConfirmingDelete,
-                title: "Delete this subscription?",
-                message: "All of its charges are removed. This cannot be undone.",
+                title: String(localized: "Delete this subscription?", bundle: .module),
+                message: String(localized: "All of its charges are removed. This cannot be undone.", bundle: .module),
                 identifierPrefix: Self.identifierPrefix
             ) {
                 if model.delete() {
@@ -124,22 +130,26 @@ public struct AddSubscriptionView: View {
                 switch choice {
                 case .card:
                     OptionList(
-                        title: "Card", identifierPrefix: Self.identifierPrefix,
+                        title: String(localized: "Card", bundle: .module), identifierPrefix: Self.identifierPrefix,
                         options: cardOptions, selection: $model.cardID
                     )
                 case .period:
                     OptionList(
-                        title: "Repeats", identifierPrefix: Self.identifierPrefix,
+                        title: String(localized: "Repeats", bundle: .module), identifierPrefix: Self.identifierPrefix,
                         options: periodOptions, selection: $model.period
                     )
                 case .firstMonth:
                     OptionList(
-                        title: "First charge month", identifierPrefix: Self.identifierPrefix,
+                        title: String(localized: "First charge month", bundle: .module), identifierPrefix: Self.identifierPrefix,
                         options: monthOptions, selection: $model.firstMonth
                     )
                 }
             }
-            .navigationTitle(model.isEditing ? "Edit subscription" : "New subscription")
+            .navigationTitle(
+                model.isEditing
+                    ? String(localized: "Edit subscription", bundle: .module)
+                    : String(localized: "New subscription", bundle: .module)
+            )
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // Taksit formu gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -149,11 +159,11 @@ public struct AddSubscriptionView: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(String(localized: "Cancel", bundle: .module)) { dismiss() }
                         .accessibilityIdentifier("addSubscription.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(String(localized: "Save", bundle: .module)) {
                         if model.save() {
                             onSaved()
                             dismiss()
@@ -174,7 +184,7 @@ public struct AddSubscriptionView: View {
     }
 
     private static let identifierPrefix = "addSubscription"
-    private static let noCardTitle = "No card"
+    private static var noCardTitle: String { String(localized: "No card", bundle: .module) }
 
     private var cardTitle: String {
         model.cards.first { $0.id == model.cardID }?.name ?? Self.noCardTitle

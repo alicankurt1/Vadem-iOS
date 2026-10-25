@@ -29,24 +29,33 @@ public final class AssistantViewModel {
 
         /// The message as one VoiceOver label: `"You: …"` or `"Assistant: …"`.
         public var accessibilityLabel: String {
-            "\(role == .user ? "You" : "Assistant"): \(text)"
+            role == .user
+                ? String(localized: "You: \(text)", bundle: .module, comment: "Spoken user message")
+                : String(localized: "Assistant: \(text)", bundle: .module, comment: "Spoken assistant message")
         }
     }
 
     /// The suggestion chips, in display order.
-    public nonisolated static let suggestions = [
-        "How much do I pay this month?",
-        "What is my next payment?",
-        "When am I debt-free?",
-    ]
+    public nonisolated static var suggestions: [String] {
+        [
+            String(localized: "How much do I pay this month?", bundle: .module),
+            String(localized: "What is my next payment?", bundle: .module),
+            String(localized: "When am I debt-free?", bundle: .module),
+        ]
+    }
 
     /// The footer note under the input.
-    public nonisolated static let footerNote =
-        "Answers come from your data on this device and can be wrong."
+    public nonisolated static var footerNote: String {
+        String(localized: "Answers come from your data on this device and can be wrong.", bundle: .module)
+    }
 
     /// The empty state's text: the assistant only reads.
-    public nonisolated static let readOnlyNote =
-        "Ask about your payments. The assistant can only read your data; it can't add, edit or delete anything."
+    public nonisolated static var readOnlyNote: String {
+        String(
+            localized: "Ask about your payments. The assistant can only read your data; it can't add, edit or delete anything.",
+            bundle: .module
+        )
+    }
 
     /// The text being typed.
     public var input = ""
@@ -86,15 +95,21 @@ public final class AssistantViewModel {
         case .available:
             return nil
         case .unavailable(.appleIntelligenceDisabled):
-            return "Apple Intelligence is turned off. Turn it on in Settings to use the assistant."
+            return String(
+                localized: "Apple Intelligence is turned off. Turn it on in Settings to use the assistant.", bundle: .module
+            )
         case .unavailable(.deviceNotEligible):
-            return "This device doesn't support Apple Intelligence, so the assistant can't run here."
+            return String(
+                localized: "This device doesn't support Apple Intelligence, so the assistant can't run here.", bundle: .module
+            )
         case .unavailable(.modelNotReady):
-            return "The on-device model is still downloading. Try again in a little while."
+            return String(
+                localized: "The on-device model is still downloading. Try again in a little while.", bundle: .module
+            )
         case .unavailable(.unknown):
-            return "The assistant is not available right now. Try again later."
+            return String(localized: "The assistant is not available right now. Try again later.", bundle: .module)
         case .unsupportedOS:
-            return "The assistant needs iOS 26 or later."
+            return String(localized: "The assistant needs iOS 26 or later.", bundle: .module)
         }
     }
 

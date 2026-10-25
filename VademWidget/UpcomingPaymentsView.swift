@@ -41,9 +41,15 @@ struct UpcomingPaymentsView: View {
                 SmallSummaryView(summary: summary)
             }
         case .empty:
-            MessageView(title: "Nothing due", detail: "Add a payment in Vadem", isAccessory: isAccessory)
+            MessageView(
+                title: String(localized: "Nothing due"), detail: String(localized: "Add a payment in Vadem"),
+                isAccessory: isAccessory
+            )
         case .unavailable:
-            MessageView(title: "Payments unavailable", detail: "Open Vadem to try again", isAccessory: isAccessory)
+            MessageView(
+                title: String(localized: "Payments unavailable"), detail: String(localized: "Open Vadem to try again"),
+                isAccessory: isAccessory
+            )
         }
     }
 }
@@ -136,7 +142,7 @@ private struct AccessorySummaryView: View {
             .minimumScaleFactor(0.6)
             .widgetAccentable()
             if let next = summary.next.first {
-                Text("\(next.title) \(AmountText.format(next.amount)), \(DayText.text(daysUntil: next.daysUntil))")
+                Text(DayText.nextPaymentLine(for: next))
                     .font(.caption)
                     .lineLimit(2)
                     .minimumScaleFactor(0.6)
@@ -191,7 +197,7 @@ private struct UpcomingRowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text("\(payment.dueDate.day)")
+            Text(verbatim: "\(payment.dueDate.day)")
                 .font(.caption.weight(.bold))
                 .monospacedDigit()
                 .foregroundStyle(Color.vademOnAccent)
@@ -235,25 +241,36 @@ private struct MessageView: View {
     }
 }
 
-/// "Today", "Tomorrow" or "in N days", and the spoken row label built from it.
+/// "Today", "Tomorrow" or "in N days", and the row texts built from it (from the widget's string catalog).
 enum DayText {
     static func text(daysUntil: Int) -> String {
         switch daysUntil {
-        case ...0: "Today"
-        case 1: "Tomorrow"
-        default: "in \(daysUntil) days"
+        case ...0: String(localized: "Today", comment: "Widget: the payment is due today")
+        case 1: String(localized: "Tomorrow", comment: "Widget: the payment is due tomorrow")
+        // "in 1 day" çıkmaz (1 = Tomorrow) ama çoğul varyasyonları katalogda.
+        default: String(localized: "in \(daysUntil) days", comment: "Widget: days until the payment")
         }
+    }
+
+    /// The lock screen's next-payment line: `"Rent ₺25.000,00, Today"`.
+    static func nextPaymentLine(for payment: PaymentSummary.Upcoming) -> String {
+        let title = payment.title
+        let amount = AmountText.format(payment.amount)
+        let dayText = text(daysUntil: payment.daysUntil)
+        return String(localized: "\(title) \(amount), \(dayText)", comment: "Widget lock screen: title, amount, day")
     }
 
     /// The VoiceOver label of a payment row: `"Rent, 25.000,00 Türk lirası, today"` (no "₺").
     static func accessibilityLabel(for payment: PaymentSummary.Upcoming) -> String {
-        let day: String
+        let dayText: String
         switch payment.daysUntil {
-        case ...0: day = "today"
-        case 1: day = "tomorrow"
-        default: day = "in \(payment.daysUntil) days"
+        case ...0: dayText = String(localized: "today", comment: "Widget VoiceOver: due today")
+        case 1: dayText = String(localized: "tomorrow", comment: "Widget VoiceOver: due tomorrow")
+        default: dayText = String(localized: "in \(payment.daysUntil) days", comment: "Widget: days until the payment")
         }
-        return "\(payment.title), \(AmountText.spokenLabel(payment.amount)), \(day)"
+        let title = payment.title
+        let amount = AmountText.spokenLabel(payment.amount)
+        return String(localized: "\(title), \(amount), \(dayText)", comment: "Widget VoiceOver row: title, spoken amount, day")
     }
 }
 

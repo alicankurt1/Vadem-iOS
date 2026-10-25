@@ -43,20 +43,22 @@ public struct AssistantFailure: Sendable, Hashable {
     /// A short sentence for the user.
     public let message: String
 
-    /// The standard failure for `kind`.
+    /// The standard failure for `kind`; ``message`` comes from the string catalog.
     public init(kind: AssistantFailureKind) {
         self.kind = kind
         switch kind {
         case .guardrailViolation:
-            message = "I can't help with that. Try asking about your payments in a different way."
+            message = String(
+                localized: "I can't help with that. Try asking about your payments in a different way.", bundle: .module
+            )
         case .contextWindowExceeded:
-            message = "That question was too long for me. Try a shorter one."
+            message = String(localized: "That question was too long for me. Try a shorter one.", bundle: .module)
         case .cancelled:
-            message = "Cancelled."
+            message = String(localized: "Cancelled.", bundle: .module)
         case .unavailable:
-            message = "The assistant is not available on this device right now."
+            message = String(localized: "The assistant is not available on this device right now.", bundle: .module)
         case .other:
-            message = "Something went wrong. Please try again."
+            message = String(localized: "Something went wrong. Please try again.", bundle: .module)
         }
     }
 }

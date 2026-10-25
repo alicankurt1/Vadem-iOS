@@ -46,9 +46,9 @@ public struct SurfaceCard<Content: View>: View {
 
 #Preview {
     SurfaceCard {
-        Text("First")
-        Text("Second")
-        Text("Third")
+        Text(verbatim: "First")
+        Text(verbatim: "Second")
+        Text(verbatim: "Third")
     }
     .padding()
     .background(Color.vademBackground)

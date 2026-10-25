@@ -59,42 +59,51 @@ public struct AddCardView: View {
                     // Alanlar tek kartta. Alan adı alanın üstünde (sarılabilen düz metin); yer tutucular
                     // AX5'te de sığacak kadar kısa. Dikey eksen: yazılan metin kırpılmaz, sarılır.
                     FormCard {
-                        field(.name, title: "Card name") {
-                            TextField("Card name", text: nameBinding, prompt: Text("e.g. Everyday"), axis: .vertical)
+                        field(.name, title: String(localized: "Card name", bundle: .module)) {
+                            TextField(
+                                String(localized: "Card name", bundle: .module),
+                                text: nameBinding, prompt: Text("e.g. Everyday", bundle: .module), axis: .vertical
+                            )
                                 #if os(iOS)
                                 .textInputAutocapitalization(.words)
                                 #endif
                                 .accessibilityIdentifier("addCard.name")
                                 .focused($focusedField, equals: .name)
                         }
-                        field(.statementDay, title: "Statement day") {
-                            TextField("Statement day", text: $model.statementDayText, prompt: Text("1–31"), axis: .vertical)
+                        field(.statementDay, title: String(localized: "Statement day", bundle: .module)) {
+                            TextField(
+                                String(localized: "Statement day", bundle: .module),
+                                text: $model.statementDayText, prompt: Text("1–31", bundle: .module), axis: .vertical
+                            )
                                 #if os(iOS)
                                 .keyboardType(.numberPad)
                                 #endif
-                                .accessibilityHint("The day of the month the statement is cut")
+                                .accessibilityHint(Text("The day of the month the statement is cut", bundle: .module))
                                 .accessibilityIdentifier("addCard.statementDay")
                                 .focused($focusedField, equals: .statementDay)
                         }
-                        field(.dueDay, title: "Due day") {
-                            TextField("Due day", text: $model.dueDayText, prompt: Text("1–31"), axis: .vertical)
+                        field(.dueDay, title: String(localized: "Due day", bundle: .module)) {
+                            TextField(
+                                String(localized: "Due day", bundle: .module),
+                                text: $model.dueDayText, prompt: Text("1–31", bundle: .module), axis: .vertical
+                            )
                                 #if os(iOS)
                                 .keyboardType(.numberPad)
                                 #endif
-                                .accessibilityHint("The day of the month the payment is due")
+                                .accessibilityHint(Text("The day of the month the payment is due", bundle: .module))
                                 .accessibilityIdentifier("addCard.dueDay")
                                 .focused($focusedField, equals: .dueDay)
                         }
                     }
                     if model.isEditing {
                         // Kullanımdaki kart silinmez; neden formun üstündeki hata satırında gösterilir.
-                        DeleteSection(title: "Delete card", identifierPrefix: "addCard", isConfirming: $isConfirmingDelete)
+                        DeleteSection(title: String(localized: "Delete card", bundle: .module), identifierPrefix: "addCard", isConfirming: $isConfirmingDelete)
                     }
                 }
                 .deleteConfirmation(
                     isPresented: $isConfirmingDelete,
-                    title: "Delete this card?",
-                    message: "Cards used by installments or subscriptions cannot be deleted.",
+                    title: String(localized: "Delete this card?", bundle: .module),
+                    message: String(localized: "Cards used by installments or subscriptions cannot be deleted.", bundle: .module),
                     identifierPrefix: "addCard"
                 ) {
                     if model.delete() {
@@ -112,7 +121,11 @@ public struct AddCardView: View {
             }
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
-            .navigationTitle(model.isEditing ? "Edit card" : "New card")
+            .navigationTitle(
+                model.isEditing
+                    ? String(localized: "Edit card", bundle: .module)
+                    : String(localized: "New card", bundle: .module)
+            )
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // Ekleme formu gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -122,11 +135,11 @@ public struct AddCardView: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(String(localized: "Cancel", bundle: .module)) { dismiss() }
                         .accessibilityIdentifier("addCard.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(String(localized: "Save", bundle: .module)) {
                         if model.save(), let card = model.savedCard {
                             onSaved(card)
                             dismiss()

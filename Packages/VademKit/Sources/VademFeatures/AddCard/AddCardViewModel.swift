@@ -12,12 +12,17 @@ import VademCore
 @Observable
 public final class AddCardViewModel: Identifiable {
     /// The message shown when saving failed.
-    public nonisolated static let saveErrorMessage = "The card could not be saved. Please try again."
+    public nonisolated static var saveErrorMessage: String {
+        String(localized: "The card could not be saved. Please try again.", bundle: .module)
+    }
     /// The message shown when deleting failed for another reason than the card being in use.
-    public nonisolated static let deleteErrorMessage = "The card could not be deleted. Please try again."
+    public nonisolated static var deleteErrorMessage: String {
+        String(localized: "The card could not be deleted. Please try again.", bundle: .module)
+    }
     /// The message shown when the card cannot be deleted because payments still use it.
-    public nonisolated static let cardInUseMessage =
-        "This card is used by installments or subscriptions. Delete or move them first."
+    public nonisolated static var cardInUseMessage: String {
+        String(localized: "This card is used by installments or subscriptions. Delete or move them first.", bundle: .module)
+    }
 
     /// The name as typed.
     public var name: String = "" { didSet { touched.insert(.name) } }
@@ -141,13 +146,13 @@ public final class AddCardViewModel: Identifiable {
         let days = Card.supportedDays
         switch error {
         case .nameEmpty:
-            return "Enter a card name."
+            return String(localized: "Enter a card name.", bundle: .module)
         case .nameTooLong:
-            return "Use at most \(Card.maxNameLength) characters."
+            return String(localized: "Use at most \(Card.maxNameLength) characters.", bundle: .module)
         case .statementDayOutOfRange:
-            return "Enter a statement day from \(days.lowerBound) to \(days.upperBound)."
+            return String(localized: "Enter a statement day from \(days.lowerBound) to \(days.upperBound).", bundle: .module)
         case .dueDayOutOfRange:
-            return "Enter a due day from \(days.lowerBound) to \(days.upperBound)."
+            return String(localized: "Enter a due day from \(days.lowerBound) to \(days.upperBound).", bundle: .module)
         }
     }
 }

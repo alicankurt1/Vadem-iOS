@@ -50,7 +50,11 @@ public final class AnalyticsViewModel {
 
         /// The row as one VoiceOver label: `"Night, 1.200,00 TL, 40 percent"`.
         public var accessibilityLabel: String {
-            "\(name), \(AmountText.formattedMagnitude(amount)) TL, \(percent) percent"
+            let amountText = AmountText.formattedMagnitude(amount)
+            return String(
+                localized: "\(name), \(amountText) TL, \(percent) percent", bundle: .module,
+                comment: "Spoken card share: card name, amount, whole percent"
+            )
         }
     }
 
@@ -69,7 +73,9 @@ public final class AnalyticsViewModel {
     /// The number of months the chart shows.
     public nonisolated static let monthCount = 12
     /// The message of the ``State/error(message:)`` state.
-    public nonisolated static let loadErrorMessage = "Your payments could not be loaded."
+    public nonisolated static var loadErrorMessage: String {
+        String(localized: "Your payments could not be loaded.", bundle: .module)
+    }
 
     /// The current state.
     public private(set) var state: State = .loading
@@ -114,7 +120,7 @@ public final class AnalyticsViewModel {
         return zip(shares, percents).map { share, percent in
             CardShareRow(
                 id: share.card?.id.uuidString ?? Self.noCardID,
-                name: share.card?.name ?? "No card",
+                name: share.card?.name ?? HomeViewModel.noCardText,
                 amount: share.total,
                 percent: percent,
                 style: share.card.map { CardStyle.default(for: $0.id) }
@@ -166,13 +172,22 @@ public final class AnalyticsViewModel {
                 let signed = currentMonth.months(until: last)
                 let remaining = max(0, signed)
                 let text = switch signed {
-                case ..<0: "Paid off"
-                case 0: "Last payment this month"
-                case 1: "1 month remaining"
-                default: "\(remaining) months remaining"
+                case ..<0: String(localized: "Paid off", bundle: .module)
+                case 0: String(localized: "Last payment this month", bundle: .module)
+                // "1 month remaining" / "11 months remaining": katalogdaki çoğul varyasyonları.
+                // Derlenmiş katalog yokken (`swift test`) "inflect" İngilizce çoğulu kurar.
+                default: String(AttributedString(
+                    localized: "^[\(remaining) month](inflect: true) remaining", bundle: .module,
+                    comment: "Months until the last installment payment; plural variations in the catalog"
+                ).characters)
                 }
+                let lastTitle = Self.title(of: last)
                 return Insight(
-                    title: "Last installment payment: \(Self.title(of: last))", remaining: text,
+                    title: String(
+                        localized: "Last installment payment: \(lastTitle)", bundle: .module,
+                        comment: "The argument is a month, e.g. May 2027"
+                    ),
+                    remaining: text,
                     monthsRemaining: remaining
                 )
             }
@@ -196,12 +211,17 @@ public final class AnalyticsViewModel {
 
     /// The month's three-letter name for the chart axis: `"May"`.
     public nonisolated static func shortTitle(of month: YearMonth) -> String {
-        String(HomeViewModel.title(of: month).prefix(3))
+        VademLocalization.shortMonthTitle(month)
     }
 
     /// The bar as one VoiceOver label: `"May 2026, 4.250,00 TL"`.
     public nonisolated static func accessibilityLabel(for total: SpendingAnalytics.MonthTotal) -> String {
-        "\(title(of: total.month)), \(AmountText.formattedMagnitude(total.total)) TL"
+        let monthText = title(of: total.month)
+        let amountText = AmountText.formattedMagnitude(total.total)
+        return String(
+            localized: "\(monthText), \(amountText) TL", bundle: .module,
+            comment: "Spoken chart bar: month, amount"
+        )
     }
 
     /// A stable id for a month (`"2026-05"`), used as the chart's x value.

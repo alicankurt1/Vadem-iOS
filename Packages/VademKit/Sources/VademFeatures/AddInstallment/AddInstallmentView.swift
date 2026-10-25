@@ -56,7 +56,10 @@ public struct AddInstallmentView: View {
                 // Tüm alanlar tek kartta, ince çizgilerle ayrılmış satırlar olarak durur.
                 FormCard {
                     field(.title) {
-                        TextField("Title", text: $model.title, prompt: Text("e.g. Laptop"))
+                        TextField(
+                            String(localized: "Title", bundle: .module),
+                            text: $model.title, prompt: Text("e.g. Laptop", bundle: .module)
+                        )
                             #if os(iOS)
                             .textInputAutocapitalization(.sentences)
                             #endif
@@ -65,43 +68,46 @@ public struct AddInstallmentView: View {
                     }
                     field(.card) {
                         // Satır bizim çizdiğimiz bir düğme (ChoiceRow); seçim itilen listede (OptionList) yapılır.
-                        ChoiceRow(title: "Card", value: cardTitle) { choice = .card }
+                        ChoiceRow(title: String(localized: "Card", bundle: .module), value: cardTitle) { choice = .card }
                             .accessibilityIdentifier("addInstallment.card")
                     }
                     field(.amount) {
                         // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
                         // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır; kısa yer tutucu AX5'te de sığar.
-                        TextField("Total amount", text: $model.amountText, prompt: Text("Amount (₺)"), axis: .vertical)
+                        TextField(
+                            String(localized: "Total amount", bundle: .module),
+                            text: $model.amountText, prompt: Text("Amount (₺)", bundle: .module), axis: .vertical
+                        )
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                            .accessibilityHint("In Turkish lira")
+                            .accessibilityHint(Text("In Turkish lira", bundle: .module))
                             .accessibilityIdentifier("addInstallment.amount")
                             .focused($focusedField, equals: .amount)
                     }
                     field(.count) {
                         Stepper(value: $model.count, in: InstallmentPlan.supportedCounts) {
-                            Text("Installments: \(model.count)")
+                            Text("Installments: \(model.count)", bundle: .module)
                                 .foregroundStyle(Color.vademTextPrimary)
                         }
                         .accessibilityIdentifier("addInstallment.count")
                     }
                     field(.firstMonth) {
-                        ChoiceRow(title: "First due month", value: model.title(of: model.firstMonth)) { choice = .firstMonth }
+                        ChoiceRow(title: String(localized: "First due month", bundle: .module), value: model.title(of: model.firstMonth)) { choice = .firstMonth }
                             .accessibilityIdentifier("addInstallment.firstMonth")
                     }
                 }
                 if model.isEditing {
                     DeleteSection(
-                        title: "Delete installment", identifierPrefix: Self.identifierPrefix,
+                        title: String(localized: "Delete installment", bundle: .module), identifierPrefix: Self.identifierPrefix,
                         isConfirming: $isConfirmingDelete
                     )
                 }
             }
             .deleteConfirmation(
                 isPresented: $isConfirmingDelete,
-                title: "Delete this installment?",
-                message: "All of its payments are removed. This cannot be undone.",
+                title: String(localized: "Delete this installment?", bundle: .module),
+                message: String(localized: "All of its payments are removed. This cannot be undone.", bundle: .module),
                 identifierPrefix: Self.identifierPrefix
             ) {
                 if model.delete() {
@@ -115,19 +121,23 @@ public struct AddInstallmentView: View {
                 switch choice {
                 case .card:
                     OptionList(
-                        title: "Card", identifierPrefix: Self.identifierPrefix,
+                        title: String(localized: "Card", bundle: .module), identifierPrefix: Self.identifierPrefix,
                         options: cardOptions, selection: $model.cardID
                     ) {
                         addCardModel = model.makeAddCardModel()
                     }
                 case .firstMonth:
                     OptionList(
-                        title: "First due month", identifierPrefix: Self.identifierPrefix,
+                        title: String(localized: "First due month", bundle: .module), identifierPrefix: Self.identifierPrefix,
                         options: monthOptions, selection: $model.firstMonth
                     )
                 }
             }
-            .navigationTitle(model.isEditing ? "Edit installment" : "New installment")
+            .navigationTitle(
+                model.isEditing
+                    ? String(localized: "Edit installment", bundle: .module)
+                    : String(localized: "New installment", bundle: .module)
+            )
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // Galeri gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -137,11 +147,11 @@ public struct AddInstallmentView: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(String(localized: "Cancel", bundle: .module)) { dismiss() }
                         .accessibilityIdentifier("addInstallment.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(String(localized: "Save", bundle: .module)) {
                         if model.save() {
                             onSaved()
                             dismiss()
@@ -169,7 +179,7 @@ public struct AddInstallmentView: View {
     }
 
     private static let identifierPrefix = "addInstallment"
-    private static let noCardTitle = "Choose a card"
+    private static var noCardTitle: String { String(localized: "Choose a card", bundle: .module) }
 
     private var cardTitle: String {
         model.cards.first { $0.id == model.cardID }?.name ?? Self.noCardTitle

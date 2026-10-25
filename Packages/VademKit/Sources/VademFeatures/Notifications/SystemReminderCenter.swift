@@ -43,8 +43,9 @@ public final class SystemReminderCenter: ReminderCenter {
         var firstError: (any Error)?
         for reminder in reminders {
             let content = UNMutableNotificationContent()
-            content.title = reminder.title
-            content.body = reminder.body
+            // Metin cihaz dilinde, katalogdan kurulur (VademCore'un İngilizce metni kullanılmaz).
+            content.title = ReminderText.title(for: reminder)
+            content.body = ReminderText.body(for: reminder)
             content.sound = .default
             // Takvim tetikleyicisi yerel saatle çalar (ör. 09:00), tekrarlamaz. Bileşenler enjekte edilen
             // takvimden gelir ama tetikleyicide açık saat dilimi yoktur: cihazın o anki diliminde çalar.

@@ -57,11 +57,16 @@ public enum AmountInput {
     /// The message for an amount that is missing: empty `text`, or text that is not a number.
     static func missingMessage(for text: String, locale: Locale) -> String {
         let isEmpty = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        return isEmpty ? "Enter an amount." : "Enter a number like 1499\(locale.decimalSeparator ?? ".")90."
+        if isEmpty { return String(localized: "Enter an amount.", bundle: .module) }
+        let separator = locale.decimalSeparator ?? "."
+        return String(
+            localized: "Enter a number like 1499\(separator)90.", bundle: .module,
+            comment: "The argument is the locale's decimal separator"
+        )
     }
 
     /// The message for an amount that is zero or negative.
-    static let notPositiveMessage = "Amount must be greater than zero."
+    static var notPositiveMessage: String { String(localized: "Amount must be greater than zero.", bundle: .module) }
 }
 
 // Seçim listelerinde sunulan aylar; iki form da aynı hesabı kullanır.

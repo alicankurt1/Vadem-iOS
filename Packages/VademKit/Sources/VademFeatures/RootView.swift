@@ -10,7 +10,9 @@ public struct RootView: View {
     }
 
     /// The message shown when the store could not be opened.
-    public nonisolated static let storeUnavailableMessage = "Your data could not be opened. Please restart the app."
+    public nonisolated static var storeUnavailableMessage: String {
+        String(localized: "Your data could not be opened. Please restart the app.", bundle: .module)
+    }
 
     private let content: Content
 

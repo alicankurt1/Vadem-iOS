@@ -1,0 +1,46 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Monthly total" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monthly total"
+          }
+        }
+      }
+    },
+    "Next payment" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next payment"
+          }
+        }
+      }
+    },
+    "Tells how much you pay this month." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tells how much you pay this month."
+          }
+        }
+      }
+    },
+    "Tells your next upcoming payment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tells your next upcoming payment."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

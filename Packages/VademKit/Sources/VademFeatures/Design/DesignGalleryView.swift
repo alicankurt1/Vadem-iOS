@@ -19,7 +19,14 @@ public struct DesignGalleryView: View {
 
     /// The "Add ₺100" button's accessibility label, without the `₺` symbol: "Add 100,00 Türk lirası".
     nonisolated static var addButtonAccessibilityLabel: String {
-        "Add " + AmountText.spokenLabel(addedAmount)
+        let amountText = AmountText.spokenLabel(addedAmount)
+        return String(localized: "Add \(amountText)", bundle: .module, comment: "Gallery button, spoken amount")
+    }
+
+    // Örnek "yakında" çipi; Home ile aynı çoğul anahtarı kullanır.
+    private static var inThreeDays: String {
+        let days = 3
+        return String(localized: "In \(days) days", bundle: .module, comment: "Due chip, 2 or more days ahead")
     }
 
     public var body: some View {
@@ -27,22 +34,22 @@ public struct DesignGalleryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
-                    section("Colors", id: "gallery.colors") {
+                    section(String(localized: "Colors", bundle: .module, comment: "Design gallery section"), id: "gallery.colors") {
                         ForEach(ColorToken.allCases, id: \.self) { token in
                             tokenRow(token)
                         }
                     }
 
-                    section("Chips", id: "gallery.chips") {
-                        DueChip("Today", kind: .today)
-                        DueChip("In 3 days", kind: .soon)
-                        DueChip("Later", kind: .later)
-                        Label("Paid", systemImage: "checkmark.circle.fill")
+                    section(String(localized: "Chips", bundle: .module, comment: "Design gallery section"), id: "gallery.chips") {
+                        DueChip(String(localized: "Today", bundle: .module, comment: "Due chip"), kind: .today)
+                        DueChip(Self.inThreeDays, kind: .soon)
+                        DueChip(String(localized: "Later", bundle: .module, comment: "Due chip"), kind: .later)
+                        Label(String(localized: "Paid", bundle: .module), systemImage: "checkmark.circle.fill")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.vademPaid)
                     }
 
-                    section("Amounts", id: "gallery.amounts") {
+                    section(String(localized: "Amounts", bundle: .module, comment: "Design gallery section"), id: "gallery.amounts") {
                         ForEach([Decimal(0), Decimal(123_456) / 100, -5, 1_000_000], id: \.self) { amount in
                             AmountText(Money(amount))
                                 .font(.title2)
@@ -51,7 +58,7 @@ public struct DesignGalleryView: View {
                         AmountText(animatedAmount)
                             .font(.largeTitle.weight(.semibold))
                             .foregroundStyle(Color.vademBrand)
-                        Button("Add ₺100") {
+                        Button(String(localized: "Add ₺100", bundle: .module)) {
                             animatedAmount = animatedAmount + Self.addedAmount
                         }
                         // VoiceOver ve denetim "₺" sembolü yerine okunabilir tutarı alır.
@@ -63,44 +70,44 @@ public struct DesignGalleryView: View {
                         .vademGlass()
                     }
 
-                    section("Hero", id: "gallery.hero") {
-                        HeroPanel(title: "This month", total: Money(Decimal(482_550) / 100), paid: Money(1_200)) {
-                            Button {} label: { Label("Add", systemImage: "plus") }
+                    section(String(localized: "Hero", bundle: .module, comment: "Design gallery section"), id: "gallery.hero") {
+                        HeroPanel(title: String(localized: "This month", bundle: .module), total: Money(Decimal(482_550) / 100), paid: Money(1_200)) {
+                            Button {} label: { Label(String(localized: "Add", bundle: .module), systemImage: "plus") }
                                 .buttonStyle(.heroPill)
-                            Button {} label: { Label("Calendar", systemImage: "calendar") }
+                            Button {} label: { Label(String(localized: "Calendar", bundle: .module), systemImage: "calendar") }
                                 .buttonStyle(.heroPill)
                         }
                     }
 
-                    section("Rows", id: "gallery.rows") {
+                    section(String(localized: "Rows", bundle: .module, comment: "Design gallery section"), id: "gallery.rows") {
                         SurfaceCard {
                             PaymentRow(
                                 day: 22, title: "Rent", subtitle: "Everyday card",
-                                amount: Money(15_000), dueTitle: "Overdue", dueKind: .overdue
+                                amount: Money(15_000), dueTitle: String(localized: "Overdue", bundle: .module, comment: "Due chip"), dueKind: .overdue
                             )
                             PaymentRow(
                                 day: 24, title: "Netflix", subtitle: "Subscription",
-                                amount: Money(Decimal(22_999) / 100), dueTitle: "Today", dueKind: .today
+                                amount: Money(Decimal(22_999) / 100), dueTitle: String(localized: "Today", bundle: .module, comment: "Due chip"), dueKind: .today
                             )
                             PaymentRow(
                                 day: 27, title: "Laptop", subtitle: "Everyday card · 3/12",
-                                amount: Money(Decimal(208_333) / 100), dueTitle: "In 3 days", dueKind: .soon
+                                amount: Money(Decimal(208_333) / 100), dueTitle: Self.inThreeDays, dueKind: .soon
                             )
                             PaymentRow(
                                 day: 5, title: "Phone", subtitle: "Travel card · 7/9",
-                                amount: Money(1_000_000), dueTitle: "Later", dueKind: .later
+                                amount: Money(1_000_000), dueTitle: String(localized: "Later", bundle: .module, comment: "Due chip"), dueKind: .later
                             )
                         }
                     }
 
-                    section("Pills", id: "gallery.pills") {
-                        Button {} label: { Label("Add", systemImage: "plus") }
+                    section(String(localized: "Pills", bundle: .module, comment: "Design gallery section"), id: "gallery.pills") {
+                        Button {} label: { Label(String(localized: "Add", bundle: .module), systemImage: "plus") }
                             .buttonStyle(.heroPill)
-                        Button("Calendar") {}
+                        Button(String(localized: "Calendar", bundle: .module)) {}
                             .buttonStyle(.heroPill)
                     }
 
-                    section("Cards", id: "gallery.cards") {
+                    section(String(localized: "Cards", bundle: .module, comment: "Design gallery section"), id: "gallery.cards") {
                         ForEach(CardStyle.allCases, id: \.self) { style in
                             CardFaceView(title: style.name, subtitle: "Due on the 15th", style: style)
                                 .accessibilityIdentifier("gallery.card.\(style.rawValue)")
@@ -112,7 +119,7 @@ public struct DesignGalleryView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(Color.vademBackground.ignoresSafeArea())
-            .navigationTitle("Design gallery")
+            .navigationTitle(Text("Design gallery", bundle: .module))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             // iOS 26 çubuğu altından geçen koyu kartlara uyum sağlamasın: renk şeması ve arka plan
