@@ -21,7 +21,8 @@ public enum AssistantPromptBuilder {
     public static func prompt(for question: String, today: Date, calendar: Calendar = .current) -> String {
         let parts = calendar.dateComponents([.year, .month, .day], from: today)
         let date = String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
-        let trimmed = question.trimmingCharacters(in: .whitespacesAndNewlines)
-        return "Today is \(date).\nQuestion: \(trimmed)"
+        // Satır sonları tek boşluğa iner; soru "Today is" satırını taklit edemez.
+        let oneLine = question.split(whereSeparator: { $0.isNewline || $0.isWhitespace }).joined(separator: " ")
+        return "Today is \(date).\nQuestion: \(oneLine)"
     }
 }

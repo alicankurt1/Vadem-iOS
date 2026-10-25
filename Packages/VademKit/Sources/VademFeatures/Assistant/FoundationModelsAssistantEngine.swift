@@ -28,7 +28,8 @@ enum AssistantErrorMapper {
         if error is CancellationError { return .cancelled }
         if let generation = error as? LanguageModelSession.GenerationError {
             switch generation {
-            case .guardrailViolation: return .guardrailViolation
+            // Model cevap vermeyi reddetti (refusal) de kullanıcıya aynı dostça mesajı verir.
+            case .guardrailViolation, .refusal: return .guardrailViolation
             case .exceededContextWindowSize: return .contextWindowExceeded
             default: return .other
             }
@@ -46,6 +47,7 @@ public struct FoundationModelsAssistantEngine: AssistantEngine {
     private let availabilityProvider: any LanguageModelAvailabilityProviding
     private let calendar: Calendar
     private let now: @Sendable () -> Date
+    private let generate: @Sendable (_ instructions: String, _ prompt: String, _ toolbox: AssistantToolbox) async throws -> String
 
     /// Creates the engine. `snapshot` loads the current data for each question.
     public init(
@@ -54,10 +56,40 @@ public struct FoundationModelsAssistantEngine: AssistantEngine {
         calendar: Calendar = .current,
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
+        self.init(
+            snapshot: snapshot, availabilityProvider: availabilityProvider,
+            calendar: calendar, now: now, generate: Self.generateWithSession
+        )
+    }
+
+    /// Test seam: `generate` replaces the real session call (instructions, prompt, toolbox → text).
+    init(
+        snapshot: @escaping @Sendable () async throws -> AssistantQueries,
+        availabilityProvider: any LanguageModelAvailabilityProviding = SystemLanguageModelAvailability(),
+        calendar: Calendar = .current,
+        now: @escaping @Sendable () -> Date = { Date() },
+        generate: @escaping @Sendable (_ instructions: String, _ prompt: String, _ toolbox: AssistantToolbox) async throws -> String
+    ) {
         self.snapshot = snapshot
         self.availabilityProvider = availabilityProvider
         self.calendar = calendar
         self.now = now
+        self.generate = generate
+    }
+
+    // Gerçek oturum: her soru için yeni LanguageModelSession ve beş salt okunur araç.
+    private static func generateWithSession(instructions: String, prompt: String, toolbox: AssistantToolbox) async throws -> String {
+        let session = LanguageModelSession(
+            tools: [
+                MonthTotalTool(toolbox: toolbox),
+                PaymentsInMonthTool(toolbox: toolbox),
+                NextPaymentTool(toolbox: toolbox),
+                CardTotalTool(toolbox: toolbox),
+                DebtFreeMonthTool(toolbox: toolbox),
+            ],
+            instructions: instructions
+        )
+        return try await session.respond(to: prompt).content
     }
 
     public var availability: AssistantAvailability {
@@ -68,18 +100,8 @@ public struct FoundationModelsAssistantEngine: AssistantEngine {
         guard availability == .available else { return .failure(AssistantFailure(kind: .unavailable)) }
         do {
             let toolbox = AssistantToolbox(queries: try await snapshot(), calendar: calendar, now: now)
-            let session = LanguageModelSession(
-                tools: [
-                    MonthTotalTool(toolbox: toolbox),
-                    PaymentsInMonthTool(toolbox: toolbox),
-                    NextPaymentTool(toolbox: toolbox),
-                    CardTotalTool(toolbox: toolbox),
-                    DebtFreeMonthTool(toolbox: toolbox),
-                ],
-                instructions: AssistantPromptBuilder.instructions
-            )
             let prompt = AssistantPromptBuilder.prompt(for: question, today: now(), calendar: calendar)
-            let text = try await session.respond(to: prompt).content
+            let text = try await generate(AssistantPromptBuilder.instructions, prompt, toolbox)
             return text.isEmpty ? .failure(AssistantFailure(kind: .other)) : .text(text)
         } catch {
             // Oturum hataları kullanıcıya dostça bir cevap olur; uygulama çökmez.
