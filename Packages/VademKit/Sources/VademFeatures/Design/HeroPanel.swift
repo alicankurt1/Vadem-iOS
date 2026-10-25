@@ -99,7 +99,9 @@ public struct HeroPanel<Actions: View>: View {
     }
 
     /// The caption's default first word: `"Paid"`.
-    public nonisolated static var defaultCaptionPrefix: String { "Paid" }
+    public nonisolated static var defaultCaptionPrefix: String {
+        String(localized: "Paid", bundle: .module, comment: "Hero panel caption prefix: Paid ₺1.200,00 of ₺4.825,50")
+    }
 
     /// The share of `total` already paid, clamped to `0...1`.
     ///
@@ -114,12 +116,20 @@ public struct HeroPanel<Actions: View>: View {
 
     // Görünen açıklama: "Paid ₺1.200,00 of ₺4.825,50" (ön ek değiştirilebilir, örn. "Due so far").
     nonisolated static func caption(paid: Money, total: Money, prefix: String = defaultCaptionPrefix) -> String {
-        prefix + " " + AmountText.format(paid) + " of " + AmountText.format(total)
+        captionText(prefix: prefix, paid: AmountText.format(paid), total: AmountText.format(total))
     }
 
     // Okunan açıklama: "Paid 1.200,00 Türk lirası of 4.825,50 Türk lirası".
     nonisolated static func spokenCaption(paid: Money, total: Money, prefix: String = defaultCaptionPrefix) -> String {
-        prefix + " " + AmountText.spokenLabel(paid) + " of " + AmountText.spokenLabel(total)
+        captionText(prefix: prefix, paid: AmountText.spokenLabel(paid), total: AmountText.spokenLabel(total))
+    }
+
+    // "<ön ek> <ödenen> of <toplam>"; sözcük sırası katalogdan gelir.
+    private nonisolated static func captionText(prefix: String, paid: String, total: String) -> String {
+        String(
+            localized: "\(prefix) \(paid) of \(total)", bundle: .module,
+            comment: "Hero panel caption: prefix (e.g. Paid, Due so far), paid amount, total amount"
+        )
     }
 
     // Panelin okunan özeti: "This month, 4.825,50 Türk lirası, Paid 1.200,00 Türk lirası of 4.825,50 Türk lirası".

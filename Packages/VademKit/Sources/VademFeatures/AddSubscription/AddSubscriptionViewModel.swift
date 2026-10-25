@@ -12,11 +12,17 @@ import VademCore
 @Observable
 public final class AddSubscriptionViewModel: Identifiable {
     /// The message shown when the cards could not be loaded.
-    public nonisolated static let cardsLoadErrorMessage = "Your cards could not be loaded."
+    public nonisolated static var cardsLoadErrorMessage: String {
+        String(localized: "Your cards could not be loaded.", bundle: .module)
+    }
     /// The message shown when saving failed.
-    public nonisolated static let saveErrorMessage = "The subscription could not be saved. Please try again."
+    public nonisolated static var saveErrorMessage: String {
+        String(localized: "The subscription could not be saved. Please try again.", bundle: .module)
+    }
     /// The message shown when deleting failed.
-    public nonisolated static let deleteErrorMessage = "The subscription could not be deleted. Please try again."
+    public nonisolated static var deleteErrorMessage: String {
+        String(localized: "The subscription could not be deleted. Please try again.", bundle: .module)
+    }
     /// How many months before the initial month the first-month picker offers.
     public nonisolated static let monthsBefore = 60
     /// How many months after the initial month the first-month picker offers.
@@ -197,24 +203,24 @@ public final class AddSubscriptionViewModel: Identifiable {
     /// The period as shown in the form: `"Monthly"` or `"Yearly"`.
     public nonisolated static func title(of period: Subscription.Period) -> String {
         switch period {
-        case .monthly: return "Monthly"
-        case .yearly: return "Yearly"
+        case .monthly: return String(localized: "Monthly", bundle: .module)
+        case .yearly: return String(localized: "Yearly", bundle: .module)
         }
     }
 
     private func message(for error: SubscriptionDraft.ValidationError) -> String {
         switch error {
         case .titleEmpty:
-            return "Enter a title."
+            return String(localized: "Enter a title.", bundle: .module)
         case .titleTooLong:
-            return "Use at most \(SubscriptionItem.maxTitleLength) characters."
+            return String(localized: "Use at most \(SubscriptionItem.maxTitleLength) characters.", bundle: .module)
         case .amountMissing:
             return AmountInput.missingMessage(for: amountText, locale: locale)
         case .amountNotPositive:
             return AmountInput.notPositiveMessage
         case .renewalDayOutOfRange:
             let days = Subscription.supportedRenewalDays
-            return "Choose a renewal day from \(days.lowerBound) to \(days.upperBound)."
+            return String(localized: "Choose a renewal day from \(days.lowerBound) to \(days.upperBound).", bundle: .module)
         }
     }
 }

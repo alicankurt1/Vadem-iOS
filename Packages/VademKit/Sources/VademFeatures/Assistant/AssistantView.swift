@@ -41,7 +41,7 @@ public struct AssistantView: View {
             }
         }
         .background(Color.vademBackground.ignoresSafeArea())
-        .navigationTitle("Assistant")
+        .navigationTitle(Text("Assistant", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         // Home gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -108,7 +108,7 @@ public struct AssistantView: View {
                 .font(.largeTitle)
                 .foregroundStyle(Color.vademTextSecondary)
                 .accessibilityHidden(true)
-            Text("Ask about your payments")
+            Text("Ask about your payments", bundle: .module)
                 .font(.headline)
                 .foregroundStyle(Color.vademTextPrimary)
             Text(AssistantViewModel.readOnlyNote)
@@ -150,7 +150,7 @@ public struct AssistantView: View {
                 ProgressView()
                     .accessibilityHidden(true)
             }
-            Text("Thinking…")
+            Text("Thinking…", bundle: .module)
                 .font(.body)
                 .foregroundStyle(Color.vademTextSecondary)
         }
@@ -160,7 +160,7 @@ public struct AssistantView: View {
 
     private var suggestions: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Suggestions")
+            Text("Suggestions", bundle: .module)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Color.vademTextSecondary)
                 .accessibilityAddTraits(.isHeader)
@@ -191,7 +191,7 @@ public struct AssistantView: View {
     private var inputBar: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .bottom, spacing: 8) {
-                TextField("Ask a question", text: $model.input, axis: .vertical)
+                TextField(text: $model.input, axis: .vertical) { Text("Ask a question", bundle: .module) }
                     .lineLimit(1...4)
                     .font(.body)
                     .foregroundStyle(Color.vademTextPrimary)
@@ -200,7 +200,7 @@ public struct AssistantView: View {
                     .frame(minHeight: 44)
                     .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                     .disabled(model.isResponding)
-                    .accessibilityLabel("Question")
+                    .accessibilityLabel(Text("Question", bundle: .module))
                     .accessibilityIdentifier("assistant.input")
                 Button {
                     model.send()
@@ -216,7 +216,7 @@ public struct AssistantView: View {
                 .buttonStyle(.plain)
                 .disabled(!model.canSend)
                 .opacity(model.canSend ? 1 : 0.5)
-                .accessibilityLabel("Send")
+                .accessibilityLabel(Text("Send", bundle: .module))
                 .accessibilityIdentifier("assistant.send")
             }
             Text(AssistantViewModel.footerNote)
@@ -239,7 +239,7 @@ public struct AssistantView: View {
                     .font(.largeTitle)
                     .foregroundStyle(Color.vademTextSecondary)
                     .accessibilityHidden(true)
-                Text("Assistant unavailable")
+                Text("Assistant unavailable", bundle: .module)
                     .font(.headline)
                     .foregroundStyle(Color.vademTextPrimary)
                 Text(message)

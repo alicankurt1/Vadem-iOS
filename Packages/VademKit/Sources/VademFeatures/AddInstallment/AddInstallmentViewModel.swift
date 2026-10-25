@@ -12,11 +12,17 @@ import VademCore
 @Observable
 public final class AddInstallmentViewModel: Identifiable {
     /// The message shown when the cards could not be loaded.
-    public nonisolated static let cardsLoadErrorMessage = "Your cards could not be loaded."
+    public nonisolated static var cardsLoadErrorMessage: String {
+        String(localized: "Your cards could not be loaded.", bundle: .module)
+    }
     /// The message shown when saving failed.
-    public nonisolated static let saveErrorMessage = "The installment could not be saved. Please try again."
+    public nonisolated static var saveErrorMessage: String {
+        String(localized: "The installment could not be saved. Please try again.", bundle: .module)
+    }
     /// The message shown when deleting failed.
-    public nonisolated static let deleteErrorMessage = "The installment could not be deleted. Please try again."
+    public nonisolated static var deleteErrorMessage: String {
+        String(localized: "The installment could not be deleted. Please try again.", bundle: .module)
+    }
     /// How many months before the initial month the first-month picker offers.
     public nonisolated static let monthsBefore = InstallmentPlan.supportedCounts.upperBound - 1
     /// How many months after the initial month the first-month picker offers.
@@ -196,20 +202,22 @@ public final class AddInstallmentViewModel: Identifiable {
     private func message(for error: InstallmentDraft.ValidationError) -> String {
         switch error {
         case .titleEmpty:
-            return "Enter a title."
+            return String(localized: "Enter a title.", bundle: .module)
         case .titleTooLong:
-            return "Use at most \(InstallmentItem.maxTitleLength) characters."
+            return String(localized: "Use at most \(InstallmentItem.maxTitleLength) characters.", bundle: .module)
         case .cardMissing:
-            return cards.isEmpty ? "Add a card first." : "Choose a card."
+            return cards.isEmpty
+                ? String(localized: "Add a card first.", bundle: .module)
+                : String(localized: "Choose a card.", bundle: .module)
         case .amountMissing:
             return AmountInput.missingMessage(for: amountText, locale: locale)
         case .amountNotPositive:
             return AmountInput.notPositiveMessage
         case .countOutOfRange:
             let range = InstallmentPlan.supportedCounts
-            return "Choose \(range.lowerBound) to \(range.upperBound) installments."
+            return String(localized: "Choose \(range.lowerBound) to \(range.upperBound) installments.", bundle: .module)
         case .firstMonthOutOfRange:
-            return "The last installment must be in December 9999 or earlier."
+            return String(localized: "The last installment must be in December 9999 or earlier.", bundle: .module)
         }
     }
 

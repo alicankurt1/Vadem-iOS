@@ -71,9 +71,9 @@ public final class SettingsViewModel: Identifiable {
     /// The display title of `timing`, e.g. `"Day before and on the day"`.
     public nonisolated static func title(of timing: ReminderTiming) -> String {
         switch timing {
-        case .both: return "Day before and on the day"
-        case .dueDay: return "On the day"
-        case .dayBefore: return "Day before"
+        case .both: return String(localized: "Day before and on the day", bundle: .module)
+        case .dueDay: return String(localized: "On the day", bundle: .module)
+        case .dayBefore: return String(localized: "Day before", bundle: .module)
         }
     }
 

@@ -14,8 +14,13 @@ public struct AnalyticsView: View {
     /// The launch argument that opens Home with the Analytics screen already pushed (debug builds).
     public nonisolated static let launchArgument = "-ui-analytics"
 
-    private static let installmentsName = "Installments"
-    private static let subscriptionsName = "Subscriptions"
+    // Seri adları lejantta görünür; katalogdan gelir.
+    fileprivate nonisolated static var installmentsName: String { String(localized: "Installments", bundle: .module) }
+    fileprivate nonisolated static var subscriptionsName: String { String(localized: "Subscriptions", bundle: .module) }
+    // Grafik değerlerinin adları (Swift Charts erişilebilirliği için).
+    private static var monthLabel: String { String(localized: "Month", bundle: .module) }
+    private static var amountLabel: String { String(localized: "Amount", bundle: .module) }
+    private static var kindLabel: String { String(localized: "Kind", bundle: .module) }
 
     @State private var model: AnalyticsViewModel
     // Grafikte seçili ayın kimliği; nil = seçim yok (özet son seçili ayı gösterir).
@@ -43,7 +48,7 @@ public struct AnalyticsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(Color.vademBackground.ignoresSafeArea())
-        .navigationTitle("Analytics")
+        .navigationTitle(Text("Analytics", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         // Home gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
@@ -65,17 +70,18 @@ public struct AnalyticsView: View {
                 .padding(.vertical, 32)
                 .accessibilityIdentifier("analytics.loading")
         case .error(let message):
-            messageView(title: "Something went wrong", detail: message, systemImage: "exclamationmark.triangle")
+            messageView(title: Text("Something went wrong", bundle: .module), detail: Text(message), systemImage: "exclamationmark.triangle")
                 .accessibilityIdentifier("analytics.error")
         case .empty:
             messageView(
-                title: "No payments yet", detail: "Add a payment to see your next 12 months.",
+                title: Text("No payments yet", bundle: .module),
+                detail: Text("Add a payment to see your next 12 months.", bundle: .module),
                 systemImage: "chart.bar"
             )
             .accessibilityIdentifier("analytics.empty")
             if let onAddPayment {
                 Button(action: onAddPayment) {
-                    Label("Add a payment", systemImage: "plus.circle")
+                    Label { Text("Add a payment", bundle: .module) } icon: { Image(systemName: "plus.circle") }
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.vademTextPrimary)
                         .frame(maxWidth: .infinity, minHeight: 44)
@@ -101,13 +107,13 @@ public struct AnalyticsView: View {
     private var breakdown: some View {
         let shares = model.cardShares
         SurfaceCard {
-            Text("By card")
+            Text("By card", bundle: .module)
                 .font(.headline)
                 .foregroundStyle(Color.vademTextPrimary)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("analytics.breakdown")
             if shares.isEmpty {
-                Text("Nothing is due this month.")
+                Text("Nothing is due this month.", bundle: .module)
                     .font(.body)
                     .foregroundStyle(Color.vademTextSecondary)
                     .accessibilityIdentifier("analytics.donut.empty")
@@ -121,7 +127,7 @@ public struct AnalyticsView: View {
     private func donut(_ shares: [AnalyticsViewModel.CardShareRow]) -> some View {
         Chart(shares) { share in
             SectorMark(
-                angle: .value("Amount", Self.value(share.amount)),
+                angle: .value(Self.amountLabel, Self.value(share.amount)),
                 innerRadius: .ratio(0.62),
                 angularInset: 1.5
             )
@@ -133,7 +139,7 @@ public struct AnalyticsView: View {
         // Küçük dilimler 44 pt altı ayrı öğeler olmasın: halka tek öğe, ayrıntılar açıklama satırlarında.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "Spending by card: " + shares.map(\.accessibilityLabel).joined(separator: "; ")
+            Self.donutLabel(shares)
         )
         .accessibilityIdentifier("analytics.donut")
     }
@@ -153,7 +159,7 @@ public struct AnalyticsView: View {
                     if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
                     VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
                         AmountText(share.amount).foregroundStyle(Color.vademTextPrimary)
-                        Text("\(share.percent)%").font(.subheadline).foregroundStyle(Color.vademTextSecondary)
+                        Text("\(share.percent)%", bundle: .module).font(.subheadline).foregroundStyle(Color.vademTextSecondary)
                     }
                 }
                 .font(.body)
@@ -163,6 +169,12 @@ public struct AnalyticsView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("analytics.legend")
+    }
+
+    // Halkanın tek VoiceOver etiketi: "Spending by card: Night, 1.200,00 TL, 40 percent; …".
+    private static func donutLabel(_ shares: [AnalyticsViewModel.CardShareRow]) -> String {
+        let list = shares.map(\.accessibilityLabel).joined(separator: "; ")
+        return String(localized: "Spending by card: \(list)", bundle: .module, comment: "The argument lists every card share")
     }
 
     // Kartın kendi stilinin orta mesh rengi; kartsız ödemeler nötr renkte.
@@ -202,10 +214,12 @@ public struct AnalyticsView: View {
         .accessibilityIdentifier("analytics.summary")
     }
 
+    // Başlık anahtarla çizilir (Text(String) değil): yerelleştirilmiş metin uzun sözcükleri tireyle böler;
+    // AX5'te düz metin harf harf kırılıyor ve düzen kayıyordu.
     private func partRow(_ title: LocalizedStringKey, amount: Money, color: Color) -> some View {
         HStack(spacing: 8) {
             Circle().fill(color).frame(width: 10, height: 10).accessibilityHidden(true)
-            Text(title).foregroundStyle(Color.vademTextPrimary)
+            Text(title, bundle: .module).foregroundStyle(Color.vademTextPrimary)
             Spacer(minLength: 8)
             AmountText(amount).foregroundStyle(Color.vademTextPrimary)
         }
@@ -219,16 +233,16 @@ public struct AnalyticsView: View {
                 let label = AnalyticsViewModel.accessibilityLabel(for: total)
                 let opacity = Self.opacity(for: total.month, in: model)
                 // Grafik değerleri için Double kaçınılmaz; gösterilen metinler Decimal'den gelir.
-                BarMark(x: .value("Month", id), y: .value("Amount", Self.value(total.installments)))
-                    .foregroundStyle(by: .value("Kind", Self.installmentsName))
+                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.installments)))
+                    .foregroundStyle(by: .value(Self.kindLabel, Self.installmentsName))
                     .opacity(opacity)
                     .accessibilityLabel(label)
-                    .accessibilityValue("\(Self.installmentsName) \(AmountText.formattedMagnitude(total.installments)) TL")
-                BarMark(x: .value("Month", id), y: .value("Amount", Self.value(total.subscriptions)))
-                    .foregroundStyle(by: .value("Kind", Self.subscriptionsName))
+                    .accessibilityValue(Self.partValue(Self.installmentsName, total.installments))
+                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.subscriptions)))
+                    .foregroundStyle(by: .value(Self.kindLabel, Self.subscriptionsName))
                     .opacity(opacity)
                     .accessibilityLabel(label)
-                    .accessibilityValue("\(Self.subscriptionsName) \(AmountText.formattedMagnitude(total.subscriptions)) TL")
+                    .accessibilityValue(Self.partValue(Self.subscriptionsName, total.subscriptions))
             }
         }
         .chartForegroundStyleScale([
@@ -274,6 +288,12 @@ public struct AnalyticsView: View {
         .accessibilityIdentifier("analytics.chart")
     }
 
+    // Çubuğun okunan değeri: "Installments 1.200,00 TL".
+    private static func partValue(_ name: String, _ amount: Money) -> String {
+        let amountText = AmountText.formattedMagnitude(amount)
+        return String(localized: "\(name) \(amountText) TL", bundle: .module, comment: "Spoken bar part: series name, amount")
+    }
+
     // Seçili ve bu ay tam opak; diğerleri soluk.
     private static func opacity(for month: YearMonth, in model: AnalyticsViewModel) -> Double {
         month == model.selectedMonth || month == model.currentMonth ? 1 : 0.5
@@ -285,20 +305,23 @@ public struct AnalyticsView: View {
 
     // Eksen etiketi kısa: 1500 → "1,5B" yerine tam sayı lira; yer kazanmak için binlik "k".
     private static func axisText(_ amount: Double) -> String {
-        amount >= 1000 ? "\(Int((amount / 1000).rounded()))k" : "\(Int(amount))"
+        guard amount >= 1000 else { return "\(Int(amount))" }
+        let thousands = Int((amount / 1000).rounded())
+        return String(localized: "\(thousands)k", bundle: .module, comment: "Chart axis label in thousands, e.g. 5k")
     }
 
-    private func messageView(title: String, detail: String?, systemImage: String) -> some View {
+    // Metinler hazır Text olarak gelir: katalog anahtarıyla kurulan Text tireleme yapar (bkz. partRow).
+    private func messageView(title: Text, detail: Text?, systemImage: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.largeTitle)
                 .foregroundStyle(Color.vademTextSecondary)
                 .accessibilityHidden(true)
-            Text(LocalizedStringKey(title))
+            title
                 .font(.headline)
                 .foregroundStyle(Color.vademTextPrimary)
             if let detail {
-                Text(LocalizedStringKey(detail))
+                detail
                     .font(.body)
                     .foregroundStyle(Color.vademTextSecondary)
             }
@@ -316,13 +339,14 @@ private struct AnalyticsChartDescriptor: AXChartDescriptorRepresentable {
 
     func makeChartDescriptor() -> AXChartDescriptor {
         let xAxis = AXCategoricalDataAxisDescriptor(
-            title: "Month", categoryOrder: months.map { AnalyticsViewModel.title(of: $0.month) }
+            title: String(localized: "Month", bundle: .module), categoryOrder: months.map { AnalyticsViewModel.title(of: $0.month) }
         )
         let top = months.map { AnalyticsView.value($0.total) }.max() ?? 0
         let yAxis = AXNumericDataAxisDescriptor(
-            title: "Amount (TL)", range: 0...max(top, 1), gridlinePositions: []
+            title: String(localized: "Amount (TL)", bundle: .module), range: 0...max(top, 1), gridlinePositions: []
         ) { value in
-            AmountText.formattedMagnitude(Money(Decimal(value))) + " TL"
+            let amountText = AmountText.formattedMagnitude(Money(Decimal(value)))
+            return String(localized: "\(amountText) TL", bundle: .module, comment: "Spoken axis value in lira")
         }
         func series(_ name: String, _ part: (SpendingAnalytics.MonthTotal) -> Money) -> AXDataSeriesDescriptor {
             AXDataSeriesDescriptor(
@@ -333,9 +357,13 @@ private struct AnalyticsChartDescriptor: AXChartDescriptorRepresentable {
             )
         }
         return AXChartDescriptor(
-            title: "Monthly payments", summary: "Installments and subscriptions due in each of the next 12 months",
+            title: String(localized: "Monthly payments", bundle: .module),
+            summary: String(localized: "Installments and subscriptions due in each of the next 12 months", bundle: .module),
             xAxis: xAxis, yAxis: yAxis, additionalAxes: [],
-            series: [series("Installments", \.installments), series("Subscriptions", \.subscriptions)]
+            series: [
+                series(AnalyticsView.installmentsName, \.installments),
+                series(AnalyticsView.subscriptionsName, \.subscriptions),
+            ]
         )
     }
 

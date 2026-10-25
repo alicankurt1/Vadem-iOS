@@ -159,7 +159,7 @@ struct ChoiceRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Opens a list")
+        .accessibilityHint(Text("Opens a list", bundle: .module))
     }
 
     // Başlık ve değer normal boyutlarda yan yana, erişilebilirlik boyutlarında alt alta durur.
@@ -237,9 +237,9 @@ extension View {
         // Onay, ortada açılan standart uyarı (alert): confirmationDialog iOS 26'da forma bağlıyken de
         // dar bir açılır pencere (popover) oluyor, Vazgeç düğmesini gizliyor ve kimliği iki kez veriyordu.
         alert(title, isPresented: isPresented) {
-            Button("Delete", role: .destructive, action: onDelete)
+            Button(role: .destructive, action: onDelete) { Text("Delete", bundle: .module) }
                 .accessibilityIdentifier("\(identifierPrefix).delete.confirm")
-            Button("Cancel", role: .cancel) {}
+            Button(role: .cancel) {} label: { Text("Cancel", bundle: .module) }
                 .accessibilityIdentifier("\(identifierPrefix).delete.cancel")
         } message: {
             Text(message)

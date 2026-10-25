@@ -92,7 +92,7 @@ public struct PaymentRow: View {
         amount: Money,
         dueTitle: String
     ) -> String {
-        var parts = ["Day \(day)", title]
+        var parts = [String(localized: "Day \(day)", bundle: .module, comment: "Payment row, spoken due day"), title]
         if let subtitle, !subtitle.isEmpty {
             parts.append(subtitle)
         }

@@ -54,7 +54,7 @@ struct OptionList<Value: Hashable>: View {
                     Button(action: onAdd) {
                         HStack(spacing: 8) {
                             // Ekleme satırı bağlantı gibi marka renginde.
-                            Text("Add a card")
+                            Text("Add a card", bundle: .module)
                                 .foregroundStyle(Color.vademBrand)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Image(systemName: "plus")

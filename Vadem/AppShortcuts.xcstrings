@@ -1,0 +1,14 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "${applicationName} monthly total" : {},
+    "${applicationName} next payment" : {},
+    "How much do I pay this month in ${applicationName}" : {},
+    "How much is due this month in ${applicationName}" : {},
+    "What do I pay next in ${applicationName}" : {},
+    "What is my monthly total in ${applicationName}" : {},
+    "What is my next payment in ${applicationName}" : {},
+    "When is my next payment in ${applicationName}" : {}
+  },
+  "version" : "1.0"
+}

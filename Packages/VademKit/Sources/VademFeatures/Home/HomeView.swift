@@ -193,7 +193,7 @@ public struct HomeView: View {
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(.rect)
         }
-        .accessibilityLabel("Assistant")
+        .accessibilityLabel(Text("Assistant", bundle: .module))
         .accessibilityIdentifier("home.assistant")
     }
 
@@ -217,7 +217,7 @@ public struct HomeView: View {
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(.rect)
         }
-        .accessibilityLabel("Analytics")
+        .accessibilityLabel(Text("Analytics", bundle: .module))
         .accessibilityIdentifier("home.analytics")
     }
 
@@ -261,8 +261,9 @@ public struct HomeView: View {
     // Ayın toplamı ve vadesi gelen kısmı; altında ekleme menüsü ve takvim düğmesi.
     private func hero(_ proxy: ScrollViewProxy) -> some View {
         HeroPanel(
-            title: "Due this month", total: model.total, paid: model.dueSoFar,
-            captionPrefix: "Due so far", summaryIdentifier: "home.total"
+            title: String(localized: "Due this month", bundle: .module),
+            total: model.total, paid: model.dueSoFar,
+            captionPrefix: String(localized: "Due so far", bundle: .module), summaryIdentifier: "home.total"
         ) {
             addMenu
             // Takvim gizliyken (hata durumu) kaydırılacak yer yok; düğme de gösterilmez.
@@ -273,7 +274,7 @@ public struct HomeView: View {
                         proxy.scrollTo(Self.calendarAnchor, anchor: .top)
                     }
                 } label: {
-                    Label("Calendar", systemImage: "calendar")
+                    Label { Text("Calendar", bundle: .module) } icon: { Image(systemName: "calendar") }
                 }
                 .buttonStyle(.heroPill)
                 .accessibilityIdentifier("home.showCalendar")
@@ -288,22 +289,22 @@ public struct HomeView: View {
             Button {
                 addModel = model.makeAddInstallmentModel()
             } label: {
-                Label("Installment", systemImage: "creditcard")
+                Label { Text("Installment", bundle: .module) } icon: { Image(systemName: "creditcard") }
             }
-            .accessibilityLabel("Add installment")
+            .accessibilityLabel(Text("Add installment", bundle: .module))
             .accessibilityIdentifier("home.add.installment")
             Button {
                 addSubscriptionModel = model.makeAddSubscriptionModel()
             } label: {
-                Label("Subscription", systemImage: "arrow.triangle.2.circlepath")
+                Label { Text("Subscription", bundle: .module) } icon: { Image(systemName: "arrow.triangle.2.circlepath") }
             }
-            .accessibilityLabel("Add subscription")
+            .accessibilityLabel(Text("Add subscription", bundle: .module))
             .accessibilityIdentifier("home.add.subscription")
         } label: {
-            Label("Add", systemImage: "plus")
+            Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") }
                 .heroPillLabel()
         }
-        .accessibilityLabel("Add payment")
+        .accessibilityLabel(Text("Add payment", bundle: .module))
         .accessibilityIdentifier("home.add")
     }
 
@@ -319,14 +320,14 @@ public struct HomeView: View {
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(.rect)
         }
-        .accessibilityLabel("Settings")
+        .accessibilityLabel(Text("Settings", bundle: .module))
         .accessibilityIdentifier("home.settings")
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
     private var monthBar: some View {
         HStack(spacing: 8) {
-            monthButton(systemImage: "chevron.left", label: "Previous month", identifier: "home.previousMonth") {
+            monthButton(systemImage: "chevron.left", label: String(localized: "Previous month", bundle: .module), identifier: "home.previousMonth") {
                 model.showPreviousMonth()
             }
             Text(model.monthTitle)
@@ -336,7 +337,7 @@ public struct HomeView: View {
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("home.month")
-            monthButton(systemImage: "chevron.right", label: "Next month", identifier: "home.nextMonth") {
+            monthButton(systemImage: "chevron.right", label: String(localized: "Next month", bundle: .module), identifier: "home.nextMonth") {
                 model.showNextMonth()
             }
         }
@@ -361,11 +362,11 @@ public struct HomeView: View {
     private var content: some View {
         switch model.state {
         case .error(let message):
-            messageView(title: "Something went wrong", detail: message, systemImage: "exclamationmark.triangle")
+            messageView(title: String(localized: "Something went wrong", bundle: .module), detail: message, systemImage: "exclamationmark.triangle")
                 .accessibilityIdentifier("home.error")
         case .empty:
             if !model.hasCards { addCardPrompt }
-            messageView(title: "Nothing due this month", detail: nil, systemImage: "checkmark.circle")
+            messageView(title: String(localized: "Nothing due this month", bundle: .module), detail: nil, systemImage: "checkmark.circle")
                 .accessibilityIdentifier("home.empty")
         case .loaded:
             if !model.hasCards { addCardPrompt }
@@ -374,7 +375,9 @@ public struct HomeView: View {
             }
             if model.rows.isEmpty, let dayText = model.selectedDayText {
                 // Seçili günde ödeme yok; ayın geri kalanı dolu olduğundan "bu ay boş" denmez.
-                messageView(title: "Nothing due on \(dayText)", detail: nil, systemImage: "calendar")
+                messageView(
+                    title: String(localized: "Nothing due on \(dayText)", bundle: .module, comment: "The argument is a day, e.g. 12 October"),
+                    detail: nil, systemImage: "calendar")
                     .accessibilityIdentifier("home.dayEmpty")
                 showAllButton
             } else {
@@ -392,13 +395,13 @@ public struct HomeView: View {
 
     private var addCardPromptContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Add a card to start tracking installments.")
+            Text("Add a card to start tracking installments.", bundle: .module)
                 .font(.body)
                 .foregroundStyle(Color.vademTextPrimary)
             Button {
                 addCardModel = model.makeAddCardModel()
             } label: {
-                Label("Add a card", systemImage: "plus.circle")
+                Label { Text("Add a card", bundle: .module) } icon: { Image(systemName: "plus.circle") }
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Color.vademTextPrimary)
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -414,7 +417,7 @@ public struct HomeView: View {
         Button {
             model.clearSelectedDay()
         } label: {
-            Text("Show all payments")
+            Text("Show all payments", bundle: .module)
                 .font(.body.weight(.semibold))
                 .foregroundStyle(Color.vademTextPrimary)
                 .frame(maxWidth: .infinity, minHeight: 44)
@@ -426,7 +429,7 @@ public struct HomeView: View {
 
     private var subtotalsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("By card", identifier: "home.cards")
+            sectionTitle(String(localized: "By card", bundle: .module), identifier: "home.cards")
             SurfaceCard {
                 ForEach(Array(model.cardSubtotals.enumerated()), id: \.element.id) { index, subtotal in
                     // Alt toplama dokunmak kartın düzenleme formunu açar.
@@ -447,7 +450,7 @@ public struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityElement(children: .combine)
-                    .accessibilityHint("Edits the card")
+                    .accessibilityHint(Text("Edits the card", bundle: .module))
                     .accessibilityIdentifier("home.card.\(index)")
                 }
             }
@@ -456,7 +459,7 @@ public struct HomeView: View {
 
     private var listSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle(model.selectedDayText.map { "Payments on \($0)" } ?? "Payments", identifier: "home.list")
+            sectionTitle(listTitle, identifier: "home.list")
                 .padding(.bottom, 8)
             if model.selectedDay != nil {
                 showAllButton
@@ -473,11 +476,17 @@ public struct HomeView: View {
                             .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("Edits the payment")
+                    .accessibilityHint(Text("Edits the payment", bundle: .module))
                     .accessibilityIdentifier("home.row.\(index)")
                 }
             }
         }
+    }
+
+    // "Payments" ya da seçili gün varsa "Payments on 12 October".
+    private var listTitle: String {
+        guard let dayText = model.selectedDayText else { return String(localized: "Payments", bundle: .module) }
+        return String(localized: "Payments on \(dayText)", bundle: .module, comment: "The argument is a day, e.g. 12 October")
     }
 
     // Satırın kalemine göre taksit ya da abonelik formu düzenleme modunda açılır.
@@ -543,7 +552,7 @@ struct UpcomingStrip: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Upcoming")
+            Text("Upcoming", bundle: .module)
                 .font(.headline)
                 .foregroundStyle(Color.vademTextPrimary)
                 .accessibilityAddTraits(.isHeader)
@@ -638,7 +647,7 @@ struct MonthCalendar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Calendar")
+            Text("Calendar", bundle: .module)
                 .font(.headline)
                 .foregroundStyle(Color.vademTextPrimary)
                 .accessibilityAddTraits(.isHeader)
@@ -712,7 +721,7 @@ struct MonthCalendar: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                 }
-                Text("\(day)")
+                Text(verbatim: "\(day)")
                     .font(.body.weight(cell.hasPayments ? .bold : .regular))
                     .monospacedDigit()
                     .lineLimit(1)
@@ -758,7 +767,7 @@ struct AppHeader<Trailing: View>: View {
         VStack(alignment: .leading, spacing: 4) {
             // Sağdaki öğe yalnızca başlık satırında; sürüm etiketi tüm genişliği kullanır.
             HStack(alignment: .center, spacing: 8) {
-                Text("Vadem")
+                Text("Vadem", bundle: .module)
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(Color.vademTextPrimary)
                     .accessibilityAddTraits(.isHeader)
@@ -766,7 +775,7 @@ struct AppHeader<Trailing: View>: View {
                 trailing
             }
             // Sürüm etiketi başlığın altında, daha küçük; ayrı erişilebilirlik etiketi yok.
-            Text("Version \(VademCore.version)")
+            Text("Version \(VademCore.version)", bundle: .module)
                 .font(.subheadline)
                 .foregroundStyle(Color.vademTextPrimary)
         }

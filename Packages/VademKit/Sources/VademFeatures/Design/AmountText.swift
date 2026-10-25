@@ -1,7 +1,7 @@
 import SwiftUI
 import VademCore
 
-/// An amount in Turkish lira, in a rounded font with monospaced digits.
+/// An amount in Turkish lira (see ``AmountText/format(_:)``), in a rounded font with monospaced digits.
 ///
 /// Changes animate with the numeric-text transition (off under Reduce Motion or `-ui-static-motion`).
 /// The size comes from the environment font.
@@ -29,41 +29,47 @@ public struct AmountText: View {
             .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: money)
     }
 
-    /// Formats `money` as Turkish lira (`tr_TR` style): `1234.56 → "₺1.234,56"`, `-5 → "-₺5,00"`.
+    /// The locale whose conventions lira amounts are written in (`tr_TR`: `₺1.234,56`).
     ///
-    /// Pure and locale-independent: the result does not depend on the device's settings.
+    /// Amounts are Turkish lira, so they keep the lira's home format whatever the UI language.
+    public nonisolated static let amountLocale = Locale(identifier: "tr_TR")
+
+    /// Formats `money` as Turkish lira with ``amountLocale``'s currency format:
+    /// `1234.56 → "₺1.234,56"`, `-5 → "-₺5,00"`.
+    ///
+    /// Pure: the result does not depend on the device's settings.
     public nonisolated static func format(_ money: Money) -> String {
-        (money.isNegative ? "-" : "") + "₺" + formattedMagnitude(money)
+        // Sembol, gruplama ve işaret Foundation'ın para birimi biçiminden gelir; elle kurulmaz.
+        signedAmount(money).formatted(.currency(code: "TRY").locale(amountLocale))
     }
 
     /// The spoken (VoiceOver) form of `money`, without symbols:
     /// `1234.56 → "1.234,56 Türk lirası"`, `-5 → "eksi 5,00 Türk lirası"`.
     ///
-    /// Pure and locale-independent, like ``format(_:)``.
+    /// The number is written like ``format(_:)``; the words come from the string catalog.
     public nonisolated static func spokenLabel(_ money: Money) -> String {
-        (money.isNegative ? "eksi " : "") + formattedMagnitude(money) + " Türk lirası"
+        let numberText = formattedMagnitude(money)
+        if money.isNegative {
+            return String(
+                localized: "amount.spokenNegative", defaultValue: "eksi \(numberText) Türk lirası", bundle: .module,
+                comment: "Spoken negative lira amount; the argument is the number without sign, e.g. 5,00"
+            )
+        }
+        return String(
+            localized: "amount.spoken", defaultValue: "\(numberText) Türk lirası", bundle: .module,
+            comment: "Spoken lira amount; the argument is the number, e.g. 1.234,56"
+        )
     }
 
-    // Mutlak değer, tr_TR biçiminde: "1.234,56".
+    // Mutlak değer, iki ondalıkla ve amountLocale ayraçlarıyla: "1.234,56".
     nonisolated static func formattedMagnitude(_ money: Money) -> String {
-        // NumberFormatter/ICU sürüme göre işaret ve boşluk değiştirebilir; biçim elle kurulur.
-        let magnitude = money.isNegative ? -money.amount : money.amount
-        let plain = NSDecimalNumber(decimal: magnitude)
-            .description(withLocale: Locale(identifier: "en_US_POSIX"))
-        let parts = plain.split(separator: ".", omittingEmptySubsequences: false)
-        let integerDigits = Array(parts[0])
-        let fraction = parts.count > 1 ? String(parts[1]) : ""
-        let paddedFraction = (fraction + "00").prefix(2)
+        let magnitude = abs(signedAmount(money))
+        return magnitude.formatted(.number.precision(.fractionLength(2)).locale(amountLocale))
+    }
 
-        // Binlik ayırıcı: sağdan her üç basamakta bir nokta.
-        var grouped = ""
-        for (index, digit) in integerDigits.enumerated() {
-            if index > 0 && (integerDigits.count - index) % 3 == 0 {
-                grouped.append(".")
-            }
-            grouped.append(digit)
-        }
-        return grouped + "," + paddedFraction
+    // Sıfıra yuvarlanmış negatif tutar ("-0") işaretsiz sıfır olarak yazılır.
+    private nonisolated static func signedAmount(_ money: Money) -> Decimal {
+        money.isZero ? Decimal.zero : money.amount
     }
 }
 
