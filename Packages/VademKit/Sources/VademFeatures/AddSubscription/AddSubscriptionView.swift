@@ -159,16 +159,16 @@ public struct AddSubscriptionView: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "Cancel", bundle: .module)) { dismiss() }
+                    Button { dismiss() } label: { Text("Cancel", bundle: .module) }
                         .accessibilityIdentifier("addSubscription.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "Save", bundle: .module)) {
+                    Button {
                         if model.save() {
                             onSaved()
                             dismiss()
                         }
-                    }
+                    } label: { Text("Save", bundle: .module) }
                     .disabled(!model.canSave)
                     .accessibilityIdentifier("addSubscription.save")
                 }

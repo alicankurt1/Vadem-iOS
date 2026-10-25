@@ -40,10 +40,12 @@ public struct SettingsView: View {
             FormScroll {
                 FormCard {
                     FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
-                        Toggle(String(localized: "Payment reminders", bundle: .module), isOn: Binding(
+                        Toggle(isOn: Binding(
                             get: { model.isEnabled },
                             set: { model.setEnabled($0) }
-                        ))
+                        )) {
+                            Text("Payment reminders", bundle: .module)
+                        }
                         .foregroundStyle(Color.vademTextPrimary)
                         .accessibilityIdentifier("settings.reminders")
                     }
@@ -80,7 +82,7 @@ public struct SettingsView: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "Done", bundle: .module)) { dismiss() }
+                    Button { dismiss() } label: { Text("Done", bundle: .module) }
                         .accessibilityIdentifier("settings.done")
                 }
             }

@@ -191,7 +191,7 @@ public struct AssistantView: View {
     private var inputBar: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .bottom, spacing: 8) {
-                TextField(String(localized: "Ask a question", bundle: .module), text: $model.input, axis: .vertical)
+                TextField(text: $model.input, axis: .vertical) { Text("Ask a question", bundle: .module) }
                     .lineLimit(1...4)
                     .font(.body)
                     .foregroundStyle(Color.vademTextPrimary)

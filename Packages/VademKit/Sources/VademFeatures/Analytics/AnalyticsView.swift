@@ -70,18 +70,18 @@ public struct AnalyticsView: View {
                 .padding(.vertical, 32)
                 .accessibilityIdentifier("analytics.loading")
         case .error(let message):
-            messageView(title: String(localized: "Something went wrong", bundle: .module), detail: message, systemImage: "exclamationmark.triangle")
+            messageView(title: Text("Something went wrong", bundle: .module), detail: Text(message), systemImage: "exclamationmark.triangle")
                 .accessibilityIdentifier("analytics.error")
         case .empty:
             messageView(
-                title: String(localized: "No payments yet", bundle: .module),
-                detail: String(localized: "Add a payment to see your next 12 months.", bundle: .module),
+                title: Text("No payments yet", bundle: .module),
+                detail: Text("Add a payment to see your next 12 months.", bundle: .module),
                 systemImage: "chart.bar"
             )
             .accessibilityIdentifier("analytics.empty")
             if let onAddPayment {
                 Button(action: onAddPayment) {
-                    Label(String(localized: "Add a payment", bundle: .module), systemImage: "plus.circle")
+                    Label { Text("Add a payment", bundle: .module) } icon: { Image(systemName: "plus.circle") }
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.vademTextPrimary)
                         .frame(maxWidth: .infinity, minHeight: 44)
@@ -207,17 +207,19 @@ public struct AnalyticsView: View {
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(Color.vademTextPrimary)
             }
-            partRow(Self.installmentsName, amount: summary.installments, color: .vademBrand)
-            partRow(Self.subscriptionsName, amount: summary.subscriptions, color: .vademAccent)
+            partRow("Installments", amount: summary.installments, color: .vademBrand)
+            partRow("Subscriptions", amount: summary.subscriptions, color: .vademAccent)
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("analytics.summary")
     }
 
-    private func partRow(_ title: String, amount: Money, color: Color) -> some View {
+    // Başlık anahtarla çizilir (Text(String) değil): yerelleştirilmiş metin uzun sözcükleri tireyle böler;
+    // AX5'te düz metin harf harf kırılıyor ve düzen kayıyordu.
+    private func partRow(_ title: LocalizedStringKey, amount: Money, color: Color) -> some View {
         HStack(spacing: 8) {
             Circle().fill(color).frame(width: 10, height: 10).accessibilityHidden(true)
-            Text(title).foregroundStyle(Color.vademTextPrimary)
+            Text(title, bundle: .module).foregroundStyle(Color.vademTextPrimary)
             Spacer(minLength: 8)
             AmountText(amount).foregroundStyle(Color.vademTextPrimary)
         }
@@ -308,17 +310,18 @@ public struct AnalyticsView: View {
         return String(localized: "\(thousands)k", bundle: .module, comment: "Chart axis label in thousands, e.g. 5k")
     }
 
-    private func messageView(title: String, detail: String?, systemImage: String) -> some View {
+    // Metinler hazır Text olarak gelir: katalog anahtarıyla kurulan Text tireleme yapar (bkz. partRow).
+    private func messageView(title: Text, detail: Text?, systemImage: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.largeTitle)
                 .foregroundStyle(Color.vademTextSecondary)
                 .accessibilityHidden(true)
-            Text(title)
+            title
                 .font(.headline)
                 .foregroundStyle(Color.vademTextPrimary)
             if let detail {
-                Text(detail)
+                detail
                     .font(.body)
                     .foregroundStyle(Color.vademTextSecondary)
             }

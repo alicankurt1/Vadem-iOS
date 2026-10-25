@@ -44,7 +44,7 @@ public struct DesignGalleryView: View {
                         DueChip(String(localized: "Today", bundle: .module, comment: "Due chip"), kind: .today)
                         DueChip(Self.inThreeDays, kind: .soon)
                         DueChip(String(localized: "Later", bundle: .module, comment: "Due chip"), kind: .later)
-                        Label(String(localized: "Paid", bundle: .module), systemImage: "checkmark.circle.fill")
+                        Label { Text("Paid", bundle: .module) } icon: { Image(systemName: "checkmark.circle.fill") }
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.vademPaid)
                     }
@@ -58,8 +58,10 @@ public struct DesignGalleryView: View {
                         AmountText(animatedAmount)
                             .font(.largeTitle.weight(.semibold))
                             .foregroundStyle(Color.vademBrand)
-                        Button(String(localized: "Add ₺100", bundle: .module)) {
+                        Button {
                             animatedAmount = animatedAmount + Self.addedAmount
+                        } label: {
+                            Text("Add ₺100", bundle: .module)
                         }
                         // VoiceOver ve denetim "₺" sembolü yerine okunabilir tutarı alır.
                         .accessibilityLabel(Self.addButtonAccessibilityLabel)
@@ -72,9 +74,9 @@ public struct DesignGalleryView: View {
 
                     section(String(localized: "Hero", bundle: .module, comment: "Design gallery section"), id: "gallery.hero") {
                         HeroPanel(title: String(localized: "This month", bundle: .module), total: Money(Decimal(482_550) / 100), paid: Money(1_200)) {
-                            Button {} label: { Label(String(localized: "Add", bundle: .module), systemImage: "plus") }
+                            Button {} label: { Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") } }
                                 .buttonStyle(.heroPill)
-                            Button {} label: { Label(String(localized: "Calendar", bundle: .module), systemImage: "calendar") }
+                            Button {} label: { Label { Text("Calendar", bundle: .module) } icon: { Image(systemName: "calendar") } }
                                 .buttonStyle(.heroPill)
                         }
                     }
@@ -101,9 +103,9 @@ public struct DesignGalleryView: View {
                     }
 
                     section(String(localized: "Pills", bundle: .module, comment: "Design gallery section"), id: "gallery.pills") {
-                        Button {} label: { Label(String(localized: "Add", bundle: .module), systemImage: "plus") }
+                        Button {} label: { Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") } }
                             .buttonStyle(.heroPill)
-                        Button(String(localized: "Calendar", bundle: .module)) {}
+                        Button {} label: { Text("Calendar", bundle: .module) }
                             .buttonStyle(.heroPill)
                     }
 

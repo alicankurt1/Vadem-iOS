@@ -274,7 +274,7 @@ public struct HomeView: View {
                         proxy.scrollTo(Self.calendarAnchor, anchor: .top)
                     }
                 } label: {
-                    Label(String(localized: "Calendar", bundle: .module), systemImage: "calendar")
+                    Label { Text("Calendar", bundle: .module) } icon: { Image(systemName: "calendar") }
                 }
                 .buttonStyle(.heroPill)
                 .accessibilityIdentifier("home.showCalendar")
@@ -289,19 +289,19 @@ public struct HomeView: View {
             Button {
                 addModel = model.makeAddInstallmentModel()
             } label: {
-                Label(String(localized: "Installment", bundle: .module), systemImage: "creditcard")
+                Label { Text("Installment", bundle: .module) } icon: { Image(systemName: "creditcard") }
             }
             .accessibilityLabel(Text("Add installment", bundle: .module))
             .accessibilityIdentifier("home.add.installment")
             Button {
                 addSubscriptionModel = model.makeAddSubscriptionModel()
             } label: {
-                Label(String(localized: "Subscription", bundle: .module), systemImage: "arrow.triangle.2.circlepath")
+                Label { Text("Subscription", bundle: .module) } icon: { Image(systemName: "arrow.triangle.2.circlepath") }
             }
             .accessibilityLabel(Text("Add subscription", bundle: .module))
             .accessibilityIdentifier("home.add.subscription")
         } label: {
-            Label(String(localized: "Add", bundle: .module), systemImage: "plus")
+            Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") }
                 .heroPillLabel()
         }
         .accessibilityLabel(Text("Add payment", bundle: .module))
@@ -401,7 +401,7 @@ public struct HomeView: View {
             Button {
                 addCardModel = model.makeAddCardModel()
             } label: {
-                Label(String(localized: "Add a card", bundle: .module), systemImage: "plus.circle")
+                Label { Text("Add a card", bundle: .module) } icon: { Image(systemName: "plus.circle") }
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Color.vademTextPrimary)
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)

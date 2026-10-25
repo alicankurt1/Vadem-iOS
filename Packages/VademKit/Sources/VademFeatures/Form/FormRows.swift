@@ -237,9 +237,9 @@ extension View {
         // Onay, ortada açılan standart uyarı (alert): confirmationDialog iOS 26'da forma bağlıyken de
         // dar bir açılır pencere (popover) oluyor, Vazgeç düğmesini gizliyor ve kimliği iki kez veriyordu.
         alert(title, isPresented: isPresented) {
-            Button(String(localized: "Delete", bundle: .module), role: .destructive, action: onDelete)
+            Button(role: .destructive, action: onDelete) { Text("Delete", bundle: .module) }
                 .accessibilityIdentifier("\(identifierPrefix).delete.confirm")
-            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
+            Button(role: .cancel) {} label: { Text("Cancel", bundle: .module) }
                 .accessibilityIdentifier("\(identifierPrefix).delete.cancel")
         } message: {
             Text(message)
