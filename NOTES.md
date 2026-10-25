@@ -394,3 +394,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer:** Blocker/major yok; 4 minor, 3 nit. `respond` hata yolu test edilemiyordu (enjekte edilebilir `generate` dikişi eklendi), "kullanıcı verisi yok" testi totolojikti (artık oturuma giden metni kontrol ediyor), soru sahte "Today is" satırı taklit edebiliyordu (düzeltildi).
 - **Metrikler:** 760 dk (oturum kesintisi ve gece beklemesi dahil), 6 verify (0 kırmızı), 1 düzeltme turu; UI'a dokunulmadığı için capture atlandı. Test yazarı bloke oldu, testleri orkestratör yazdı.
 - **Ders:** `FoundationModels`'a bağlı testler macOS 15 test host'unda atlanıyor; yani yeşil `VERIFY` bu yolları çalıştırmadı. Sistem modelini bir protokol dikişinin (availability, generate) arkasına almak, hata eşlemesini en azından derlenebilir ve ileride test edilebilir tutuyor.
+
+### Koşu #127 — Asistan sohbet ekranı
+
+- **Ne yapıldı:** `AssistantViewModel` ve `AssistantView` eklendi; Home'da iOS 26+ ve model `.unsupportedOS` değilken görünen yıldız düğmesi sohbeti açıyor. Öneri çipleri, model yokken açıklama ekranı ve CI için `-ui-scripted-assistant`, `-ui-assistant-unavailable`, `-ui-assistant` argümanları var (PR #132, Faz 15).
+- **Reviewer yakaladı:** Major: Home giriş kuralı (`showsAssistant`) testsizdi. Minor: `refreshAvailability()` testsizdi, sistem motoru her Home render'ında yeniden kuruluyordu, "Thinking…" satırı görünüme kaydırılmıyordu. Dördü de tek turda düzeltildi.
+- **Metrikler:** 16 dk, 7 verify (0 kırmızı), 1 düzeltme turu. Fonksiyonel ve capture ilk seferde geçti, kaydırma düzeltmesinden sonra tekrar geçti; AX5'te yalnızca 2 kontrast notu.
+- **Ders:** Gerçek modele bağlı ekranı test edilebilir kılmak için motoru protokol arkasına alıp launch argümanlarıyla sahte/kullanılamaz motor enjekte etmek, UI kapılarını modelsiz çalıştırmayı sağladı. Kabul edilen: gönderimden sonra metin alanı odağı kaybediyor (issue giriş alanının devre dışı kalmasını istiyordu).
