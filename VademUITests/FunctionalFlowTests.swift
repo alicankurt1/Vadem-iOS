@@ -114,6 +114,49 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testAssistantChipShowsScriptedReply() throws {
+        // Betiklenmiş asistan: gerçek model gerekmez.
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-static-motion", "-ui-sample-data", "-ui-scripted-assistant"]
+        app.launch()
+
+        let button = app.buttons["home.assistant"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "assistant button not found on Home")
+        button.tap()
+        XCTAssertTrue(element("assistant.screen", in: app).waitForExistence(timeout: 10), "Assistant screen must show")
+        XCTAssertTrue(element("assistant.empty", in: app).exists, "empty state must show before any question")
+        XCTAssertFalse(element("assistant.unavailable", in: app).exists)
+
+        let chip = app.buttons["assistant.suggestion.0"]
+        XCTAssertTrue(chip.waitForExistence(timeout: 5), "first suggestion chip not found")
+        chip.tap()
+
+        // Soru ve cevap sırayla görünür.
+        XCTAssertTrue(element("assistant.message.0", in: app).waitForExistence(timeout: 5), "question bubble must show")
+        let reply = element("assistant.message.1", in: app)
+        XCTAssertTrue(reply.waitForExistence(timeout: 10), "reply bubble must show")
+        XCTAssertTrue(reply.label.contains("You pay"), "reply must be the scripted answer, got: \(reply.label)")
+        XCTAssertFalse(element("assistant.empty", in: app).exists, "empty state must go away")
+
+        // Geri düğmesi Home'a döner.
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after going back")
+    }
+
+    @MainActor
+    func testAssistantUnavailableShowsExplanation() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-static-motion", "-ui-sample-data", "-ui-assistant-unavailable"]
+        app.launch()
+
+        let button = app.buttons["home.assistant"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "assistant button must stay for unavailable models")
+        button.tap()
+        XCTAssertTrue(element("assistant.unavailable", in: app).waitForExistence(timeout: 10), "explanation must show")
+        XCTAssertFalse(app.textFields["assistant.input"].exists, "no chat input when unavailable")
+    }
+
+    @MainActor
     func testAnalyticsSelectingBarChangesDonut() throws {
         let app = launchHome()
         let button = app.buttons["home.analytics"]

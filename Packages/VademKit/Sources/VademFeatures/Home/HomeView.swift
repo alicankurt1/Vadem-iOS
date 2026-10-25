@@ -9,6 +9,8 @@ import VademCore
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
+/// On iOS 26+, a sparkles button next to Analytics (`home.assistant`) pushes the ``AssistantView``
+/// unless ``HomeViewModel/showsAssistant`` is `false`.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
 public struct HomeView: View {
@@ -23,6 +25,8 @@ public struct HomeView: View {
     @State private var settingsModel: SettingsViewModel?
     // Açık Analytics ekranının modeli; nil iken ekran itilmemiştir.
     @State private var analyticsModel: AnalyticsViewModel?
+    // Açık asistan ekranının modeli; nil iken ekran itilmemiştir. Kapanınca sohbet atılır.
+    @State private var assistantModel: AssistantViewModel?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -42,7 +46,8 @@ public struct HomeView: View {
     /// ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument`` and
     /// ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
     /// month in its edit form. ``SettingsView/launchArgument`` (or ``SettingsView/deniedLaunchArgument``)
-    /// opens the settings sheet. ``AnalyticsView/launchArgument`` pushes the Analytics screen.
+    /// opens the settings sheet. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
+    /// ``AssistantView/launchArgument`` the assistant chat.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddModel: AddInstallmentViewModel?
@@ -50,10 +55,14 @@ public struct HomeView: View {
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
         var initialSettingsModel: SettingsViewModel?
         var initialAnalyticsModel: AnalyticsViewModel?
+        var initialAssistantModel: AssistantViewModel?
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AnalyticsView.launchArgument) {
             initialAnalyticsModel = model.makeAnalyticsModel()
+        } else if arguments.contains(AssistantView.launchArgument) {
+            // İki ekran aynı anda itilemez; Analytics önceliklidir.
+            initialAssistantModel = model.makeAssistantModel()
         }
         if arguments.contains(AddInstallmentView.launchArgument) {
             let addModel = model.makeAddInstallmentModel()
@@ -97,6 +106,7 @@ public struct HomeView: View {
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
         _settingsModel = State(initialValue: initialSettingsModel)
         _analyticsModel = State(initialValue: initialAnalyticsModel)
+        _assistantModel = State(initialValue: initialAssistantModel)
     }
 
     public var body: some View {
@@ -104,7 +114,16 @@ public struct HomeView: View {
         NavigationStack {
             scrollContent
                 .toolbar {
+                    // Asistan düğmesi yalnızca iOS 26+ ve motor desteklenen bir sistemdeyken görünür.
+                    if Self.isAssistantOS, model.showsAssistant {
+                        ToolbarItem(placement: .primaryAction) { assistantButton }
+                    }
                     ToolbarItem(placement: .primaryAction) { analyticsButton }
+                }
+                .navigationDestination(isPresented: assistantPresented) {
+                    if let assistantModel {
+                        AssistantView(model: assistantModel)
+                    }
                 }
                 // Grafik ekranı itilir (sekme değil); geri düğmesi Home'a döner.
                 .navigationDestination(isPresented: analyticsPresented) {
@@ -148,6 +167,34 @@ public struct HomeView: View {
             get: { analyticsModel != nil },
             set: { if !$0 { analyticsModel = nil } }
         )
+    }
+
+    private var assistantPresented: Binding<Bool> {
+        Binding(
+            get: { assistantModel != nil },
+            set: { if !$0 { assistantModel = nil } }
+        )
+    }
+
+    // Yerel model iOS 26 ile gelir; daha eski sistemde giriş hiç gösterilmez.
+    private static var isAssistantOS: Bool {
+        if #available(iOS 26, macOS 26, *) { return true }
+        return false
+    }
+
+    // Araç çubuğundaki pırıltı düğmesi: asistan sohbetini açar.
+    private var assistantButton: some View {
+        Button {
+            assistantModel = model.makeAssistantModel()
+        } label: {
+            Image(systemName: "sparkles")
+                .foregroundStyle(Color.vademTextPrimary)
+                // En az 44 pt dokunma alanı.
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel("Assistant")
+        .accessibilityIdentifier("home.assistant")
     }
 
     // Boş grafik ekranından ödeme ekleme: kart yoksa önce kart formu açılır. Sayfa Analytics'in üstünde açılır.
