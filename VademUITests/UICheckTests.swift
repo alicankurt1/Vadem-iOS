@@ -241,6 +241,45 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testAssistantEmpty() throws {
+        // Sohbet boş: salt okunur açıklaması, öneri çipleri, giriş ve dipnot.
+        try capture(
+            screen: "assistant-empty",
+            launchArguments: ["-ui-sample-data", "-ui-scripted-assistant", "-ui-assistant"],
+            sections: [.top]
+        )
+    }
+
+    @MainActor
+    func testAssistantChat() throws {
+        // Bir çipe dokunulur; soru ve betiklenmiş cevap görünür.
+        try capture(
+            screen: "assistant-chat",
+            launchArguments: ["-ui-sample-data", "-ui-scripted-assistant", "-ui-assistant"],
+            sections: [.top],
+            navigate: { app, variant in
+                let chip = app.buttons["assistant.suggestion.0"]
+                XCTAssertTrue(chip.waitForExistence(timeout: 10), "[ui-check] assistant-chat__\(variant.name): chip not found")
+                chip.tap()
+                XCTAssertTrue(
+                    app.descendants(matching: .any)["assistant.message.1"].waitForExistence(timeout: 10),
+                    "[ui-check] assistant-chat__\(variant.name): reply not found"
+                )
+            }
+        )
+    }
+
+    @MainActor
+    func testAssistantUnavailable() throws {
+        // Model kapalı: sohbet yerine açıklama görünür.
+        try capture(
+            screen: "assistant-unavailable",
+            launchArguments: ["-ui-sample-data", "-ui-assistant-unavailable", "-ui-assistant"],
+            sections: [.top]
+        )
+    }
+
+    @MainActor
     func testSettingsScreen() throws {
         try capture(
             screen: "settings",
