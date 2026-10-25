@@ -907,11 +907,18 @@ final class UICheckTests: XCTestCase {
         let statusBar = app.statusBars.firstMatch
         let height = statusBar.exists && !statusBar.frame.isEmpty ? statusBar.frame.maxY - window.minY : 54
         let band = CGRect(x: window.minX, y: window.minY, width: window.width, height: height)
-        let candidates = [app.staticTexts, app.buttons, app.cells, app.otherElements]
-            .flatMap { $0.allElementsBoundByIndex }
-        let labels = candidates
-            .filter { $0.exists && !$0.label.isEmpty && !$0.frame.isEmpty && $0.frame.intersects(band) && $0.frame.height < 100 }
-            .map { "'\($0.label)'" }
+        // Tek bir `snapshot()` ile ağaç bellekte gezilir; öğe öğe sorgu AX5'te bölüm başına ~60 sn sürüyordu.
+        guard let root = try? app.snapshot() else { return [] }
+        let types: Set<XCUIElement.ElementType> = [.staticText, .button, .cell, .other]
+        var labels: [String] = []
+        func visit(_ node: any XCUIElementSnapshot) {
+            if types.contains(node.elementType), !node.label.isEmpty, !node.frame.isEmpty,
+               node.frame.intersects(band), node.frame.height < 100 {
+                labels.append("'\(node.label)'")
+            }
+            node.children.forEach(visit)
+        }
+        visit(root)
         return Array(NSOrderedSet(array: labels)) as? [String] ?? labels
     }
 
