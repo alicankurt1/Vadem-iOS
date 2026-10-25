@@ -387,3 +387,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer:** Blocker/major yok. Minor: `cardTotal` modelin gördüğü temizlenmiş ve kısaltılmış kart adıyla eşleşmiyordu; `.format` kategorisi ZWJ/ZWNJ'yi de siliyordu. İkisi tek turda düzeltildi, testleri eklendi.
 - **Metrikler:** 169 dk (üç rol görünür oturumlarda), 4 verify (0 kırmızı), 1 düzeltme turu; UI'a dokunulmadığı için capture atlandı.
 - **Ders:** Modele giden metni temizlediysen, modelin geri sorabileceği tanımlayıcıları (kart adı) da aynı temizlenmiş biçimle eşleştir; yoksa araç "bulunamadı" döner. Unicode "format" karakterlerini toptan silmek ZWJ/ZWNJ gibi meşru karakterleri bozar.
+
+### Koşu #126 — Foundation Models asistan motoru
+
+- **Ne yapıldı:** `AssistantEngine` protokolü ve iOS 26'da `FoundationModelsAssistantEngine` eklendi; beş salt okunur araç `AssistantQueries` üzerinde çalışıyor, iOS 18'de `UnsupportedOSAssistantEngine` devreye giriyor (PR #130, Faz 15). Soru komuta tek metin olarak giriyor, isimler yalnızca araç çıktısıyla modele ulaşıyor.
+- **Reviewer:** Blocker/major yok; 4 minor, 3 nit. `respond` hata yolu test edilemiyordu (enjekte edilebilir `generate` dikişi eklendi), "kullanıcı verisi yok" testi totolojikti (artık oturuma giden metni kontrol ediyor), soru sahte "Today is" satırı taklit edebiliyordu (düzeltildi).
+- **Metrikler:** 760 dk (oturum kesintisi ve gece beklemesi dahil), 6 verify (0 kırmızı), 1 düzeltme turu; UI'a dokunulmadığı için capture atlandı. Test yazarı bloke oldu, testleri orkestratör yazdı.
+- **Ders:** `FoundationModels`'a bağlı testler macOS 15 test host'unda atlanıyor; yani yeşil `VERIFY` bu yolları çalıştırmadı. Sistem modelini bir protokol dikişinin (availability, generate) arkasına almak, hata eşlemesini en azından derlenebilir ve ileride test edilebilir tutuyor.
