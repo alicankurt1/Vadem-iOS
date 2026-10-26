@@ -717,7 +717,7 @@ final class UICheckTests: XCTestCase {
             ]
         ) { app, variant in
             XCTAssertTrue(
-                app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
+                Self.galleryTitle(in: app).waitForExistence(timeout: 5),
                 "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
             )
         }
@@ -726,8 +726,19 @@ final class UICheckTests: XCTestCase {
     @MainActor
     func testGalleryCards() throws {
         // Her kart yüzü kendi parçasında en üste kaydırılır; AX5'te de hiçbir yüz atlanmaz (#36).
-        // Ekran adı "gallery" kalır: görüntü adları (gallery-card-<yüz>) değişmez.
-        let cardParts: [Section] = ["night", "ocean", "emerald", "sunset", "lavender", "graphite"].map {
+        // Altı yüz × 3 varyant tek testte 3 dk sınırını aşıyordu; ikiye bölündü (#142).
+        try captureGalleryCards(["night", "ocean", "emerald"])
+    }
+
+    @MainActor
+    func testGalleryCardsWarm() throws {
+        try captureGalleryCards(["sunset", "lavender", "graphite"])
+    }
+
+    /// Ekran adı "gallery" kalır: görüntü adları (gallery-card-<yüz>) değişmez.
+    @MainActor
+    private func captureGalleryCards(_ faces: [String]) throws {
+        let cardParts: [Section] = faces.map {
             .scrolled(to: "gallery.card.\($0)", named: "card-\($0)")
         }
         try capture(
@@ -736,7 +747,7 @@ final class UICheckTests: XCTestCase {
             sections: cardParts
         ) { app, variant in
             XCTAssertTrue(
-                app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
+                Self.galleryTitle(in: app).waitForExistence(timeout: 5),
                 "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
             )
         }
@@ -755,7 +766,7 @@ final class UICheckTests: XCTestCase {
             ]
         ) { app, variant in
             XCTAssertTrue(
-                app.staticTexts["Design gallery"].waitForExistence(timeout: 5),
+                Self.galleryTitle(in: app).waitForExistence(timeout: 5),
                 "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
             )
         }
@@ -768,17 +779,17 @@ final class UICheckTests: XCTestCase {
         let title = app.staticTexts["Vadem"]
         XCTAssertTrue(title.waitForExistence(timeout: 5), "[ui-check] \(name): 'Vadem' title not found")
 
-        let version = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Version ")).firstMatch
+        let version = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Version ", "Sürüm ")).firstMatch
         guard version.waitForExistence(timeout: 5) else {
-            XCTFail("[ui-check] \(name): version label ('Version …') not found")
+            XCTFail("[ui-check] \(name): version label ('Version …' / 'Sürüm …') not found")
             return
         }
 
         // Etiketin tamamı eşleşmeli; önek/sonek ("v", fazladan metin) kabul edilmez.
         let label = version.label
         XCTAssertNotNil(
-            label.wholeMatch(of: /Version [0-9]+(\.[0-9]+)*/),
-            "[ui-check] \(name): version label '\(label)' does not match ^Version [0-9]+(\\.[0-9]+)*$"
+            label.wholeMatch(of: /(Version|Sürüm) [0-9]+(\.[0-9]+)*/),
+            "[ui-check] \(name): version label '\(label)' does not match ^(Version|Sürüm) [0-9]+(\\.[0-9]+)*$"
         )
         XCTAssertTrue(version.isHittable, "[ui-check] \(name): version label is not hittable")
 
@@ -793,6 +804,12 @@ final class UICheckTests: XCTestCase {
             versionFrame.height, titleFrame.height,
             "[ui-check] \(name): version label height (\(versionFrame.height)) is not smaller than title height (\(titleFrame.height))"
         )
+    }
+
+    /// Galeri başlığı; cihaz dili Türkçe olabilir (#136), bu yüzden iki dilde de aranır.
+    @MainActor
+    static func galleryTitle(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.matching(NSPredicate(format: "label IN %@", ["Design gallery", "Tasarım galerisi"])).firstMatch
     }
 
     // MARK: - Helpers
@@ -824,6 +841,8 @@ final class UICheckTests: XCTestCase {
                 var target = window.minY
                 var previousMinY: CGFloat?
                 var attempts = 0
+                var dragX: CGFloat = 0.5
+                var trail: [Int] = []
 
                 for _ in 0..<12 {
                     attempts += 1
@@ -834,21 +853,31 @@ final class UICheckTests: XCTestCase {
                     // Büyük başlık kaydırınca küçülür; çubuğun alt kenarı her adımda yeniden okunur.
                     target = max(window.minY + window.height * 0.15, barBottom(in: app) + 8)
                     let minY = element.frame.minY
+                    trail.append(Int(minY))
                     let distance = minY - target
                     // Hedef bir bant: çubuğun hemen altından ekranın yarısına kadar. Dar tolerans (%5)
                     // sürüklemeyi ileri geri salındırıyordu; her sürükleme ~3 sn sürüyor (#37).
                     if minY >= target - 8, minY <= target + window.height * 0.35 { break }
                     // İçerik sonu: öğe artık yer değiştirmiyor, daha fazla sürüklemek boşa zaman.
-                    if let previousMinY, abs(previousMinY - minY) < 1 { break }
+                    // Ama önce sürüklemeyi kenar boşluğundan dene: AX5'te büyüyen grafik/kart ortadaki
+                    // sürüklemeyi kendisi yakalayıp içeriği kaydırmıyordu (#142).
+                    if let previousMinY, abs(previousMinY - minY) < 1 {
+                        if dragX < 0.5 { break }
+                        dragX = 0.03
+                    }
                     previousMinY = minY
                     // Öğeyi parmakla tutup hedef bandın ortasına sürükle; tek seferde ekranın en fazla yarısı.
                     // İçerik sürüklenenden fazla kayıyor (büyük başlık daralıp genişliyor, az da olsa
                     // momentum); bu yüzden adım kısaltılır ve sonda beklenir (#37).
                     let wanted = (distance - window.height * 0.15) * 0.75
-                    let step = max(-window.height * 0.5, min(window.height * 0.5, wanted))
-                    let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: step > 0 ? 0.8 : 0.3))
+                    // Hedef çok uzaktaysa (AX5'te galeri kartları ~6000 pt aşağıda) adım büyür ve hızlanır;
+                    // 12 deneme ve ~430 pt'lik adımlar yetmiyordu (#142). Yakında yine kısa, hassas adım.
+                    let far = distance > window.height * 1.5
+                    let maxStep = window.height * (far ? 0.8 : 0.5)
+                    let step = max(-maxStep, min(maxStep, wanted))
+                    let from = app.coordinate(withNormalizedOffset: CGVector(dx: dragX, dy: step > 0 ? 0.8 : 0.3))
                     let to = from.withOffset(CGVector(dx: 0, dy: -step))
-                    from.press(forDuration: 0.05, thenDragTo: to, withVelocity: .default, thenHoldForDuration: 0.2)
+                    from.press(forDuration: 0.05, thenDragTo: to, withVelocity: far ? .fast : .default, thenHoldForDuration: 0.2)
                 }
 
                 // İçerik sonuna gelindiyse öğe hedefe çıkamayabilir; çubuğun altında görünür olması yeter.
@@ -857,7 +886,7 @@ final class UICheckTests: XCTestCase {
                 if element.exists, element.isHittable, frame.midY > bar, frame.minY < window.maxY { return nil }
                 return "marker '\(marker)' not reached after \(attempts) attempts — exists: \(element.exists), "
                     + "hittable: \(element.exists && element.isHittable), marker frame: \(frame), "
-                    + "bar bottom: \(bar), target y: \(target)"
+                    + "bar bottom: \(bar), target y: \(target), minY trail: \(trail)"
             }
         }
     }
