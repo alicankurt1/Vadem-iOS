@@ -280,7 +280,9 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertEqual(titleField.value as? String, "Laptop", "title must be prefilled")
         XCTAssertTrue(app.buttons["addInstallment.save"].isEnabled, "save must be enabled with the saved values")
 
-        titleField.tap()
+        // Dikey eksenli alanda ortaya dokunmak imleci metnin ortasına koyar;
+        // sağ kenara dokunarak imleci sona alırız.
+        titleField.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
         titleField.typeText(" Pro")
         app.buttons["addInstallment.save"].tap()
 
