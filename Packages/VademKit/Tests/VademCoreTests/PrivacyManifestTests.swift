@@ -63,6 +63,30 @@ struct PrivacyManifestTests {
         }
     }
 
+    // UserDefaults gerçekten kullanılıyor (UserDefaultsReminderPreferencesStore);
+    // widget da VademFeatures'ı bağladığı için aynı beyanı taşımalı.
+    @Test("Manifest declares the UserDefaults API category", arguments: manifestPaths)
+    func declaresUserDefaults(path: String) throws {
+        let manifest = try Self.loadManifest(path)
+        let entries = try #require(manifest["NSPrivacyAccessedAPITypes"] as? [[String: Any]])
+        let categories = entries.compactMap { $0["NSPrivacyAccessedAPIType"] as? String }
+        #expect(categories.contains("NSPrivacyAccessedAPICategoryUserDefaults"))
+    }
+
+    // İletişim yer tutucusu her dilde bir kez geçer (İngilizce + Türkçe = 2);
+    // sahibi doldurana kadar yer tutucu silinmemeli, çoğaltılmamalı.
+    @Test("Privacy policy has the contact placeholder once per language")
+    func policyContactPlaceholder() throws {
+        let url = Self.repoRoot.appendingPathComponent("docs/privacy.md")
+        let text = try String(contentsOf: url, encoding: .utf8)
+        let placeholder = "[contact email — owner to fill in]"
+        let turkishRange = try #require(text.range(of: "## Türkçe"))
+        let english = text[..<turkishRange.lowerBound]
+        let turkish = text[turkishRange.lowerBound...]
+        #expect(english.components(separatedBy: placeholder).count - 1 == 1)
+        #expect(turkish.components(separatedBy: placeholder).count - 1 == 1)
+    }
+
     @Test("Privacy policy has English and Turkish sections")
     func policyHasBothLanguages() throws {
         let url = Self.repoRoot.appendingPathComponent("docs/privacy.md")
