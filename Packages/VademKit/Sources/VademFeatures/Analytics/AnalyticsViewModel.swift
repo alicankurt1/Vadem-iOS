@@ -157,6 +157,14 @@ public final class AnalyticsViewModel {
         selectedMonth = month
     }
 
+    /// Moves the selection `offset` months along ``months`` (VoiceOver's adjustable action);
+    /// the selection stops at the first and last month.
+    public func selectMonth(offsetBy offset: Int) {
+        guard let index = months.firstIndex(where: { $0.month == selectedMonth }) else { return }
+        let target = min(max(index + offset, 0), months.count - 1)
+        selectedMonth = months[target].month
+    }
+
     /// Loads the months from the repository; a thrown error becomes ``State/error(message:)``.
     ///
     /// Keeps the selected month while it is still shown, otherwise selects ``currentMonth``.
@@ -221,6 +229,29 @@ public final class AnalyticsViewModel {
         return String(
             localized: "\(monthText), \(amountText) TL", bundle: .module,
             comment: "Spoken chart bar: month, amount"
+        )
+    }
+
+    /// The bar chart's VoiceOver summary: what it shows, the total of `months` and the highest month,
+    /// e.g. `"… Total: 24.000,00 TL. Highest: May 2026, 4.250,00 TL."`.
+    ///
+    /// Pure. Without months, or when every month is zero, only the first sentence is returned.
+    /// Ties for the highest month go to the earlier month.
+    public nonisolated static func chartSummary(for months: [SpendingAnalytics.MonthTotal]) -> String {
+        let highest = months.reduce(nil as SpendingAnalytics.MonthTotal?) { best, total in
+            guard let best, best.total >= total.total else { return total }
+            return best
+        }
+        guard let highest, !highest.total.isZero else {
+            return String(localized: "Installments and subscriptions due in each of the next 12 months", bundle: .module)
+        }
+        let totalText = AmountText.formattedMagnitude(months.reduce(Money.zero) { $0 + $1.total })
+        let monthText = title(of: highest.month)
+        let highestText = AmountText.formattedMagnitude(highest.total)
+        return String(
+            localized: "Installments and subscriptions due in each of the next 12 months. Total: \(totalText) TL. Highest: \(monthText), \(highestText) TL.",
+            bundle: .module,
+            comment: "Spoken chart summary: total of all months, highest month and its amount"
         )
     }
 

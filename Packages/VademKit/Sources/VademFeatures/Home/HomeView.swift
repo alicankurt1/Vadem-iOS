@@ -753,8 +753,23 @@ struct MonthCalendar: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(cell.accessibilityLabel)
+        // Bugün görselde yalnızca halkayla belirtilir; VoiceOver da "Bugün" duyar.
+        .modifier(TodayAccessibilityValue(isToday: cell.isToday))
         .accessibilityAddTraits(cell.isSelected ? [.isButton, .isSelected] : .isButton)
         .accessibilityIdentifier("home.calendar.day.\(day)")
+    }
+}
+
+// Değer yalnızca bugüne eklenir; diğer günlerde boş bir değer okunmasın.
+private struct TodayAccessibilityValue: ViewModifier {
+    let isToday: Bool
+
+    func body(content: Content) -> some View {
+        if isToday {
+            content.accessibilityValue(Text("Today", bundle: .module))
+        } else {
+            content
+        }
     }
 }
 
