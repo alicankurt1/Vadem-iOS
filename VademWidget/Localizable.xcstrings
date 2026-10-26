@@ -9,6 +9,12 @@
             "state" : "translated",
             "value" : "%@ %@, %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ %@, %@"
+          }
         }
       }
     },
@@ -16,6 +22,12 @@
       "comment" : "Widget VoiceOver row: title, spoken amount, day",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, %@, %@"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@, %@, %@"
@@ -30,6 +42,12 @@
             "state" : "translated",
             "value" : "Add a payment in Vadem"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem'de ödeme ekleyin"
+          }
         }
       }
     },
@@ -39,6 +57,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Left to pay"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kalan ödeme"
           }
         }
       }
@@ -50,6 +74,12 @@
             "state" : "translated",
             "value" : "No upcoming payments"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yaklaşan ödeme yok"
+          }
         }
       }
     },
@@ -59,6 +89,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nothing due"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme yok"
           }
         }
       }
@@ -70,6 +106,12 @@
             "state" : "translated",
             "value" : "Open Vadem to try again"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekrar denemek için Vadem'i açın"
+          }
         }
       }
     },
@@ -79,6 +121,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Payments unavailable"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeler alınamadı"
           }
         }
       }
@@ -90,6 +138,12 @@
             "state" : "translated",
             "value" : "This month"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay"
+          }
         }
       }
     },
@@ -99,6 +153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This month's total and your next payments."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ayın toplamı ve sıradaki ödemeleriniz."
           }
         }
       }
@@ -111,6 +171,12 @@
             "state" : "translated",
             "value" : "Today"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bugün"
+          }
         }
       }
     },
@@ -122,6 +188,12 @@
             "state" : "translated",
             "value" : "Tomorrow"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yarın"
+          }
         }
       }
     },
@@ -131,6 +203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upcoming payments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yaklaşan ödemeler"
           }
         }
       }
@@ -155,6 +233,24 @@
               }
             }
           }
+        },
+        "tr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld gün sonra"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld gün sonra"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -166,6 +262,12 @@
             "state" : "translated",
             "value" : "today"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bugün"
+          }
         }
       }
     },
@@ -176,6 +278,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "tomorrow"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "yarın"
           }
         }
       }

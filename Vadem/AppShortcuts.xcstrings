@@ -1,14 +1,86 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "${applicationName} monthly total" : {},
-    "${applicationName} next payment" : {},
-    "How much do I pay this month in ${applicationName}" : {},
-    "How much is due this month in ${applicationName}" : {},
-    "What do I pay next in ${applicationName}" : {},
-    "What is my monthly total in ${applicationName}" : {},
-    "What is my next payment in ${applicationName}" : {},
-    "When is my next payment in ${applicationName}" : {}
+    "${applicationName} monthly total" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} aylık toplam"
+          }
+        }
+      }
+    },
+    "${applicationName} next payment" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} sıradaki ödeme"
+          }
+        }
+      }
+    },
+    "How much do I pay this month in ${applicationName}" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile bu ay ne kadar ödüyorum"
+          }
+        }
+      }
+    },
+    "How much is due this month in ${applicationName}" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} bu ay ne kadar ödemem var"
+          }
+        }
+      }
+    },
+    "What do I pay next in ${applicationName}" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} sırada ne ödüyorum"
+          }
+        }
+      }
+    },
+    "What is my monthly total in ${applicationName}" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} aylık toplamım ne"
+          }
+        }
+      }
+    },
+    "What is my next payment in ${applicationName}" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} sıradaki ödemem ne"
+          }
+        }
+      }
+    },
+    "When is my next payment in ${applicationName}" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} sıradaki ödemem ne zaman"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }
