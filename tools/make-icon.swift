@@ -103,18 +103,18 @@ func draw(_ palette: Palette, in context: CGContext, colorSpace: CGColorSpace) {
     let card = CGRect(x: -cardWidth / 2, y: -cardHeight / 2, width: cardWidth, height: cardHeight)
     let cardPath = CGPath(roundedRect: card, cornerWidth: 56, cornerHeight: 56, transform: nil)
 
-    // Gölge.
+    // Gölge, kart yüzünün tamamına (degrade + şerit) tek katman olarak uygulanır.
     context.saveGState()
     context.setShadow(offset: CGSize(width: 0, height: -24), blur: 48, color: palette.shadow)
-    context.addPath(cardPath)
-    context.setFillColor(palette.cardBottom)
-    context.fillPath()
-    context.restoreGState()
+    context.beginTransparencyLayer(auxiliaryInfo: nil)
 
-    // Kart yüzü: degrade.
+    // Kart yüzü kart şekline kırpılır. Degrade ve şerit iç katmanda kırpmasız
+    // çizilir, katman bir kez kırpılarak birleştirilir: kenar tek kez yumuşatılır,
+    // şerit uçları kart kenarıyla aynı hizada kalır ve altta açık renkli sızıntı olmaz.
     context.saveGState()
     context.addPath(cardPath)
     context.clip()
+    context.beginTransparencyLayer(auxiliaryInfo: nil)
     let cardGradient = CGGradient(
         colorsSpace: colorSpace,
         colors: [palette.cardTop, palette.cardBottom] as CFArray,
@@ -124,12 +124,16 @@ func draw(_ palette: Palette, in context: CGContext, colorSpace: CGColorSpace) {
         cardGradient,
         start: CGPoint(x: 0, y: card.maxY),
         end: CGPoint(x: 0, y: card.minY),
-        options: []
+        options: [.drawsBeforeStartLocation, .drawsAfterEndLocation]
     )
 
-    // Manyetik şerit.
+    // Manyetik şerit: kenarlardan taşacak kadar geniş; uçlarını kırpma belirler.
     context.setFillColor(palette.stripe)
-    context.fill(CGRect(x: card.minX, y: card.maxY - 140, width: card.width, height: 76))
+    context.fill(CGRect(x: card.minX - 8, y: card.maxY - 140, width: card.width + 16, height: 76))
+    context.endTransparencyLayer()
+    context.restoreGState()
+
+    context.endTransparencyLayer()
     context.restoreGState()
 
     // Taksit dilimleri: 5 dilimin 3'ü dolu.
