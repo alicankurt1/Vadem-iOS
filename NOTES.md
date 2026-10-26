@@ -401,3 +401,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer yakaladı:** Major: Home giriş kuralı (`showsAssistant`) testsizdi. Minor: `refreshAvailability()` testsizdi, sistem motoru her Home render'ında yeniden kuruluyordu, "Thinking…" satırı görünüme kaydırılmıyordu. Dördü de tek turda düzeltildi.
 - **Metrikler:** 16 dk, 7 verify (0 kırmızı), 1 düzeltme turu. Fonksiyonel ve capture ilk seferde geçti, kaydırma düzeltmesinden sonra tekrar geçti; AX5'te yalnızca 2 kontrast notu.
 - **Ders:** Gerçek modele bağlı ekranı test edilebilir kılmak için motoru protokol arkasına alıp launch argümanlarıyla sahte/kullanılamaz motor enjekte etmek, UI kapılarını modelsiz çalıştırmayı sağladı. Kabul edilen: gönderimden sonra metin alanı odağı kaybediyor (issue giriş alanının devre dışı kalmasını istiyordu).
+
+### Koşu #136 — Türkçe çeviri
+
+- **Ne yapıldı:** Dört String Catalog'un (VademFeatures 190, uygulama 4, App Shortcuts 8, widget 16) her anahtarına `tr` değeri eklendi; `knownRegions`'a `tr` girdi. Çoğullarda `one`/`other` var, iki Siri cevabında yer tutucular konumsal belirteçle (`%2$@`) yeniden sıralandı (PR #143, Faz 16). 49 dk, 8 verify (0 kırmızı), 2 düzeltme turu.
+- **Test/Reviewer yakaladı:** Silme onay mesajları dilbilgisi olarak hatalı ve birbirinin aynısıydı; birkaç ifade doğal değildi; `amountFormat` testi dili hiç değiştirmiyordu (yeniden adlandırıldı). Hepsi turda düzeltildi.
+- **UI kapısı yakaladı:** Türkçe capture, taksit başlık alanının yer tutucusunda `Text clipped` (major) buldu; alan `axis: .vertical` yapılarak düzeltildi. Bu değişiklik bir fonksiyonel testi bozdu (imleç yerleştirme), ikinci turda düzeltildi.
+- **Ders:** Daha uzun bir dil, İngilizce'de görünmeyen kırpılma hatalarını ortaya çıkarır; yeni dil için capture testi şart. Kabul edilen risk: `axis: .vertical` alanda Return yeni satır ekleyebilir; silme onayı, düzenleme formları ve asistan sohbeti Türkçe capture'da yok.
