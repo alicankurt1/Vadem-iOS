@@ -416,3 +416,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **UI kapısı:** Hedefli koşu (light + AX5) 0 erişilebilirlik hatası verdi, ama tam galeri çalıştırılamadı: AX5'te `testGalleryCards` ve `testEditSubscriptionForm` `main` üzerinde de takılıyordu (#142).
 - **Sonrası:** Harness PR #146 (#142) hemen ardından birleşti: AX5 kaydırma düzeltildi, galeri kartları `testGalleryCards` + `testGalleryCardsWarm` olarak bölündü, Türkçe başlık/sürüm kontrolleri kabul edildi. Tam galeri yaklaşık 39 dk sürüyor (bütçe 4 dk) ve son düzeltmeden sonra uçtan uca çalıştırılmadı.
 - **Ders:** Kapı `main` üzerinde de kırmızıysa sorun özelliğin değil harness'in; ayrı `harness/` PR gerekir. Tam galeri bütçesi aşıldı, bu yüzden "tam galeri 0 hata" kabul kriteri pratikte doğrulanamıyor.
+
+### Koşu #138 — Gizlilik manifestleri
+
+- **Ne yapıldı:** Uygulama ve widget için `PrivacyInfo.xcprivacy` (izleme yok, toplanan veri yok, `UserDefaults` için `CA92.1`) ve `docs/privacy.md` (İngilizce + Türkçe) eklendi; `PrivacyManifestTests` her iki manifesti ve politikayı ayrıştırıyor (PR #149, Faz 16). 11 dk, 5 verify (0 kırmızı), 1 düzeltme turu.
+- **Reviewer yakaladı:** Minor: testler `UserDefaults` bildirimini ve politikadaki iletişim yer tutucusunu denetlemiyordu (düzeltildi; yer tutucu dil başına bir kez). Widget doğrudan `UserDefaults` çağırmıyor ama `VademFeatures`'ı bağladığı için kategoriyi bildiriyor (kabul edildi).
+- **Ders:** Required-reason API'leri hedefin kendi kodundan değil, bağladığı modüllerden de gelir; bildirim için bağımlılık grafiğine bakmak gerekir. Archive gizlilik raporu çalıştırılmadı; yayından önce elle kontrol edilmeli.
