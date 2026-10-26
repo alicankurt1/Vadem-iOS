@@ -3,9 +3,10 @@ import SwiftUI
 /// The assistant chat: questions about the user's payments, answered on device.
 ///
 /// User bubbles sit on the trailing side (`vademAccent`), answers on the leading side
-/// (`vademSurface`). Each message (`assistant.message.<index>`) is one VoiceOver element, read in
-/// order; a new answer is also announced to VoiceOver. Suggestion chips (`assistant.suggestion.<index>`), the input (`assistant.input`), the send
-/// button (`assistant.send`) and a footer note (`assistant.footer`) complete the chat. Without
+/// (`vademSurface`). Each message (`assistant.message.<index>`) is one VoiceOver element in chat
+/// order. A new answer (never the user's own message) is announced to VoiceOver, since focus stays
+/// on the input. Suggestion chips (`assistant.suggestion.<index>`), the input (`assistant.input`),
+/// the send button (`assistant.send`) and a footer note (`assistant.footer`) complete the chat. Without
 /// messages an empty state (`assistant.empty`) says the assistant is read-only. When the model is
 /// unavailable, an explanation (`assistant.unavailable`) replaces the chat. Closing the screen
 /// cancels the question in flight. No continuous animation under Reduce Motion or `-ui-static-motion`.
@@ -84,7 +85,8 @@ public struct AssistantView: View {
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: model.messages.count) {
                 scrollToBottom(proxy)
-                // Cevap geldiğinde VoiceOver kullanıcısı odağı taşımadan da duyar.
+                // Odak giriş alanında kalır, yeni öğe kendiliğinden okunmaz; bu yüzden yalnızca
+                // cevap duyurulur (kullanıcının kendi mesajı duyurulmaz, çift okuma olmaz).
                 if let last = model.messages.last, last.role == .assistant {
                     AccessibilityNotification.Announcement(last.accessibilityLabel).post()
                 }
