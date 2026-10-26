@@ -13,9 +13,9 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
-    private func launchHome() -> XCUIApplication {
+    private func launchHome(extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-ui-static-motion", "-ui-sample-data"]
+        app.launchArguments += ["-ui-static-motion", "-ui-sample-data"] + extraArguments
         app.launch()
         return app
     }
@@ -46,7 +46,18 @@ final class FunctionalFlowTests: XCTestCase {
 
     @MainActor
     func testAddInstallmentFromHomeShowsPaymentOnHome() throws {
-        let app = launchHome()
+        try addInstallmentAndFindItOnHome(extraArguments: [])
+    }
+
+    /// Aynı akış Türkçe arayüzle (#136): kimlikler dilden bağımsız, kayıt ve Home listesi çalışmalı.
+    @MainActor
+    func testAddInstallmentFromHomeInTurkish() throws {
+        try addInstallmentAndFindItOnHome(extraArguments: ["-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"])
+    }
+
+    @MainActor
+    private func addInstallmentAndFindItOnHome(extraArguments: [String]) throws {
+        let app = launchHome(extraArguments: extraArguments)
         let title = "Test Phone"
 
         let add = app.buttons["home.add"]
