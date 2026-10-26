@@ -11,6 +11,7 @@
 #                     An unknown name fails the run and lists the available tests.
 #   UI_CHECK_APPEARANCES  appearances to run, space separated (default: "light dark"); "light" alone
 #                     halves a targeted run. The AX5 text variant runs in the light pass.
+#   UI_CHECK_TEST_TIMEOUT  per-test time allowance in seconds (default: 180)
 #
 # Output: .build/ui-check/latest/
 #   screenshots/<screen>__<variant>.png
@@ -102,7 +103,7 @@ for appearance in $APPEARANCES; do
     -project Vadem.xcodeproj -scheme Vadem -destination "$DEST" \
     "${ONLY_TESTING[@]}" \
     -parallel-testing-enabled NO \
-    -test-timeouts-enabled YES -default-test-execution-time-allowance 180 \
+    -test-timeouts-enabled YES -default-test-execution-time-allowance "${UI_CHECK_TEST_TIMEOUT:-180}" \
     -resultBundlePath "$OUT/UICheck-$appearance.xcresult" \
     -quiet >"$OUT/test-$appearance.log" 2>&1
   [ -d "$OUT/UICheck-$appearance.xcresult" ] || fail "no result bundle for $appearance" "$OUT/test-$appearance.log"
@@ -147,7 +148,11 @@ for appearance in appearances:
                 base = name.split("_0_")[0]
                 if not base.endswith(".png"):
                     base += ".png"
-                shutil.copy(os.path.join(export, a["exportedFileName"]), os.path.join(out, "screenshots", base))
+                # Süre aşımına uğrayan testlerin eki dışa aktarılmamış olabilir; eksik dosya özeti çökertmesin.
+                try:
+                    shutil.copy(os.path.join(export, a["exportedFileName"]), os.path.join(out, "screenshots", base))
+                except FileNotFoundError:
+                    continue
                 shots.append(base)
 
     tests = os.path.join(out, f"tests-{appearance}.json")
