@@ -121,6 +121,130 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    // MARK: Türkçe yakalamalar (#136)
+    // Aynı ekranlar Türkçe arayüz ve yerel ayarla açılır; açık modda varsayılan ve AX5 metin boyutu
+    // yakalanır. Kesilen/taşan metin erişilebilirlik denetimi ve ekran görüntülerinde görünür.
+
+    private static let turkish = ["-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"]
+
+    @MainActor
+    func testHomeScreenTurkish() throws {
+        try capture(
+            screen: "home-tr",
+            launchArguments: ["-ui-sample-data"] + Self.turkish,
+            sections: [
+                .top,
+                .scrolled(to: "home.upcoming", named: "upcoming"),
+                .scrolled(to: "home.calendar", named: "calendar"),
+                .scrolled(to: "home.cards", named: "cards"),
+                .scrolled(to: "home.list", named: "list"),
+            ]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.staticTexts["home.month"].waitForExistence(timeout: 5),
+                "[ui-check] home-tr__\(variant.name): month title not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddInstallmentFormTurkish() throws {
+        try capture(
+            screen: "add-installment-tr",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"] + Self.turkish,
+            sections: [.top, .scrolled(to: "addInstallment.firstMonth", named: "first-month")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addInstallment.title"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-tr__\(variant.name): title field not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionFormTurkish() throws {
+        try capture(
+            screen: "add-subscription-tr",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription"] + Self.turkish,
+            sections: [.top, .scrolled(to: "addSubscription.card", named: "card")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addSubscription.title"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-tr__\(variant.name): title field not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAnalyticsScreenTurkish() throws {
+        try capture(
+            screen: "analytics-tr",
+            launchArguments: ["-ui-sample-data", "-ui-analytics"] + Self.turkish,
+            sections: [
+                .top,
+                .scrolled(to: "analytics.breakdown", named: "donut"),
+                .scrolled(to: "analytics.insight", named: "insight"),
+            ]
+        )
+    }
+
+    @MainActor
+    func testSettingsScreenTurkish() throws {
+        try capture(
+            screen: "settings-tr",
+            launchArguments: ["-ui-sample-data", "-ui-settings"] + Self.turkish,
+            sections: [.top]
+        )
+    }
+
+    @MainActor
+    func testAssistantEmptyTurkish() throws {
+        try capture(
+            screen: "assistant-empty-tr",
+            launchArguments: ["-ui-sample-data", "-ui-scripted-assistant", "-ui-assistant"] + Self.turkish,
+            sections: [.top]
+        )
+    }
+
+    @MainActor
+    func testAddCardFormTurkish() throws {
+        // Türkçe boş kart formu (en uzun Türkçe metinler).
+        try capture(
+            screen: "add-card-tr",
+            launchArguments: ["-ui-sample-data", "-ui-add-card-form"] + Self.turkish,
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addCard.name"].waitForExistence(timeout: 5),
+                "[ui-check] add-card-tr__\(variant.name): name field not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditCardInUseErrorTurkish() throws {
+        // Türkçe: kullanımdaki kartı silme onayı sonrası ret mesajı.
+        try capture(
+            screen: "edit-card-in-use-tr",
+            launchArguments: ["-ui-sample-data", "-ui-edit-card"] + Self.turkish,
+            sections: [.top]
+        ) { app, variant in
+            let delete = revealDelete(prefix: "addCard", in: app)
+            XCTAssertTrue(delete.exists, "[ui-check] edit-card-in-use-tr__\(variant.name): delete button not found")
+            delete.tap()
+            let confirm = app.buttons["addCard.delete.confirm"].firstMatch
+            XCTAssertTrue(
+                confirm.waitForExistence(timeout: 5),
+                "[ui-check] edit-card-in-use-tr__\(variant.name): confirmation not shown"
+            )
+            confirm.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addCard.failure"].waitForExistence(timeout: 5),
+                "[ui-check] edit-card-in-use-tr__\(variant.name): in-use message not shown"
+            )
+        }
+    }
+
     @MainActor
     func testAddInstallmentCardList() throws {
         // Kart seçim listesi (itme ekranı): formdaki kart satırına dokunarak açılır.

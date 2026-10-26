@@ -61,6 +61,38 @@ struct LocalizationFormattingTests {
         #expect(HomeViewModel.paymentCountText(count) == expected)
     }
 
+    // MARK: Türkçe biçimler
+
+    @Test("Turkish locale writes the day before the month name and uses Turkish month names", arguments: [
+        (1, 2026, 3, "1 Mart"), (31, 2026, 8, "31 Ağustos"), (29, 2024, 2, "29 Şubat"),
+        (15, 2026, 12, "15 Aralık"), (5, 2026, 11, "5 Kasım"),
+    ])
+    func turkishDayTitle(day: Int, year: Int, month: Int, expected: String) {
+        #expect(VademLocalization.dayTitle(day: day, of: Self.month(year, month), locale: Self.tr) == expected)
+    }
+
+    @Test("Turkish month titles for every month are not the English names", arguments: Array(1...12))
+    func turkishMonthTitlesDifferFromEnglish(month: Int) {
+        let tr = VademLocalization.monthTitle(Self.month(2026, month), locale: Self.tr)
+        let en = VademLocalization.monthTitle(Self.month(2026, month), locale: Self.en)
+        #expect(tr.hasSuffix(" 2026"))
+        // Mayıs'ın İngilizcesi "May" ile aynı değil ("Mayıs"), diğerleri de farklı.
+        #expect(tr != en)
+    }
+
+    @Test("Turkish weekday symbols run Sunday to Saturday")
+    func turkishWeekdaySymbols() {
+        #expect(VademLocalization.shortWeekdaySymbols(locale: Self.tr) == ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"])
+    }
+
+    @Test("Lira amounts use the fixed tr_TR format (AmountText takes no language)", arguments: [
+        ("26549.99", "₺26.549,99"), ("0.5", "₺0,50"), ("1000000", "₺1.000.000,00"), ("-1234.56", "-₺1.234,56"),
+    ])
+    func amountUsesFixedTurkishFormat(input: String, expected: String) throws {
+        let amount = try #require(Decimal(string: input, locale: Locale(identifier: "en_US_POSIX")))
+        #expect(AmountText.format(Money(amount)) == expected)
+    }
+
     // MARK: Bildirim metni
 
     private static func reminders(subscriptions count: Int, kind: PlannedReminder.Kind) -> [PlannedReminder] {

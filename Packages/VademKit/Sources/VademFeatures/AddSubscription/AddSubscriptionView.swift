@@ -57,9 +57,10 @@ public struct AddSubscriptionView: View {
                 // Tüm alanlar tek kartta, ince çizgilerle ayrılmış satırlar olarak durur.
                 FormCard {
                     field(.title) {
+                        // Dikey eksen: uzun yer tutucu (ör. Türkçe) ve büyük yazı boyutları kırpılmaz, sarılır.
                         TextField(
                             String(localized: "Title", bundle: .module),
-                            text: $model.title, prompt: Text("e.g. Music", bundle: .module)
+                            text: $model.title, prompt: Text("e.g. Music", bundle: .module), axis: .vertical
                         )
                             #if os(iOS)
                             .textInputAutocapitalization(.sentences)

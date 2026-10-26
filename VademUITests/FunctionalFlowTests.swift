@@ -13,9 +13,9 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
-    private func launchHome() -> XCUIApplication {
+    private func launchHome(extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-ui-static-motion", "-ui-sample-data"]
+        app.launchArguments += ["-ui-static-motion", "-ui-sample-data"] + extraArguments
         app.launch()
         return app
     }
@@ -46,7 +46,18 @@ final class FunctionalFlowTests: XCTestCase {
 
     @MainActor
     func testAddInstallmentFromHomeShowsPaymentOnHome() throws {
-        let app = launchHome()
+        try addInstallmentAndFindItOnHome(extraArguments: [])
+    }
+
+    /// Aynı akış Türkçe arayüzle (#136): kimlikler dilden bağımsız, kayıt ve Home listesi çalışmalı.
+    @MainActor
+    func testAddInstallmentFromHomeInTurkish() throws {
+        try addInstallmentAndFindItOnHome(extraArguments: ["-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"])
+    }
+
+    @MainActor
+    private func addInstallmentAndFindItOnHome(extraArguments: [String]) throws {
+        let app = launchHome(extraArguments: extraArguments)
         let title = "Test Phone"
 
         let add = app.buttons["home.add"]
@@ -269,7 +280,9 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertEqual(titleField.value as? String, "Laptop", "title must be prefilled")
         XCTAssertTrue(app.buttons["addInstallment.save"].isEnabled, "save must be enabled with the saved values")
 
-        titleField.tap()
+        // Dikey eksenli alanda ortaya dokunmak imleci metnin ortasına koyar;
+        // sağ kenara dokunarak imleci sona alırız.
+        titleField.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
         titleField.typeText(" Pro")
         app.buttons["addInstallment.save"].tap()
 

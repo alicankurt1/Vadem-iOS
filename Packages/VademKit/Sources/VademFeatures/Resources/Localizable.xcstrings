@@ -9,6 +9,12 @@
             "state" : "translated",
             "value" : "%@ %@ TL"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ %@ TL"
+          }
         }
       }
     },
@@ -20,6 +26,12 @@
             "state" : "translated",
             "value" : "%@ %@ of %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ %@ / %@"
+          }
         }
       }
     },
@@ -27,6 +39,12 @@
       "comment" : "Spoken axis value in lira",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ TL"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ TL"
@@ -42,6 +60,12 @@
             "state" : "translated",
             "value" : "%@ due today, %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ bugün ödenecek, %@"
+          }
         }
       }
     },
@@ -53,6 +77,12 @@
             "state" : "translated",
             "value" : "%@ due tomorrow, %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ yarın ödenecek, %@"
+          }
         }
       }
     },
@@ -60,6 +90,12 @@
       "comment" : "Spoken chart bar: month, amount",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, %@ TL"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@, %@ TL"
@@ -74,6 +110,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@, %@ TL, %lld percent"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, %@ TL, yüzde %lld"
           }
         }
       }
@@ -102,6 +144,34 @@
                     "stringUnit" : {
                       "state" : "translated",
                       "value" : "%arg payments"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bugün %#@payments@ var, toplam %2$@"
+          },
+          "substitutions" : {
+            "payments" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg ödeme"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg ödeme"
                     }
                   }
                 }
@@ -141,6 +211,34 @@
               }
             }
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yarın %#@payments@ var, toplam %2$@"
+          },
+          "substitutions" : {
+            "payments" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg ödeme"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg ödeme"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -150,6 +248,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld%%"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%%%lld"
           }
         }
       }
@@ -162,12 +266,24 @@
             "state" : "translated",
             "value" : "%lldk"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldB"
+          }
         }
       }
     },
     "1–31" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1–31"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1–31"
@@ -182,6 +298,12 @@
             "state" : "translated",
             "value" : "Add"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekle"
+          }
         }
       }
     },
@@ -193,6 +315,12 @@
             "state" : "translated",
             "value" : "Add %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ekle"
+          }
         }
       }
     },
@@ -202,6 +330,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add a card"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kart ekle"
           }
         }
       }
@@ -213,6 +347,12 @@
             "state" : "translated",
             "value" : "Add a card first."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önce bir kart ekleyin."
+          }
         }
       }
     },
@@ -222,6 +362,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add a card to start tracking installments."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksitleri izlemeye başlamak için bir kart ekleyin."
           }
         }
       }
@@ -233,6 +379,12 @@
             "state" : "translated",
             "value" : "Add a payment"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme ekle"
+          }
         }
       }
     },
@@ -242,6 +394,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add a payment to see your next 12 months."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önümüzdeki 12 ayı görmek için bir ödeme ekleyin."
           }
         }
       }
@@ -253,6 +411,12 @@
             "state" : "translated",
             "value" : "Add installment"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit ekle"
+          }
         }
       }
     },
@@ -262,6 +426,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme ekle"
           }
         }
       }
@@ -273,6 +443,12 @@
             "state" : "translated",
             "value" : "Add subscription"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abonelik ekle"
+          }
         }
       }
     },
@@ -282,6 +458,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add ₺100"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "₺100 ekle"
           }
         }
       }
@@ -293,6 +475,12 @@
             "state" : "translated",
             "value" : "All of its charges are removed. This cannot be undone."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aboneliğin tüm ödemeleri silinir. Bu işlem geri alınamaz."
+          }
         }
       }
     },
@@ -302,6 +490,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "All of its payments are removed. This cannot be undone."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksitin tüm ödemeleri silinir. Bu işlem geri alınamaz."
           }
         }
       }
@@ -313,6 +507,12 @@
             "state" : "translated",
             "value" : "Amount"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutar"
+          }
         }
       }
     },
@@ -322,6 +522,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Amount (TL)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutar (TL)"
           }
         }
       }
@@ -333,6 +539,12 @@
             "state" : "translated",
             "value" : "Amount (₺)"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutar (₺)"
+          }
         }
       }
     },
@@ -342,6 +554,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Amount must be greater than zero."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutar sıfırdan büyük olmalı."
           }
         }
       }
@@ -354,6 +572,12 @@
             "state" : "translated",
             "value" : "Amounts"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutarlar"
+          }
         }
       }
     },
@@ -363,6 +587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Analytics"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analiz"
           }
         }
       }
@@ -374,6 +604,12 @@
             "state" : "translated",
             "value" : "Answers come from your data on this device and can be wrong."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yanıtlar bu cihazdaki verilerinizden gelir ve hatalı olabilir."
+          }
         }
       }
     },
@@ -383,6 +619,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple Intelligence is turned off. Turn it on in Settings to use the assistant."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence kapalı. Asistanı kullanmak için Ayarlar'dan açın."
           }
         }
       }
@@ -394,6 +636,12 @@
             "state" : "translated",
             "value" : "Ask a question"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir soru sorun"
+          }
         }
       }
     },
@@ -403,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ask about your payments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeleriniz hakkında soru sorun"
           }
         }
       }
@@ -414,6 +668,12 @@
             "state" : "translated",
             "value" : "Ask about your payments. The assistant can only read your data; it can't add, edit or delete anything."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeleriniz hakkında soru sorun. Asistan verilerinizi yalnızca okuyabilir; hiçbir şey ekleyemez, düzenleyemez veya silemez."
+          }
         }
       }
     },
@@ -424,6 +684,12 @@
             "state" : "translated",
             "value" : "Assistant"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asistan"
+          }
         }
       }
     },
@@ -433,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Assistant unavailable"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asistan kullanılamıyor"
           }
         }
       }
@@ -445,6 +717,12 @@
             "state" : "translated",
             "value" : "Assistant: %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asistan: %@"
+          }
         }
       }
     },
@@ -454,6 +732,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "By card"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karta göre"
           }
         }
       }
@@ -465,6 +749,12 @@
             "state" : "translated",
             "value" : "Calendar"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takvim"
+          }
         }
       }
     },
@@ -474,6 +764,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         }
       }
@@ -485,6 +781,12 @@
             "state" : "translated",
             "value" : "Cancelled."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İptal edildi."
+          }
         }
       }
     },
@@ -495,6 +797,12 @@
             "state" : "translated",
             "value" : "Card"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kart"
+          }
         }
       }
     },
@@ -504,6 +812,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Card name"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kart adı"
           }
         }
       }
@@ -516,6 +830,12 @@
             "state" : "translated",
             "value" : "Cards"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartlar"
+          }
         }
       }
     },
@@ -525,6 +845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cards used by installments or subscriptions cannot be deleted."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit veya abonelikte kullanılan kartlar silinemez."
           }
         }
       }
@@ -537,6 +863,12 @@
             "state" : "translated",
             "value" : "Chips"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiketler"
+          }
         }
       }
     },
@@ -546,6 +878,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choose %lld to %lld installments."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ile %lld arasında taksit seçin."
           }
         }
       }
@@ -557,6 +895,12 @@
             "state" : "translated",
             "value" : "Choose a card"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kart seçin"
+          }
         }
       }
     },
@@ -567,6 +911,12 @@
             "state" : "translated",
             "value" : "Choose a card."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir kart seçin."
+          }
         }
       }
     },
@@ -576,6 +926,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choose a renewal day from %lld to %lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ile %lld arasında bir yenilenme günü seçin."
           }
         }
       }
@@ -588,6 +944,12 @@
             "state" : "translated",
             "value" : "Colors"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renkler"
+          }
         }
       }
     },
@@ -599,6 +961,12 @@
             "state" : "translated",
             "value" : "Day %lld"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld. gün"
+          }
         }
       }
     },
@@ -608,6 +976,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Day before"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir gün önce"
           }
         }
       }
@@ -619,6 +993,12 @@
             "state" : "translated",
             "value" : "Day before and on the day"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir gün önce ve o gün"
+          }
         }
       }
     },
@@ -628,6 +1008,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sil"
           }
         }
       }
@@ -639,6 +1025,12 @@
             "state" : "translated",
             "value" : "Delete card"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartı sil"
+          }
         }
       }
     },
@@ -648,6 +1040,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete installment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksiti sil"
           }
         }
       }
@@ -659,6 +1057,12 @@
             "state" : "translated",
             "value" : "Delete subscription"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aboneliği sil"
+          }
         }
       }
     },
@@ -668,6 +1072,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete this card?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu kart silinsin mi?"
           }
         }
       }
@@ -679,6 +1089,12 @@
             "state" : "translated",
             "value" : "Delete this installment?"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu taksit silinsin mi?"
+          }
         }
       }
     },
@@ -688,6 +1104,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete this subscription?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu abonelik silinsin mi?"
           }
         }
       }
@@ -699,6 +1121,12 @@
             "state" : "translated",
             "value" : "Design gallery"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tasarım galerisi"
+          }
         }
       }
     },
@@ -708,6 +1136,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Done"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitti"
           }
         }
       }
@@ -719,6 +1153,12 @@
             "state" : "translated",
             "value" : "Due day"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son ödeme günü"
+          }
         }
       }
     },
@@ -728,6 +1168,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Due so far"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bugüne kadar vadesi gelen"
           }
         }
       }
@@ -739,6 +1185,12 @@
             "state" : "translated",
             "value" : "Due this month"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödenecek"
+          }
         }
       }
     },
@@ -748,6 +1200,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit card"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartı düzenle"
           }
         }
       }
@@ -759,6 +1217,12 @@
             "state" : "translated",
             "value" : "Edit installment"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksiti düzenle"
+          }
         }
       }
     },
@@ -768,6 +1232,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit subscription"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aboneliği düzenle"
           }
         }
       }
@@ -779,6 +1249,12 @@
             "state" : "translated",
             "value" : "Edits the card"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartı düzenler"
+          }
         }
       }
     },
@@ -788,6 +1264,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edits the payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeyi düzenler"
           }
         }
       }
@@ -799,6 +1281,12 @@
             "state" : "translated",
             "value" : "Enter a card name."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir kart adı girin."
+          }
         }
       }
     },
@@ -808,6 +1296,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter a due day from %lld to %lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ile %lld arasında bir son ödeme günü girin."
           }
         }
       }
@@ -820,6 +1314,12 @@
             "state" : "translated",
             "value" : "Enter a number like 1499%@90."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1499%@90 gibi bir sayı girin."
+          }
         }
       }
     },
@@ -829,6 +1329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter a statement day from %lld to %lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ile %lld arasında bir hesap kesim günü girin."
           }
         }
       }
@@ -840,6 +1346,12 @@
             "state" : "translated",
             "value" : "Enter a title."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir başlık girin."
+          }
         }
       }
     },
@@ -849,6 +1361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter an amount."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir tutar girin."
           }
         }
       }
@@ -860,6 +1378,12 @@
             "state" : "translated",
             "value" : "First charge month"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlk ödeme ayı"
+          }
         }
       }
     },
@@ -869,6 +1393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "First due month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlk taksit ayı"
           }
         }
       }
@@ -881,6 +1411,12 @@
             "state" : "translated",
             "value" : "Hero"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Özet paneli"
+          }
         }
       }
     },
@@ -890,6 +1426,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "How much do I pay this month?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ne kadar ödüyorum?"
           }
         }
       }
@@ -901,6 +1443,12 @@
             "state" : "translated",
             "value" : "I can't help with that. Try asking about your payments in a different way."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu konuda yardımcı olamıyorum. Ödemelerinizi farklı bir şekilde sormayı deneyin."
+          }
         }
       }
     },
@@ -910,6 +1458,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "I could not open your payments."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemelerinizi açamadım."
           }
         }
       }
@@ -934,6 +1488,24 @@
               }
             }
           }
+        },
+        "tr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld gün sonra"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld gün sonra"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -943,6 +1515,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "In Turkish lira"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Türk lirası cinsinden"
           }
         }
       }
@@ -954,6 +1532,12 @@
             "state" : "translated",
             "value" : "Installment"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit"
+          }
         }
       }
     },
@@ -963,6 +1547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksitler"
           }
         }
       }
@@ -974,6 +1564,12 @@
             "state" : "translated",
             "value" : "Installments and subscriptions due in each of the next 12 months"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önümüzdeki 12 ayın her birinde ödenecek taksit ve abonelikler"
+          }
         }
       }
     },
@@ -984,6 +1580,12 @@
             "state" : "translated",
             "value" : "Installments: %lld"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit sayısı: %lld"
+          }
         }
       }
     },
@@ -993,6 +1595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kind"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tür"
           }
         }
       }
@@ -1005,6 +1613,12 @@
             "state" : "translated",
             "value" : "Last installment payment: %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son taksit: %@"
+          }
         }
       }
     },
@@ -1014,6 +1628,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Last payment this month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ayın son ödemesi"
           }
         }
       }
@@ -1026,6 +1646,12 @@
             "state" : "translated",
             "value" : "Later"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daha sonra"
+          }
         }
       }
     },
@@ -1035,6 +1661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ay"
           }
         }
       }
@@ -1046,6 +1678,12 @@
             "state" : "translated",
             "value" : "Monthly"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aylık"
+          }
         }
       }
     },
@@ -1055,6 +1693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monthly payments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aylık ödemeler"
           }
         }
       }
@@ -1066,6 +1710,12 @@
             "state" : "translated",
             "value" : "New card"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni kart"
+          }
         }
       }
     },
@@ -1075,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "New installment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni taksit"
           }
         }
       }
@@ -1086,6 +1742,12 @@
             "state" : "translated",
             "value" : "New subscription"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni abonelik"
+          }
         }
       }
     },
@@ -1095,6 +1757,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Next month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonraki ay"
           }
         }
       }
@@ -1129,6 +1797,34 @@
               }
             }
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sıradaki: %1$@, %2$@, %#@days@."
+          },
+          "substitutions" : {
+            "days" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg gün sonra"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg gün sonra"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -1139,6 +1835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Next: %@, %@, on %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sıradaki: %@, %@, %@ tarihinde."
           }
         }
       }
@@ -1151,6 +1853,12 @@
             "state" : "translated",
             "value" : "Next: %@, %@, today."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sıradaki: %@, %@, bugün."
+          }
         }
       }
     },
@@ -1162,6 +1870,12 @@
             "state" : "translated",
             "value" : "Next: %@, %@, tomorrow."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sıradaki: %@, %@, yarın."
+          }
         }
       }
     },
@@ -1172,6 +1886,12 @@
             "state" : "translated",
             "value" : "No card"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kart yok"
+          }
         }
       }
     },
@@ -1181,6 +1901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No payments yet"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Henüz ödeme yok"
           }
         }
       }
@@ -1193,6 +1919,12 @@
             "state" : "translated",
             "value" : "No upcoming payments."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yaklaşan ödeme yok."
+          }
         }
       }
     },
@@ -1204,6 +1936,12 @@
             "state" : "translated",
             "value" : "Nothing due on %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tarihinde ödeme yok"
+          }
         }
       }
     },
@@ -1213,6 +1951,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nothing due this month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödeme yok"
           }
         }
       }
@@ -1225,6 +1969,12 @@
             "state" : "translated",
             "value" : "Nothing is due in %@."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ döneminde ödeme yok."
+          }
         }
       }
     },
@@ -1234,6 +1984,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nothing is due this month."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödeme yok."
           }
         }
       }
@@ -1245,6 +2001,12 @@
             "state" : "translated",
             "value" : "Notifications are turned off for Vadem in Settings."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem bildirimleri Ayarlar'da kapalı."
+          }
         }
       }
     },
@@ -1254,6 +2016,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "On the day"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O gün"
           }
         }
       }
@@ -1265,6 +2033,12 @@
             "state" : "translated",
             "value" : "Open Settings"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayarlar'ı aç"
+          }
         }
       }
     },
@@ -1274,6 +2048,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opens a list"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir liste açar"
           }
         }
       }
@@ -1286,6 +2066,12 @@
             "state" : "translated",
             "value" : "Overdue"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gecikmiş"
+          }
         }
       }
     },
@@ -1297,6 +2083,12 @@
             "state" : "translated",
             "value" : "Paid"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödenen"
+          }
         }
       }
     },
@@ -1306,6 +2098,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paid off"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödendi"
           }
         }
       }
@@ -1318,6 +2116,12 @@
             "state" : "translated",
             "value" : "Payment due today"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bugün ödeme günü"
+          }
         }
       }
     },
@@ -1329,6 +2133,12 @@
             "state" : "translated",
             "value" : "Payment due tomorrow"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yarın ödeme günü"
+          }
         }
       }
     },
@@ -1339,6 +2149,12 @@
             "state" : "translated",
             "value" : "Payment reminders"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme hatırlatmaları"
+          }
         }
       }
     },
@@ -1348,6 +2164,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Payments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeler"
           }
         }
       }
@@ -1360,6 +2182,12 @@
             "state" : "translated",
             "value" : "Payments on %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ödemeleri"
+          }
         }
       }
     },
@@ -1371,6 +2199,12 @@
             "state" : "translated",
             "value" : "Pills"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozetler"
+          }
         }
       }
     },
@@ -1380,6 +2214,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Previous month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önceki ay"
           }
         }
       }
@@ -1391,6 +2231,12 @@
             "state" : "translated",
             "value" : "Question"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soru"
+          }
         }
       }
     },
@@ -1400,6 +2246,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remind me"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hatırlat"
           }
         }
       }
@@ -1411,6 +2263,12 @@
             "state" : "translated",
             "value" : "Renews on day %lld"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her ayın %lld. günü yenilenir"
+          }
         }
       }
     },
@@ -1420,6 +2278,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Repeats"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekrar"
           }
         }
       }
@@ -1432,6 +2296,12 @@
             "state" : "translated",
             "value" : "Rows"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satırlar"
+          }
         }
       }
     },
@@ -1441,6 +2311,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Save"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaydet"
           }
         }
       }
@@ -1452,6 +2328,12 @@
             "state" : "translated",
             "value" : "Send"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gönder"
+          }
         }
       }
     },
@@ -1461,6 +2343,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayarlar"
           }
         }
       }
@@ -1472,6 +2360,12 @@
             "state" : "translated",
             "value" : "Show all payments"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tüm ödemeleri göster"
+          }
         }
       }
     },
@@ -1482,6 +2376,12 @@
             "state" : "translated",
             "value" : "Something went wrong"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir sorun oluştu"
+          }
         }
       }
     },
@@ -1491,6 +2391,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Something went wrong. Please try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir sorun oluştu. Lütfen tekrar deneyin."
           }
         }
       }
@@ -1503,6 +2409,12 @@
             "state" : "translated",
             "value" : "Spending by card: %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karta göre harcama: %@"
+          }
         }
       }
     },
@@ -1512,6 +2424,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Statement day"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hesap kesim günü"
           }
         }
       }
@@ -1523,6 +2441,12 @@
             "state" : "translated",
             "value" : "Subscription"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abonelik"
+          }
         }
       }
     },
@@ -1532,6 +2456,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subscriptions"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abonelikler"
           }
         }
       }
@@ -1543,6 +2473,12 @@
             "state" : "translated",
             "value" : "Suggestions"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öneriler"
+          }
         }
       }
     },
@@ -1552,6 +2488,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "That question was too long for me. Try a shorter one."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu soru benim için çok uzun. Daha kısa bir soru deneyin."
           }
         }
       }
@@ -1563,6 +2505,12 @@
             "state" : "translated",
             "value" : "The assistant is not available on this device right now."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asistan şu anda bu cihazda kullanılamıyor."
+          }
         }
       }
     },
@@ -1572,6 +2520,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The assistant is not available right now. Try again later."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asistan şu anda kullanılamıyor. Daha sonra tekrar deneyin."
           }
         }
       }
@@ -1583,6 +2537,12 @@
             "state" : "translated",
             "value" : "The assistant needs iOS 26 or later."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asistan için iOS 26 veya üzeri gerekir."
+          }
         }
       }
     },
@@ -1592,6 +2552,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The card could not be deleted. Please try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kart silinemedi. Lütfen tekrar deneyin."
           }
         }
       }
@@ -1603,6 +2569,12 @@
             "state" : "translated",
             "value" : "The card could not be saved. Please try again."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kart kaydedilemedi. Lütfen tekrar deneyin."
+          }
         }
       }
     },
@@ -1612,6 +2584,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The day of the month the payment is due"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemenin yapılacağı ayın günü"
           }
         }
       }
@@ -1623,6 +2601,12 @@
             "state" : "translated",
             "value" : "The day of the month the statement is cut"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hesap özetinin kesildiği ayın günü"
+          }
         }
       }
     },
@@ -1632,6 +2616,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The installment could not be deleted. Please try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit silinemedi. Lütfen tekrar deneyin."
           }
         }
       }
@@ -1643,6 +2633,12 @@
             "state" : "translated",
             "value" : "The installment could not be saved. Please try again."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit kaydedilemedi. Lütfen tekrar deneyin."
+          }
         }
       }
     },
@@ -1652,6 +2648,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The last installment must be in December 9999 or earlier."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son taksit en geç Aralık 9999'da olmalı."
           }
         }
       }
@@ -1663,6 +2665,12 @@
             "state" : "translated",
             "value" : "The on-device model is still downloading. Try again in a little while."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cihazdaki model hâlâ indiriliyor. Birazdan tekrar deneyin."
+          }
         }
       }
     },
@@ -1672,6 +2680,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The subscription could not be deleted. Please try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abonelik silinemedi. Lütfen tekrar deneyin."
           }
         }
       }
@@ -1683,6 +2697,12 @@
             "state" : "translated",
             "value" : "The subscription could not be saved. Please try again."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abonelik kaydedilemedi. Lütfen tekrar deneyin."
+          }
         }
       }
     },
@@ -1692,6 +2712,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thinking…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düşünüyor…"
           }
         }
       }
@@ -1703,6 +2729,12 @@
             "state" : "translated",
             "value" : "This card is used by installments or subscriptions. Delete or move them first."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu kart taksit veya aboneliklerde kullanılıyor. Önce onları silin veya başka karta taşıyın."
+          }
         }
       }
     },
@@ -1712,6 +2744,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This device doesn't support Apple Intelligence, so the assistant can't run here."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu cihaz Apple Intelligence'ı desteklemiyor, bu yüzden asistan burada çalışamaz."
           }
         }
       }
@@ -1723,6 +2761,12 @@
             "state" : "translated",
             "value" : "This month"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay"
+          }
         }
       }
     },
@@ -1732,6 +2776,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Title"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başlık"
           }
         }
       }
@@ -1744,6 +2794,12 @@
             "state" : "translated",
             "value" : "Today"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bugün"
+          }
         }
       }
     },
@@ -1755,6 +2811,12 @@
             "state" : "translated",
             "value" : "Tomorrow"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yarın"
+          }
         }
       }
     },
@@ -1764,6 +2826,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Total amount"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toplam tutar"
           }
         }
       }
@@ -1775,6 +2843,12 @@
             "state" : "translated",
             "value" : "Upcoming"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yaklaşan"
+          }
         }
       }
     },
@@ -1785,12 +2859,24 @@
             "state" : "translated",
             "value" : "Use at most %lld characters."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En fazla %lld karakter kullanın."
+          }
         }
       }
     },
     "Vadem" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vadem"
@@ -1805,6 +2891,12 @@
             "state" : "translated",
             "value" : "Version %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sürüm %@"
+          }
         }
       }
     },
@@ -1814,6 +2906,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "What is my next payment?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sıradaki ödemem ne?"
           }
         }
       }
@@ -1825,6 +2923,12 @@
             "state" : "translated",
             "value" : "When am I debt-free?"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borcum ne zaman biter?"
+          }
         }
       }
     },
@@ -1834,6 +2938,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yearly"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yıllık"
           }
         }
       }
@@ -1846,6 +2956,12 @@
             "state" : "translated",
             "value" : "You pay %@ in %@, %@ still to go."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ döneminde %1$@ ödüyorsunuz, %3$@ kaldı."
+          }
         }
       }
     },
@@ -1856,6 +2972,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You pay %@ in %@."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ döneminde %1$@ ödüyorsunuz."
           }
         }
       }
@@ -1868,6 +2990,12 @@
             "state" : "translated",
             "value" : "You: %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siz: %@"
+          }
         }
       }
     },
@@ -1877,6 +3005,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your cards could not be loaded."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartlarınız yüklenemedi."
           }
         }
       }
@@ -1888,6 +3022,12 @@
             "state" : "translated",
             "value" : "Your data could not be opened. Please restart the app."
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verileriniz açılamadı. Lütfen uygulamayı yeniden başlatın."
+          }
         }
       }
     },
@@ -1897,6 +3037,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your payments could not be loaded."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeleriniz yüklenemedi."
           }
         }
       }
@@ -1917,6 +3063,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld months remaining"
+                }
+              }
+            }
+          }
+        },
+        "tr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ay kaldı"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ay kaldı"
                 }
               }
             }
@@ -1944,6 +3108,24 @@
               }
             }
           }
+        },
+        "tr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ödeme"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ödeme"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -1951,6 +3133,12 @@
       "comment" : "Spoken lira amount; the argument is the number, e.g. 1.234,56",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Türk lirası"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ Türk lirası"
@@ -1966,6 +3154,12 @@
             "state" : "translated",
             "value" : "eksi %@ Türk lirası"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "eksi %@ Türk lirası"
+          }
         }
       }
     },
@@ -1977,6 +3171,12 @@
             "state" : "translated",
             "value" : "due %@"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vadesi %@"
+          }
         }
       }
     },
@@ -1986,6 +3186,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "e.g. Everyday"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ör. Bonus"
           }
         }
       }
@@ -1997,6 +3203,12 @@
             "state" : "translated",
             "value" : "e.g. Laptop"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ör. Dizüstü bilgisayar"
+          }
         }
       }
     },
@@ -2006,6 +3218,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "e.g. Music"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ör. Müzik"
           }
         }
       }
@@ -2018,6 +3236,12 @@
             "state" : "translated",
             "value" : "installment %lld of %lld"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit %lld/%lld"
+          }
         }
       }
     },
@@ -2025,6 +3249,12 @@
       "comment" : "Date pattern for a day of a month, e.g. 12 October",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "d MMMM"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "d MMMM"
@@ -2040,6 +3270,12 @@
             "state" : "translated",
             "value" : "LLL"
           }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LLL"
+          }
         }
       }
     },
@@ -2047,6 +3283,12 @@
       "comment" : "Date pattern for a month title, e.g. October 2026",
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LLLL yyyy"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "LLLL yyyy"

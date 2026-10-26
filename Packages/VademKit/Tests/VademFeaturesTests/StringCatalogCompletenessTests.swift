@@ -240,4 +240,169 @@ struct StringCatalogCompletenessTests {
         let strings = try Self.catalog(at: Self.modules[0].catalogs[0])
         #expect(strings[key] != nil, "UI tests look for \(key)")
     }
+
+    // MARK: Türkçe çeviri
+
+    private static let allCatalogs: [String] = modules.flatMap(\.catalogs)
+
+    private static func entries(at path: String) throws -> [String: [String: Any]] {
+        try catalog(at: path).mapValues { try #require($0 as? [String: Any]) }
+    }
+
+    /// Bir yerelleştirmedeki tüm düz metinler (stringUnit, çoğul varyasyonları).
+    private static func texts(of localization: [String: Any]) -> [String] {
+        var result: [String] = []
+        if let unit = localization["stringUnit"] as? [String: Any], let value = unit["value"] as? String { result.append(value) }
+        if let plural = (localization["variations"] as? [String: Any])?["plural"] as? [String: Any] {
+            for case let form as [String: Any] in plural.values {
+                if let unit = form["stringUnit"] as? [String: Any], let value = unit["value"] as? String { result.append(value) }
+            }
+        }
+        return result
+    }
+
+    @Test("Every catalog key has a translated Turkish value", arguments: allCatalogs)
+    func everyKeyHasTurkish(path: String) throws {
+        let strings = try Self.entries(at: path)
+        #expect(!strings.isEmpty)
+        for (key, entry) in strings {
+            if entry["shouldTranslate"] as? Bool == false { continue }
+            let tr = try #require(
+                (entry["localizations"] as? [String: Any])?["tr"] as? [String: Any],
+                "\(path): no Turkish value for \(key)"
+            )
+            let texts = Self.texts(of: tr)
+            #expect(!texts.isEmpty, "\(path): Turkish value has no text for \(key)")
+            for text in texts { #expect(!text.trimmingCharacters(in: .whitespaces).isEmpty, "\(path): empty Turkish text for \(key)") }
+            // Durum "translated" olmalı; "new" / "needs_review" çevrilmemiş sayılır.
+            func states(_ value: Any) -> [String] {
+                if let dict = value as? [String: Any] {
+                    var found: [String] = []
+                    if let state = (dict["stringUnit"] as? [String: Any])?["state"] as? String { found.append(state) }
+                    for child in dict.values { found += states(child) }
+                    return found
+                }
+                return []
+            }
+            for state in states(tr) { #expect(state == "translated", "\(path): Turkish state '\(state)' for \(key)") }
+        }
+    }
+
+    @Test("Turkish values are not left as the English source text (except names and symbols)", arguments: allCatalogs)
+    func turkishDiffersFromEnglishMostly(path: String) throws {
+        let strings = try Self.entries(at: path)
+        var identical = 0
+        var translatable = 0
+        for (key, entry) in strings {
+            guard let localizations = entry["localizations"] as? [String: Any],
+                  let tr = localizations["tr"] as? [String: Any] else { continue }
+            let english = (localizations["en"] as? [String: Any]).map(Self.texts(of:)) ?? [key]
+            translatable += 1
+            if Self.texts(of: tr) == english || (english.isEmpty && Self.texts(of: tr) == [key]) { identical += 1 }
+        }
+        // Özel adlar ve semboller aynı kalabilir; ama çoğunluk çevrilmiş olmalı.
+        #expect(Double(identical) <= Double(translatable) * 0.25, "\(path): \(identical)/\(translatable) Turkish values equal the English text")
+    }
+
+    private struct Spec: Equatable { let index: Int; let type: String }
+
+    private static func kind(_ spec: String) -> String {
+        if spec.hasSuffix("@") { return "object" }
+        if spec.hasSuffix("f") { return "double" }
+        return "int"
+    }
+
+    /// Metindeki argümanlar. Konumsuz belirleyiciler sırayla numaralanır; karışık kullanım `nil` döner.
+    private static func arguments(in text: String, substitutions: [String: Int] = [:]) -> [Spec]? {
+        let regex = try! NSRegularExpression(pattern: #"%(?:(\d+)\$)?(l*d|@|l*f)|%#@([A-Za-z_]+)@"#)
+        var result: [Spec] = []
+        var next = 1
+        var positional = 0
+        var sequential = 0
+        for match in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+            if let nameRange = Range(match.range(at: 3), in: text) {
+                guard let argNum = substitutions[String(text[nameRange])] else { return nil }
+                result.append(Spec(index: argNum, type: "int"))
+                continue
+            }
+            let spec = String(text[Range(match.range(at: 2), in: text)!])
+            if let posRange = Range(match.range(at: 1), in: text) {
+                positional += 1
+                result.append(Spec(index: Int(text[posRange])!, type: kind(spec)))
+            } else {
+                sequential += 1
+                result.append(Spec(index: next, type: kind(spec)))
+                next += 1
+            }
+        }
+        if positional > 0 && sequential > 0 { return nil }
+        return result
+    }
+
+    @Test("Turkish format specifiers match the English ones; reordering only with positional specifiers", arguments: allCatalogs)
+    func formatSpecifiersConsistent(path: String) throws {
+        for (key, entry) in try Self.entries(at: path) {
+            guard let localizations = entry["localizations"] as? [String: Any],
+                  let tr = localizations["tr"] as? [String: Any] else { continue }
+            // Anahtar (İngilizce kaynak) argümanları sırasıyla 1...N.
+            var expected = (Self.arguments(in: key) ?? []).sorted { $0.index < $1.index }
+            // Simgesel anahtarlarda (ör. amount.spoken) argümanlar İngilizce değerden okunur.
+            if expected.isEmpty, let en = localizations["en"] as? [String: Any], let first = Self.texts(of: en).first {
+                expected = (Self.arguments(in: first) ?? []).sorted { $0.index < $1.index }
+            }
+            // Anahtarda "%lld"/"%@" sırayla geçer; sıra = konum.
+            var texts: [[Spec]] = []
+            let subs = (tr["substitutions"] as? [String: Any]) ?? [:]
+            let argNums = subs.compactMapValues { ($0 as? [String: Any])?["argNum"] as? Int }
+            for text in Self.texts(of: tr) {
+                let parsed = try #require(Self.arguments(in: text, substitutions: argNums),
+                                          "\(path): \(key): mixed positional and sequential specifiers or unknown substitution in '\(text)'")
+                texts.append(parsed)
+            }
+            for (name, value) in subs {
+                guard let sub = value as? [String: Any] else { continue }
+                // Değişim içindeki çoğul biçimleri yalnızca %arg / %lld / sayısız olabilir.
+                for form in (((sub["variations"] as? [String: Any])?["plural"]) as? [String: Any])?.values ?? [:].values {
+                    let text = ((form as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String ?? ""
+                    #expect(!text.isEmpty, "\(path): \(key): empty plural form in substitution \(name)")
+                    #expect(!text.contains("%@"), "\(path): \(key): object specifier in plural form")
+                }
+            }
+            for parsed in texts {
+                #expect(parsed.sorted { $0.index < $1.index } == expected,
+                        "\(path): \(key): Turkish arguments \(parsed) differ from source \(expected)")
+            }
+        }
+    }
+
+    @Test("Turkish plural strings define the other form (and one if English does)", arguments: allCatalogs)
+    func turkishPluralForms(path: String) throws {
+        for (key, entry) in try Self.entries(at: path) {
+            guard let localizations = entry["localizations"] as? [String: Any],
+                  let en = localizations["en"] as? [String: Any],
+                  en["variations"] != nil || en["substitutions"] != nil else { continue }
+            let tr = try #require(localizations["tr"] as? [String: Any], "\(path): no Turkish for plural key \(key)")
+            var pluralSets: [[String: Any]] = []
+            if let plural = (tr["variations"] as? [String: Any])?["plural"] as? [String: Any] { pluralSets.append(plural) }
+            for case let sub as [String: Any] in (tr["substitutions"] as? [String: Any])?.values.map({ $0 }) ?? [] {
+                if let plural = (sub["variations"] as? [String: Any])?["plural"] as? [String: Any] { pluralSets.append(plural) }
+            }
+            #expect(!pluralSets.isEmpty, "\(path): Turkish for \(key) lost its plural variations")
+            for plural in pluralSets { #expect(plural["other"] != nil, "\(path): Turkish plural for \(key) needs 'other'") }
+        }
+    }
+
+    @Test("Turkish translations exist for the plural-sensitive texts", arguments: [
+        "^[%lld payment](inflect: true)",
+        "^[%lld month](inflect: true) remaining",
+        "In %lld days",
+        "%lld payments due today, %@ total",
+        "%lld payments due tomorrow, %@ total",
+    ])
+    func pluralKeysHaveTurkish(key: String) throws {
+        let strings = try Self.catalog(at: Self.modules[0].catalogs[0])
+        let entry = try #require(strings[key] as? [String: Any], "missing key \(key)")
+        let tr = try #require((entry["localizations"] as? [String: Any])?["tr"] as? [String: Any], "no tr for \(key)")
+        #expect(tr["variations"] != nil || tr["substitutions"] != nil, "\(key) lost its plural handling in Turkish")
+    }
 }
