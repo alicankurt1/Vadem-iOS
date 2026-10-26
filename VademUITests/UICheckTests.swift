@@ -207,6 +207,45 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testAddCardFormTurkish() throws {
+        // Türkçe boş kart formu (en uzun Türkçe metinler).
+        try capture(
+            screen: "add-card-tr",
+            launchArguments: ["-ui-sample-data", "-ui-add-card-form"] + Self.turkish,
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addCard.name"].waitForExistence(timeout: 5),
+                "[ui-check] add-card-tr__\(variant.name): name field not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditCardInUseErrorTurkish() throws {
+        // Türkçe: kullanımdaki kartı silme onayı sonrası ret mesajı.
+        try capture(
+            screen: "edit-card-in-use-tr",
+            launchArguments: ["-ui-sample-data", "-ui-edit-card"] + Self.turkish,
+            sections: [.top]
+        ) { app, variant in
+            let delete = revealDelete(prefix: "addCard", in: app)
+            XCTAssertTrue(delete.exists, "[ui-check] edit-card-in-use-tr__\(variant.name): delete button not found")
+            delete.tap()
+            let confirm = app.buttons["addCard.delete.confirm"].firstMatch
+            XCTAssertTrue(
+                confirm.waitForExistence(timeout: 5),
+                "[ui-check] edit-card-in-use-tr__\(variant.name): confirmation not shown"
+            )
+            confirm.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addCard.failure"].waitForExistence(timeout: 5),
+                "[ui-check] edit-card-in-use-tr__\(variant.name): in-use message not shown"
+            )
+        }
+    }
+
+    @MainActor
     func testAddInstallmentCardList() throws {
         // Kart seçim listesi (itme ekranı): formdaki kart satırına dokunarak açılır.
         try capture(

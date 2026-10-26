@@ -85,10 +85,10 @@ struct LocalizationFormattingTests {
         #expect(VademLocalization.shortWeekdaySymbols(locale: Self.tr) == ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"])
     }
 
-    @Test("Lira amounts keep the tr_TR format in both UI languages", arguments: [
+    @Test("Lira amounts use the fixed tr_TR format (AmountText takes no language)", arguments: [
         ("26549.99", "₺26.549,99"), ("0.5", "₺0,50"), ("1000000", "₺1.000.000,00"), ("-1234.56", "-₺1.234,56"),
     ])
-    func amountFormat(input: String, expected: String) throws {
+    func amountUsesFixedTurkishFormat(input: String, expected: String) throws {
         let amount = try #require(Decimal(string: input, locale: Locale(identifier: "en_US_POSIX")))
         #expect(AmountText.format(Money(amount)) == expected)
     }
