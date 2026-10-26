@@ -408,3 +408,11 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test/Reviewer yakaladı:** Silme onay mesajları dilbilgisi olarak hatalı ve birbirinin aynısıydı; birkaç ifade doğal değildi; `amountFormat` testi dili hiç değiştirmiyordu (yeniden adlandırıldı). Hepsi turda düzeltildi.
 - **UI kapısı yakaladı:** Türkçe capture, taksit başlık alanının yer tutucusunda `Text clipped` (major) buldu; alan `axis: .vertical` yapılarak düzeltildi. Bu değişiklik bir fonksiyonel testi bozdu (imleç yerleştirme), ikinci turda düzeltildi.
 - **Ders:** Daha uzun bir dil, İngilizce'de görünmeyen kırpılma hatalarını ortaya çıkarır; yeni dil için capture testi şart. Kabul edilen risk: `axis: .vertical` alanda Return yeni satır ekleyebilir; silme onayı, düzenleme formları ve asistan sohbeti Türkçe capture'da yok.
+
+### Koşu #137 — Erişilebilirlik geçişi
+
+- **Ne yapıldı:** Tüm galeri ekranları VoiceOver açısından gözden geçirildi; dört düzeltme: Analytics grafik özeti artık veriyi yansıtıyor (12 aylık toplam, en yüksek ay), özet kartı adjustable (ay seçimi dokunmadan), takvimde bugünün değeri "Today", Asistan cevabı duyuruluyor (PR #145, Faz 16). 17 dk, 4 verify (0 kırmızı), 1 düzeltme turu.
+- **Reviewer yakaladı:** 2 major: tam galeri kanıtı yoktu; görünüm düzeyindeki değişiklikler testsizdi (kabul edildi: SwiftUI davranışı birim testle ölçülemiyor, cihazda doğrulanmadı). Minor: bugün dışındaki günlerde boş accessibility value (düzeltildi).
+- **UI kapısı:** Hedefli koşu (light + AX5) 0 erişilebilirlik hatası verdi, ama tam galeri çalıştırılamadı: AX5'te `testGalleryCards` ve `testEditSubscriptionForm` `main` üzerinde de takılıyordu (#142).
+- **Sonrası:** Harness PR #146 (#142) hemen ardından birleşti: AX5 kaydırma düzeltildi, galeri kartları `testGalleryCards` + `testGalleryCardsWarm` olarak bölündü, Türkçe başlık/sürüm kontrolleri kabul edildi. Tam galeri yaklaşık 39 dk sürüyor (bütçe 4 dk) ve son düzeltmeden sonra uçtan uca çalıştırılmadı.
+- **Ders:** Kapı `main` üzerinde de kırmızıysa sorun özelliğin değil harness'in; ayrı `harness/` PR gerekir. Tam galeri bütçesi aşıldı, bu yüzden "tam galeri 0 hata" kabul kriteri pratikte doğrulanamıyor.
