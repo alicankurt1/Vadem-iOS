@@ -56,9 +56,10 @@ public struct AddInstallmentView: View {
                 // Tüm alanlar tek kartta, ince çizgilerle ayrılmış satırlar olarak durur.
                 FormCard {
                     field(.title) {
+                        // Dikey eksen: uzun yer tutucu (ör. Türkçe) ve büyük yazı boyutları kırpılmaz, sarılır.
                         TextField(
                             String(localized: "Title", bundle: .module),
-                            text: $model.title, prompt: Text("e.g. Laptop", bundle: .module)
+                            text: $model.title, prompt: Text("e.g. Laptop", bundle: .module), axis: .vertical
                         )
                             #if os(iOS)
                             .textInputAutocapitalization(.sentences)
