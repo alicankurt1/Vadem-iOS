@@ -753,6 +753,8 @@ struct MonthCalendar: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(cell.accessibilityLabel)
+        // Bugün görselde yalnızca halkayla belirtilir; VoiceOver da "Bugün" duyar.
+        .accessibilityValue(cell.isToday ? Text("Today", bundle: .module) : Text(verbatim: ""))
         .accessibilityAddTraits(cell.isSelected ? [.isButton, .isSelected] : .isButton)
         .accessibilityIdentifier("home.calendar.day.\(day)")
     }

@@ -6,7 +6,8 @@ import VademCore
 /// The Analytics screen: a stacked bar chart of the next 12 months (installments vs subscriptions).
 ///
 /// A summary card (`analytics.summary`) above the chart (`analytics.chart`) shows the selected
-/// month; selecting a bar changes it. The current month is highlighted. Without data the screen shows
+/// month; selecting a bar changes it (with VoiceOver, swiping up or down on the summary does).
+/// The chart's VoiceOver summary names the 12-month total and the highest month. The current month is highlighted. Without data the screen shows
 /// an empty state (`analytics.empty`) with an "Add a payment" button (`analytics.addPayment`)
 /// that calls `onAddPayment`. The chart does not animate under Reduce Motion or `-ui-static-motion`.
 @MainActor
@@ -211,6 +212,16 @@ public struct AnalyticsView: View {
             partRow("Subscriptions", amount: summary.subscriptions, color: .vademAccent)
         }
         .accessibilityElement(children: .combine)
+        // Grafikte dokunarak seçim VoiceOver'da yapılamaz: özet kartı ayarlanabilir öğe,
+        // yukarı/aşağı kaydırma ayı değiştirir (halka ve açıklama satırları da güncellenir).
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: model.selectMonth(offsetBy: 1)
+            case .decrement: model.selectMonth(offsetBy: -1)
+            @unknown default: break
+            }
+        }
+        .accessibilityHint(Text("Swipe up or down to change the month", bundle: .module))
         .accessibilityIdentifier("analytics.summary")
     }
 
@@ -333,7 +344,8 @@ public struct AnalyticsView: View {
     }
 }
 
-// VoiceOver için grafiğin sesli/dokunsal özeti: ay ekseni ve iki serinin tutarları.
+// VoiceOver için grafiğin sesli/dokunsal özeti (Audio Graph): ay ekseni, iki serinin tutarları
+// ve metin özeti (12 ayın toplamı, en yüksek ay).
 private struct AnalyticsChartDescriptor: AXChartDescriptorRepresentable {
     let months: [SpendingAnalytics.MonthTotal]
 
@@ -358,7 +370,7 @@ private struct AnalyticsChartDescriptor: AXChartDescriptorRepresentable {
         }
         return AXChartDescriptor(
             title: String(localized: "Monthly payments", bundle: .module),
-            summary: String(localized: "Installments and subscriptions due in each of the next 12 months", bundle: .module),
+            summary: AnalyticsViewModel.chartSummary(for: months),
             xAxis: xAxis, yAxis: yAxis, additionalAxes: [],
             series: [
                 series(AnalyticsView.installmentsName, \.installments),
@@ -369,6 +381,8 @@ private struct AnalyticsChartDescriptor: AXChartDescriptorRepresentable {
 
     func updateChartDescriptor(_ descriptor: AXChartDescriptor) {
         let updated = makeChartDescriptor()
+        // Özet de verilerle değişir (toplam ve en yüksek ay).
+        descriptor.summary = updated.summary
         descriptor.series = updated.series
         descriptor.xAxis = updated.xAxis
         descriptor.yAxis = updated.yAxis

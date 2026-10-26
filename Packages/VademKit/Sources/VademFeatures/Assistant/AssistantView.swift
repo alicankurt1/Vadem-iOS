@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// User bubbles sit on the trailing side (`vademAccent`), answers on the leading side
 /// (`vademSurface`). Each message (`assistant.message.<index>`) is one VoiceOver element, read in
-/// order. Suggestion chips (`assistant.suggestion.<index>`), the input (`assistant.input`), the send
+/// order; a new answer is also announced to VoiceOver. Suggestion chips (`assistant.suggestion.<index>`), the input (`assistant.input`), the send
 /// button (`assistant.send`) and a footer note (`assistant.footer`) complete the chat. Without
 /// messages an empty state (`assistant.empty`) says the assistant is read-only. When the model is
 /// unavailable, an explanation (`assistant.unavailable`) replaces the chat. Closing the screen
@@ -84,6 +84,10 @@ public struct AssistantView: View {
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: model.messages.count) {
                 scrollToBottom(proxy)
+                // Cevap geldiğinde VoiceOver kullanıcısı odağı taşımadan da duyar.
+                if let last = model.messages.last, last.role == .assistant {
+                    AccessibilityNotification.Announcement(last.accessibilityLabel).post()
+                }
             }
             .onChange(of: model.isResponding) {
                 // "Thinking…" satırı da görünür olsun.

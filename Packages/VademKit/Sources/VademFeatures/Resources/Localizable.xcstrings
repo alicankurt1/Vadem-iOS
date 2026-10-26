@@ -1573,6 +1573,23 @@
         }
       }
     },
+    "Installments and subscriptions due in each of the next 12 months. Total: %@ TL. Highest: %@, %@ TL." : {
+      "comment" : "Spoken chart summary: total of all months, highest month and its amount",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installments and subscriptions due in each of the next 12 months. Total: %@ TL. Highest: %@, %@ TL."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önümüzdeki 12 ayın her birinde ödenecek taksit ve abonelikler. Toplam: %@ TL. En yüksek: %@, %@ TL."
+          }
+        }
+      }
+    },
     "Installments: %lld" : {
       "localizations" : {
         "en" : {
@@ -2478,6 +2495,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öneriler"
+          }
+        }
+      }
+    },
+    "Swipe up or down to change the month" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe up or down to change the month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayı değiştirmek için yukarı veya aşağı kaydırın"
           }
         }
       }
