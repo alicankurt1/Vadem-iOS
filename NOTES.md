@@ -422,3 +422,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** Uygulama ve widget için `PrivacyInfo.xcprivacy` (izleme yok, toplanan veri yok, `UserDefaults` için `CA92.1`) ve `docs/privacy.md` (İngilizce + Türkçe) eklendi; `PrivacyManifestTests` her iki manifesti ve politikayı ayrıştırıyor (PR #149, Faz 16). 11 dk, 5 verify (0 kırmızı), 1 düzeltme turu.
 - **Reviewer yakaladı:** Minor: testler `UserDefaults` bildirimini ve politikadaki iletişim yer tutucusunu denetlemiyordu (düzeltildi; yer tutucu dil başına bir kez). Widget doğrudan `UserDefaults` çağırmıyor ama `VademFeatures`'ı bağladığı için kategoriyi bildiriyor (kabul edildi).
 - **Ders:** Required-reason API'leri hedefin kendi kodundan değil, bağladığı modüllerden de gelir; bildirim için bağımlılık grafiğine bakmak gerekir. Archive gizlilik raporu çalıştırılmadı; yayından önce elle kontrol edilmeli.
+
+### Koşu #139 — Uygulama ikonu ve App Store hazırlığı
+
+- **Ne yapıldı:** Açık, koyu ve tinted 1024 px ikonlar `tools/make-icon.swift` ile üretildi; `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` `Config/Shared.xcconfig`'e taşındı (`.pbxproj`'daki hedef kopyaları silindi); `docs/app-store.md` ve `AppStoreReadinessTests` eklendi (PR #151, Faz 16). 1 coder turu + 1 düzeltme turu, 0 verify hatası.
+- **Reviewer yakaladı:** Minor: ikon şeridinin uçlarında kart kenarında dikiş görünüyordu (şerit kart şekline kırpılarak düzeltildi). Widget iddiaları doğrulanmadı (kabul edildi).
+- **Sınır:** Açık ikon simülatör Home Screen'de görüldü; koyu ikon simülatörde değişmedi. PNG ve derlenmiş katalog doğru, ama koyu ve tinted varyantlar cihazda henüz bakılmadı.
+- **Ders:** Sürüm numarası tek yerde (xcconfig) durunca hedefler arasında kayma olmaz; görsel varlıkta "dosya doğru" ile "ekranda doğru görünüyor" ayrı kanıttır.
