@@ -14,6 +14,16 @@ public struct DesignGalleryView: View {
 
     public init() {}
 
+    /// `-ui-gallery-cards-only`: sadece kart yüzleri gösterilir. AX5'te kartlar diğer bölümlerin ~6000 pt
+    /// altında kalıyordu; UI yakalaması kaydırmaya dakikalar harcıyordu (#148).
+    private static var cardsOnly: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-ui-gallery-cards-only")
+        #else
+        false
+        #endif
+    }
+
     // "Ekle" düğmesinin eklediği tutar.
     nonisolated static let addedAmount = Money(100)
 
@@ -34,6 +44,7 @@ public struct DesignGalleryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
+                    if !Self.cardsOnly {
                     section(String(localized: "Colors", bundle: .module, comment: "Design gallery section"), id: "gallery.colors") {
                         ForEach(ColorToken.allCases, id: \.self) { token in
                             tokenRow(token)
@@ -107,6 +118,8 @@ public struct DesignGalleryView: View {
                             .buttonStyle(.heroPill)
                         Button {} label: { Text("Calendar", bundle: .module) }
                             .buttonStyle(.heroPill)
+                    }
+
                     }
 
                     section(String(localized: "Cards", bundle: .module, comment: "Design gallery section"), id: "gallery.cards") {
