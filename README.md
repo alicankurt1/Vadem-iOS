@@ -102,7 +102,7 @@ open Vadem.xcodeproj
 | `/ship #N` | Whole pipeline for issue N. It waits once, for your "ok" on the plan, and ends with a PR. |
 | `/after-merge #P` | After you merge PR P, the writer updates the docs in a small docs PR. |
 | `/verify` or `scripts/verify.sh` | Package unit tests + app build, no simulator (seconds). |
-| `scripts/ui-check.sh` | Simulator screenshots (light / dark / largest text) + accessibility audit (the full gallery currently takes about 39 min, far above the 4 min goal). `UI_CHECK_ONLY=gallery,root` captures only those screens. |
+| `scripts/ui-check.sh` | Simulator screenshots (light / dark / largest text) + accessibility audit (the full gallery takes about 18 min with the three variants run in parallel). `UI_CHECK_ONLY=gallery,root` captures only those screens. |
 
 Write issues with the [task template](.github/ISSUE_TEMPLATE/task.md). Its acceptance criteria are the contract for every agent.
 
