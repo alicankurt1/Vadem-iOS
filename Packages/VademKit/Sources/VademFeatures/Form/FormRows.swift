@@ -159,6 +159,9 @@ struct ChoiceRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // VoiceOver alan adını etiket, seçili değeri değer olarak okur ("Kart, Everyday card" tek metin değil).
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
         .accessibilityHint(Text("Opens a list", bundle: .module))
     }
 
@@ -225,6 +228,25 @@ struct DeleteSection: View {
 }
 
 extension View {
+    /// Formun satır içi başlığı: `title` gezinme başlığıdır (geri düğmesi, ekran adı) ve çubuğun
+    /// ortasında tek satır olarak çizilir. Vazgeç ile Kaydet arasında yer yetmezse ("Aboneliği düzenle")
+    /// metin "…" ile kesilmek yerine biraz küçülür. VoiceOver onu başlık olarak okur.
+    func formNavigationTitle(_ title: String) -> some View {
+        navigationTitle(title)
+            #if os(iOS)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(Color.vademTextPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .accessibilityAddTraits(.isHeader)
+                }
+            }
+            #endif
+    }
+
     /// Silme onayını bu görünüme bağlar. Kimlikler: onay `<identifierPrefix>.delete.confirm`,
     /// vazgeç `<identifierPrefix>.delete.cancel`.
     func deleteConfirmation(

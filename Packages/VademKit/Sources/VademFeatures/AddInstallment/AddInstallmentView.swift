@@ -146,7 +146,7 @@ public struct AddInstallmentView: View {
                     )
                 }
             }
-            .navigationTitle(
+            .formNavigationTitle(
                 model.isEditing
                     ? String(localized: "Edit installment", bundle: .module)
                     : String(localized: "New installment", bundle: .module)

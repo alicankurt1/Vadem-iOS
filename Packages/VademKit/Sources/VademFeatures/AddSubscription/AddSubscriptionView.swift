@@ -146,7 +146,7 @@ public struct AddSubscriptionView: View {
                     )
                 }
             }
-            .navigationTitle(
+            .formNavigationTitle(
                 model.isEditing
                     ? String(localized: "Edit subscription", bundle: .module)
                     : String(localized: "New subscription", bundle: .module)

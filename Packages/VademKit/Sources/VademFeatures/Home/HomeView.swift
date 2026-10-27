@@ -282,6 +282,8 @@ public struct HomeView: View {
                     Label { Text("Calendar", bundle: .module) } icon: { Image(systemName: "calendar") }
                 }
                 .buttonStyle(.heroPill)
+                // Etiket bölüm başlığıyla aynı ("Takvim"); ipucu düğmenin ne yaptığını söyler.
+                .accessibilityHint(Text("Shows the month calendar", bundle: .module))
                 .accessibilityIdentifier("home.showCalendar")
             }
         }

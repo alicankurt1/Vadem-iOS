@@ -121,7 +121,7 @@ public struct AddCardView: View {
             }
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
-            .navigationTitle(
+            .formNavigationTitle(
                 model.isEditing
                     ? String(localized: "Edit card", bundle: .module)
                     : String(localized: "New card", bundle: .module)

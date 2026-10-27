@@ -286,7 +286,8 @@ public struct AnalyticsView: View {
                 }
             }
         }
-        .chartLegend(position: .bottom, alignment: .leading)
+        // Hazır lejant sistem ikincil grisiyle çiziliyordu (açık zeminde ~3.3:1); kendi lejantımız token rengiyle.
+        .chartLegend(position: .bottom, alignment: .leading) { chartLegend }
         .frame(height: 280)
         .onChange(of: chartSelection) { _, id in
             // Seçim kalkınca (dokunuş bitince) özet son seçili ayda kalır.
@@ -298,6 +299,27 @@ public struct AnalyticsView: View {
         .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: model.months)
         .accessibilityChartDescriptor(AnalyticsChartDescriptor(months: model.months))
         .accessibilityIdentifier("analytics.chart")
+    }
+
+    // Grafiğin lejantı: seri adları vademTextSecondary ile (vademBackground üzerinde kontrastı testle güvencede).
+    // Erişilebilirlik boyutlarında öğeler alt alta dizilir; metin kırpılmaz.
+    private var chartLegend: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
+            legendItem(Self.installmentsName, color: .vademBrand)
+            legendItem(Self.subscriptionsName, color: .vademAccent)
+        }
+    }
+
+    private func legendItem(_ name: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(color).frame(width: 8, height: 8).accessibilityHidden(true)
+            Text(name)
+                .font(.footnote)
+                .foregroundStyle(Color.vademTextSecondary)
+        }
     }
 
     // Çubuğun okunan değeri: "Installments 1.200,00 TL".
