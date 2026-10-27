@@ -119,7 +119,10 @@ public struct HomeView: View {
                         ToolbarItem(placement: .primaryAction) { assistantButton }
                     }
                     ToolbarItem(placement: .primaryAction) { analyticsButton }
+                    ToolbarItem(placement: .primaryAction) { settingsButton }
                 }
+                // Başlık çubukta: sistem başlığı başlık (header) olarak okur ve AX5'te de kırpmaz.
+                .navigationTitle(Text("Vadem", bundle: .module))
                 .navigationDestination(isPresented: assistantPresented) {
                     if let assistantModel {
                         AssistantView(model: assistantModel)
@@ -225,7 +228,6 @@ public struct HomeView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    AppHeader { settingsButton }
                     monthBar
                     // Hata durumunda da görünür (toplam sıfır): ekleme menüsü her zaman erişilebilir.
                     hero(proxy)
@@ -308,13 +310,12 @@ public struct HomeView: View {
         .accessibilityIdentifier("home.add")
     }
 
-    // Başlığın yanındaki dişli: ayarlar sayfasını açar.
+    // Araç çubuğundaki dişli: ayarlar sayfasını açar.
     private var settingsButton: some View {
         Button {
             settingsModel = model.makeSettingsModel()
         } label: {
             Image(systemName: "gearshape")
-                .font(.title3.weight(.semibold))
                 .foregroundStyle(Color.vademTextPrimary)
                 // En az 44 pt dokunma alanı.
                 .frame(minWidth: 44, minHeight: 44)
@@ -773,34 +774,21 @@ private struct TodayAccessibilityValue: ViewModifier {
     }
 }
 
-/// The "Vadem" title with the app version below it; `trailing` (e.g. a button) sits on the title's line.
+/// The "Vadem" title with the app version below it; shown only when the store is unavailable
+/// (Home puts its title in the navigation bar).
 @MainActor
-struct AppHeader<Trailing: View>: View {
-    @ViewBuilder var trailing: Trailing
-
+struct AppHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Sağdaki öğe yalnızca başlık satırında; sürüm etiketi tüm genişliği kullanır.
-            HStack(alignment: .center, spacing: 8) {
-                Text("Vadem", bundle: .module)
-                    .font(.largeTitle.weight(.bold))
-                    .foregroundStyle(Color.vademTextPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 0)
-                trailing
-            }
+            Text("Vadem", bundle: .module)
+                .font(.largeTitle.weight(.bold))
+                .foregroundStyle(Color.vademTextPrimary)
+                .accessibilityAddTraits(.isHeader)
             // Sürüm etiketi başlığın altında, daha küçük; ayrı erişilebilirlik etiketi yok.
             Text("Version \(VademCore.version)", bundle: .module)
                 .font(.subheadline)
                 .foregroundStyle(Color.vademTextPrimary)
         }
-    }
-}
-
-extension AppHeader where Trailing == EmptyView {
-    /// The header without a trailing item.
-    init() {
-        self.init { EmptyView() }
     }
 }
 

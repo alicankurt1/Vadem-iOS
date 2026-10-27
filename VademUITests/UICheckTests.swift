@@ -46,8 +46,8 @@ final class UICheckTests: XCTestCase {
     @MainActor
     func testRootScreen() throws {
         try capture(screen: "root") { app, variant in
-            // Kök ekran açılışta görünür; gezinme gerekmez. Sürüm etiketi kontrolleri (#10).
-            Self.assertVersionLabel(in: app, name: "root__\(variant.name)")
+            // Kök ekran açılışta görünür; gezinme gerekmez. Sürüm artık Home'da yok (#154).
+            Self.assertNoVersionLabel(in: app, name: "root__\(variant.name)")
         }
     }
 
@@ -194,7 +194,9 @@ final class UICheckTests: XCTestCase {
             screen: "settings-tr",
             launchArguments: ["-ui-sample-data", "-ui-settings"] + Self.turkish,
             sections: [.top]
-        )
+        ) { app, variant in
+            Self.assertSettingsVersionLabel(in: app, name: "settings-tr__\(variant.name)")
+        }
     }
 
     @MainActor
@@ -409,7 +411,9 @@ final class UICheckTests: XCTestCase {
             screen: "settings",
             launchArguments: ["-ui-sample-data", "-ui-settings"],
             sections: [.top]
-        )
+        ) { app, variant in
+            Self.assertSettingsVersionLabel(in: app, name: "settings__\(variant.name)")
+        }
     }
 
     @MainActor
@@ -772,37 +776,35 @@ final class UICheckTests: XCTestCase {
         }
     }
 
-    /// Sürüm etiketi görünür, "Version x.y.z" biçiminde, dokunulabilir ve başlığın altında,
-    /// başlıktan daha küçük olmalı (ikincil bilgi hiyerarşisi).
+    /// Sürüm etiketi sorgusu: "Version x.y" / "Sürüm x.y".
     @MainActor
-    private static func assertVersionLabel(in app: XCUIApplication, name: String) {
+    private static func versionTexts(in app: XCUIApplication) -> XCUIElementQuery {
+        app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Version ", "Sürüm "))
+    }
+
+    /// Home'da sürüm metni olmamalı (#154); başlık gezinme çubuğunda görünür kalır.
+    @MainActor
+    private static func assertNoVersionLabel(in app: XCUIApplication, name: String) {
         let title = app.staticTexts["Vadem"]
         XCTAssertTrue(title.waitForExistence(timeout: 5), "[ui-check] \(name): 'Vadem' title not found")
+        XCTAssertEqual(
+            versionTexts(in: app).count, 0,
+            "[ui-check] \(name): Home must not show a version text"
+        )
+    }
 
-        let version = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Version ", "Sürüm ")).firstMatch
+    /// Ayarlar'da sürüm etiketi "Version x.y.z" biçiminde ve tam eşleşmeli (#154).
+    @MainActor
+    private static func assertSettingsVersionLabel(in app: XCUIApplication, name: String) {
+        let version = versionTexts(in: app).firstMatch
         guard version.waitForExistence(timeout: 5) else {
-            XCTFail("[ui-check] \(name): version label ('Version …' / 'Sürüm …') not found")
+            XCTFail("[ui-check] \(name): version label ('Version …' / 'Sürüm …') not found in Settings")
             return
         }
-
-        // Etiketin tamamı eşleşmeli; önek/sonek ("v", fazladan metin) kabul edilmez.
         let label = version.label
         XCTAssertNotNil(
             label.wholeMatch(of: /(Version|Sürüm) [0-9]+(\.[0-9]+)*/),
             "[ui-check] \(name): version label '\(label)' does not match ^(Version|Sürüm) [0-9]+(\\.[0-9]+)*$"
-        )
-        XCTAssertTrue(version.isHittable, "[ui-check] \(name): version label is not hittable")
-
-        guard title.exists else { return }
-        let titleFrame = title.frame
-        let versionFrame = version.frame
-        XCTAssertGreaterThanOrEqual(
-            versionFrame.minY, titleFrame.maxY,
-            "[ui-check] \(name): version label top (\(versionFrame.minY)) is above title bottom (\(titleFrame.maxY))"
-        )
-        XCTAssertLessThan(
-            versionFrame.height, titleFrame.height,
-            "[ui-check] \(name): version label height (\(versionFrame.height)) is not smaller than title height (\(titleFrame.height))"
         )
     }
 

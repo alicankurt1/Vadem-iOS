@@ -8,7 +8,7 @@ import VademCore
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 /// Identifiers: `settings.reminders` (toggle), `settings.timing` (row), the pushed list
 /// `settings.timing.options` with `settings.timing.option.<index>`, `settings.permissionDenied`
-/// (explanation), `settings.openSystemSettings` and `settings.done`.
+/// (explanation), `settings.openSystemSettings`, `settings.version` (app version) and `settings.done`.
 @MainActor
 public struct SettingsView: View {
     /// The launch argument that opens Home with this sheet already presented (UI check).
@@ -62,6 +62,7 @@ public struct SettingsView: View {
                 if model.showsPermissionDenied {
                     permissionDeniedCard
                 }
+                versionCard
             }
             .foregroundStyle(Color.vademTextPrimary)
             .tint(Color.vademBrand)
@@ -126,6 +127,17 @@ public struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("settings.openSystemSettings")
+        }
+    }
+
+    // Uygulama sürümü (Home'dan buraya taşındı); düz metin, Dynamic Type ile sarılır.
+    private var versionCard: some View {
+        FormCard {
+            Text("Version \(VademCore.version)", bundle: .module)
+                .font(.body)
+                .foregroundStyle(Color.vademTextPrimary)
+                .frame(maxWidth: .infinity, minHeight: FormLayout.minRowHeight, alignment: .leading)
+                .accessibilityIdentifier("settings.version")
         }
     }
 
