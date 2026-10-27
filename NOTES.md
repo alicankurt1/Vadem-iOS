@@ -439,3 +439,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Test:** `AppStoreReadinessTests` xcconfig'te iki anahtarın olduğunu ve `.pbxproj`'da hiç bulunmadığını denetler; biri hedef seviyesine geri sızarsa kapı kırmızı olur.
 - **SOLID:** Single Responsibility (sürüm tek yerde yaşar, ikon script'i yalnızca PNG üretir) ve Open/Closed (yeni ikon varyantı yeni bir `Palette` değeri, çizim kodu değişmez).
 - **Ders:** "Her yerde aynı olmalı" olan değer tek yerde tanımlanmalı ve bunu bir test korumalı; yoksa tutarlılık sadece dikkate bağlı kalır.
+
+### Koşu #154 — Home başlığı gezinme çubuğunda
+
+- **Ne yapıldı:** Home'daki "Vadem" başlığı ve sürüm satırı içerikten çıkarıldı; başlık satır içi gezinme çubuğu başlığı oldu, ayarlar düğmesi araç çubuğuna taşındı, sürüm Ayarlar'daki yeni karta girdi (PR #157, Faz 16). 17 dk, 0 düzeltme turu, 0 verify hatası.
+- **Reviewer yakaladı:** Yalnızca minor/nit: mağaza-kullanılamaz ekranı hâlâ sürümü gösteriyor (issue yalnızca Home diyor, kabul), ayar ikonu `.title3` yazı tipini kaybetti (diğer çubuk ikonlarıyla aynı oldu, kabul).
+- **Sınır:** Başlığın başlık (header) özelliği XCUITest ile doğrulanamadı; sistem gezinme başlığının varsayılanına güvenildi.
+- **Ders:** Özel başlık görünümü yerine sistem gezinme çubuğu başlığı kullanmak erişilebilirlik özelliğini bedavaya getirir ve test yükünü azaltır.
