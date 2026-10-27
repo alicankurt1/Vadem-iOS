@@ -467,3 +467,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Önce ölçüldü:** Light geçiş 1694 s = erişme 472, audit 443, başlatma 195, gezinme 163, bekleme 65; yalnızca galeri AX5 221 s. Optimizasyon tahminle değil bu dökümle yönlendirildi.
 - **Kalan darboğaz:** light-AX5 (~730 s); bütçe CLAUDE.md'de ~18 dk oldu.
 - **Ders:** Yavaş bir kapıyı hızlandırmadan önce zamanı aşamalara böl; en büyük kalemler (erişme, audit) hedeflenince kazanç paralellikten ve gereksiz işi atlamaktan geldi.
+
+### Koşu #165 — Kart listesi ekranı
+
+- **Ne yapıldı:** Ayarlar'a "Cards" satırı ve kart listesi ekranı (`CardListView` + `CardListViewModel`) eklendi; mevcut ekle/düzenle formları yeniden kullanıldı, şema ve repository protokolü değişmedi (PR #167, Faz 16). 15 dk, 5 verify çalıştırması, 0 başarısız, 1 düzeltme turu.
+- **Kapı neyi yakaladı:** Reviewer: 2 minor, 1 nit; uzun satır ve yanlış test yorumu düzeltildi, "makeCardListModel() opsiyonel" kabul edildi (satır zaten gizli). UI kapısı: yalnızca `cards-last` = `cards` notu (3 kart, içerik sonu), 0 a11y sorunu.
+- **Kapanan boşluk:** #67'deki "ödemesi olmayan kart UI'dan silinemiyor" sınırlaması bu ekranla kalktı; Ayarlar sheet'i üzerinde kart ekleme sheet'i işlevsel testle doğrulandı.
+- **Ders:** Önceki PR'ın bilinen sınırlaması ayrı issue olarak yazıldığında, sonraki koşu mevcut formları yeniden kullanarak küçük ve hızlı kapanıyor.
