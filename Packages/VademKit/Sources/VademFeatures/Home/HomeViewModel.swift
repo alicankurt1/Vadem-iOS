@@ -196,9 +196,10 @@ public final class HomeViewModel {
         selectedDay.map { Self.dayText(day: $0, of: month) }
     }
 
-    /// A new settings sheet model on the injected ``SettingsDependencies``.
+    /// A new settings sheet model on the injected ``SettingsDependencies``, with the Cards screen
+    /// on the same repository. Call ``reloadAfterChange()`` after the sheet closes.
     public func makeSettingsModel() -> SettingsViewModel {
-        SettingsViewModel(dependencies: settings)
+        SettingsViewModel(dependencies: settings, repository: repository)
     }
 
     /// A new Analytics screen model on the same repository, starting at the current month.

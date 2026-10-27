@@ -1131,6 +1131,22 @@
         }
       }
     },
+    "Due on day %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due on day %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son ödeme günü: %lld"
+          }
+        }
+      }
+    },
     "Due so far" : {
       "localizations" : {
         "en" : {
@@ -1877,6 +1893,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kart yok"
+          }
+        }
+      }
+    },
+    "No cards yet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No cards yet"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Henüz kart yok"
           }
         }
       }

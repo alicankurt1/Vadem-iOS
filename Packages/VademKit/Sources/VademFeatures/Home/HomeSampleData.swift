@@ -71,7 +71,7 @@ public enum HomeSampleData {
     /// A view model on ``makeRepository()`` with the fixed ``today`` and ``calendar``.
     ///
     /// Settings use an in-memory store and no scheduler; under ``SettingsView/deniedLaunchArgument``
-    /// the permission reads as denied.
+    /// the permission reads as denied. Under ``CardListView/emptyLaunchArgument`` the repository is empty.
     public static func makeViewModel() -> HomeViewModel {
         // Zamanlayıcı yok: sistem izin penceresi çıkmaz. Reddedilmiş izin sahte merkezle gösterilir.
         let isDenied = ProcessInfo.processInfo.arguments.contains(SettingsView.deniedLaunchArgument)
@@ -79,8 +79,10 @@ public enum HomeSampleData {
             store: InMemoryReminderPreferencesStore(),
             center: isDenied ? FixedStatusReminderCenter(status: .denied) : nil
         )
+        // Kartlar ekranının boş durumu için boş depo.
+        let isEmpty = ProcessInfo.processInfo.arguments.contains(CardListView.emptyLaunchArgument)
         return HomeViewModel(
-            repository: makeRepository(), today: today, calendar: calendar, settings: settings,
+            repository: isEmpty ? InMemoryPaymentRepository() : makeRepository(), today: today, calendar: calendar, settings: settings,
             assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments)
         )
     }
