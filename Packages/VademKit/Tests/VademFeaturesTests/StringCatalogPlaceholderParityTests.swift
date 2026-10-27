@@ -37,31 +37,63 @@ struct StringCatalogPlaceholderParityTests {
         }.sorted()
     }
 
-    /// Bir yerelleştirmenin "other" biçimine açılmış belirleyici türleri:
-    /// düz metin, çoğul varyasyonun other biçimi, ve şablondaki her %#@ad@ için değişimin other biçimi.
-    /// Değişimin kendi sayısı (%arg / %lld) bir kez int sayılır.
-    static func resolvedTypes(of localization: [String: Any]) -> [String] {
-        func value(_ node: Any?) -> String? {
+    /// Bir yerelleştirmenin her biçiminin belirleyici türleri (sıralı çoklu küme), biçim yoluna göre:
+    /// "plain" (düz metin), "plural.<biçim>" (çoğul varyasyon), "sub.<ad>.plural.<biçim>" (değişim çoğulu).
+    /// Değişim metinlerinde %arg, değişimin kendi sayısıdır: %lld sayılır.
+    static func formTypes(of localization: [String: Any]) -> [String: [String]] {
+        func text(_ node: Any?) -> String? {
             ((node as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String
         }
-        func other(_ node: [String: Any]) -> String? {
-            if let text = value(node) { return text }
-            let plural = (node["variations"] as? [String: Any])?["plural"] as? [String: Any]
-            return value(plural?["other"])
+        func pluralForms(_ node: [String: Any]) -> [String: Any] {
+            (node["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]
         }
-        var types: [String] = []
-        guard let template = other(localization) else { return [] }
-        types += placeholderTypes(in: template)
+        var result: [String: [String]] = [:]
+        if let plain = text(localization) { result["plain"] = placeholderTypes(in: plain) }
+        for (form, node) in pluralForms(localization) {
+            result["plural.\(form)"] = placeholderTypes(in: text(node) ?? "")
+        }
         let subs = localization["substitutions"] as? [String: Any] ?? [:]
-        for (name, sub) in subs where template.contains("%#@\(name)@") {
+        for (name, sub) in subs {
             guard let sub = sub as? [String: Any] else { continue }
-            let plural = (sub["variations"] as? [String: Any])?["plural"] as? [String: Any]
-            let form = value(plural?["other"]) ?? ""
-            // %arg ve sayıyı gösteren %lld/%d değişimin kendisidir: tek int.
-            let own = form.replacingOccurrences(of: "%arg", with: "%lld")
-            types += placeholderTypes(in: own)
+            for (form, node) in pluralForms(sub) {
+                let own = (text(node) ?? "").replacingOccurrences(of: "%arg", with: "%lld")
+                result["sub.\(name).plural.\(form)"] = placeholderTypes(in: own)
+            }
         }
-        return types.sorted()
+        return result
+    }
+
+    /// Türkçe biçimleri İngilizce karşılıklarıyla karşılaştırır; uyuşmazlıkları metin olarak döner.
+    /// Aynı adlı biçim varsa onunla, yoksa aynı gruptaki İngilizce "other" (ya da düz metin) ile eşleşir.
+    /// İngilizce "other"/düz metin biçimi Türkçede hiç yoksa o da uyuşmazlıktır.
+    static func mismatches(en: [String: [String]], tr: [String: [String]]) -> [String] {
+        func group(_ key: String) -> String {
+            key.range(of: "plural.").map { String(key[..<$0.lowerBound]) } ?? ""
+        }
+        var problems: [String] = []
+        for (key, actual) in tr {
+            let fallback = en[group(key) + "plural.other"] ?? en["plain"]
+            guard let expected = en[key] ?? fallback else {
+                problems.append("\(key): no English counterpart")
+                continue
+            }
+            if actual != expected { problems.append("\(key): Turkish \(actual) vs English \(expected)") }
+        }
+        for key in en.keys where (key.hasSuffix("plural.other") || key == "plain") && tr[key] == nil {
+            problems.append("\(key): missing in Turkish")
+        }
+        return problems
+    }
+
+    /// Anahtar kaynak metinse (İngilizce değer yok) İngilizce biçimi anahtarın kendisidir.
+    static func englishForms(_ localizations: [String: Any], key: String) -> [String: [String]] {
+        if let en = localizations["en"] as? [String: Any] { return formTypes(of: en) }
+        return ["plain": placeholderTypes(in: key)]
+    }
+
+    /// Aynı biçimde iki metin (düz) için uyuşmazlık var mı?
+    static func isMismatch(en: String, tr: String) -> Bool {
+        !mismatches(en: ["plain": placeholderTypes(in: en)], tr: ["plain": placeholderTypes(in: tr)]).isEmpty
     }
 
     // MARK: Testler
@@ -74,50 +106,57 @@ struct StringCatalogPlaceholderParityTests {
         #expect(Self.placeholderTypes(in: "%.2f %d %ld %lld %i") == ["d", "d", "d", "d", "f"])
         #expect(Self.placeholderTypes(in: "%#@payments@ left").isEmpty)
         #expect(Self.placeholderTypes(in: "no placeholders").isEmpty)
+        #expect(Self.placeholderTypes(in: "%1$@ is 100%% of %2$lld") == ["@", "d"])
+        #expect(Self.placeholderTypes(in: "%lu items") == ["u"])
     }
 
-    @Test("Turkish keeps every English placeholder with same count and types", arguments: catalogs)
+    @Test("Mismatched English/Turkish pairs are detected", arguments: [
+        ("%@ paid %lld", "%@ ödendi"),
+        ("%@", "%lld"),
+        ("Total", "Toplam %@"),
+        ("%@ and %@", "%@"),
+    ])
+    func mismatchDetected(en: String, tr: String) {
+        #expect(Self.isMismatch(en: en, tr: tr))
+    }
+
+    @Test("Matching pairs are not flagged, even reordered or with escapes", arguments: [
+        ("%1$@ paid %2$lld", "%2$lld ile %1$@ ödendi"),
+        ("100%% of %@", "%@ değerinin %%100"),
+        ("Total", "Toplam"),
+    ])
+    func matchAccepted(en: String, tr: String) {
+        #expect(!Self.isMismatch(en: en, tr: tr))
+    }
+
+    @Test("Plural forms are compared per form, with other as fallback")
+    func perFormComparison() {
+        // İki dilde de "one" sayıyı düşürürse geçer.
+        #expect(Self.mismatches(
+            en: ["plural.one": [], "plural.other": ["d"]],
+            tr: ["plural.one": [], "plural.other": ["d"]]).isEmpty)
+        // Türkçe "one" sayıyı düşürür, İngilizce düşürmez: hata.
+        #expect(!Self.mismatches(
+            en: ["plural.one": ["d"], "plural.other": ["d"]],
+            tr: ["plural.one": [], "plural.other": ["d"]]).isEmpty)
+        // İngilizcede olmayan Türkçe biçim "other" ile karşılaştırılır.
+        #expect(Self.mismatches(en: ["plural.other": ["d"]], tr: ["plural.few": ["d"], "plural.other": ["d"]]).isEmpty)
+        #expect(!Self.mismatches(en: ["plural.other": ["d"]], tr: ["plural.few": ["@"], "plural.other": ["d"]]).isEmpty)
+        // Eksik "other" yakalanır.
+        #expect(!Self.mismatches(en: ["plural.other": ["d"]], tr: ["plural.one": ["d"]]).isEmpty)
+    }
+
+    @Test("Every Turkish form keeps the placeholders of its English counterpart", arguments: catalogs)
     func placeholdersMatch(path: String) throws {
         var checked = 0
         for (key, entry) in try Self.strings(at: path) {
             if entry["shouldTranslate"] as? Bool == false { continue }
             guard let localizations = entry["localizations"] as? [String: Any],
                   let tr = localizations["tr"] as? [String: Any] else { continue }
-            // İngilizce değer yoksa anahtar kaynak metindir.
-            let expected: [String]
-            if let en = localizations["en"] as? [String: Any] {
-                expected = Self.resolvedTypes(of: en)
-            } else {
-                expected = Self.placeholderTypes(in: key)
-            }
-            let actual = Self.resolvedTypes(of: tr)
+            let problems = Self.mismatches(en: Self.englishForms(localizations, key: key), tr: Self.formTypes(of: tr))
             checked += 1
-            #expect(actual == expected, "\(path): '\(key)': Turkish placeholder types \(actual) differ from English \(expected)")
+            #expect(problems.isEmpty, "\(path): '\(key)': \(problems)")
         }
         #expect(checked > 0, "\(path): no entries compared")
-    }
-
-    @Test("Every Turkish plural form keeps the placeholders of its own text, none foreign to English", arguments: catalogs)
-    func pluralFormsHaveNoForeignPlaceholders(path: String) throws {
-        for (key, entry) in try Self.strings(at: path) {
-            guard let localizations = entry["localizations"] as? [String: Any],
-                  let tr = localizations["tr"] as? [String: Any] else { continue }
-            let english: Set<String>
-            if let en = localizations["en"] as? [String: Any] { english = Set(Self.resolvedTypes(of: en)) }
-            else { english = Set(Self.placeholderTypes(in: key)) }
-            var forms: [String] = []
-            func collect(_ node: [String: Any]) {
-                if let text = (node["stringUnit"] as? [String: Any])?["value"] as? String { forms.append(text) }
-                if let plural = (node["variations"] as? [String: Any])?["plural"] as? [String: Any] {
-                    for case let form as [String: Any] in plural.values { collect(form) }
-                }
-                for case let sub as [String: Any] in (node["substitutions"] as? [String: Any])?.values.map({ $0 }) ?? [] { collect(sub) }
-            }
-            collect(tr)
-            for text in forms {
-                let foreign = Set(Self.placeholderTypes(in: text.replacingOccurrences(of: "%arg", with: "%lld"))).subtracting(english)
-                #expect(foreign.isEmpty, "\(path): '\(key)': Turkish text '\(text)' uses types \(foreign) absent from English")
-            }
-        }
     }
 }
