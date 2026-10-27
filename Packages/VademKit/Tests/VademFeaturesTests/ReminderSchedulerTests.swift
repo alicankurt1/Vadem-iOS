@@ -356,11 +356,10 @@ struct ReminderSchedulerTests {
         await Self.scheduler(repository, replaceFails).refresh()
         #expect(replaceFails.replaced.count == 1)
 
-        // İstek hata verirse reddedilmiş sayılır: zamanlama yok, tekrar sorulmaz.
+        // İstek hata verirse (cevap yok) zamanlama yapılmaz; ama soru sorulmuş sayılmaz.
         let requestFails = FakeCenter(status: .notDetermined)
         requestFails.throwsOnRequest = true
         let scheduler = Self.scheduler(repository, requestFails)
-        await scheduler.refresh()
         await scheduler.refresh()
         #expect(requestFails.requestCount == 1)
         #expect(requestFails.replaced.isEmpty)
@@ -369,6 +368,80 @@ struct ReminderSchedulerTests {
         clearFails.throwsOnReplace = true
         await Self.scheduler(InMemoryPaymentRepository(), clearFails).refresh()
         #expect(clearFails.replaced == [[]])
+    }
+
+    // MARK: Cevapsız istek (#156)
+
+    @Test("A request that throws is retried on every refresh and never schedules")
+    func throwingRequestRetries() async throws {
+        let center = FakeCenter(status: .notDetermined)
+        center.throwsOnRequest = true
+        let scheduler = Self.scheduler(try Self.repositoryWithPayment(), center)
+        for expected in 1...3 {
+            await scheduler.refresh()
+            #expect(center.requestCount == expected)
+            #expect(center.replaced.isEmpty)
+        }
+    }
+
+    @Test("After a failed request, an answered one schedules and ends asking",
+          arguments: [true, false])
+    func retryThenAnswer(granted: Bool) async throws {
+        let center = FakeCenter(status: .notDetermined, requestResult: granted)
+        center.throwsOnRequest = true
+        let scheduler = Self.scheduler(try Self.repositoryWithPayment(), center)
+        await scheduler.refresh()
+        #expect(center.requestCount == 1)
+        #expect(center.replaced.isEmpty)
+
+        center.throwsOnRequest = false
+        await scheduler.refresh()
+        #expect(center.requestCount == 2)
+        if granted {
+            #expect(center.replaced.count == 1)
+            #expect(center.replaced.first?.isEmpty == false)
+        } else {
+            #expect(center.replaced.isEmpty)
+        }
+
+        // Cevaptan sonra (verilsin ya da reddedilsin) bir daha sorulmaz.
+        await scheduler.refresh()
+        await scheduler.refresh()
+        #expect(center.requestCount == 2)
+    }
+
+    @Test("Answered request (granted or refused) is never repeated", arguments: [true, false])
+    func answeredNeverRepeats(granted: Bool) async throws {
+        let center = FakeCenter(status: .notDetermined, requestResult: granted)
+        let scheduler = Self.scheduler(try Self.repositoryWithPayment(), center)
+        for _ in 0..<3 { await scheduler.refresh() }
+        #expect(center.requestCount == 1)
+    }
+
+    @Test("AC scenario: first request fails, a later save asks again, is granted and schedules")
+    func acceptanceScenario() async throws {
+        let repository = InMemoryPaymentRepository()
+        let center = FakeCenter(status: .notDetermined, requestResult: true)
+        center.throwsOnRequest = true
+        let scheduler = Self.scheduler(repository, center)
+
+        // Boş depo: sorulmaz, yalnızca temizlenir.
+        await scheduler.refresh()
+        #expect(center.requestCount == 0)
+        #expect(center.replaced == [[]])
+
+        // İlk anlamlı kayıt: istek başarısız olur (sahne etkin değil).
+        try repository.save(Self.monthlySubscription())
+        await scheduler.refresh()
+        #expect(center.requestCount == 1)
+        #expect(center.replaced == [[]])
+
+        // Sonraki kayıt: yeniden sorulur, verilir, zamanlanır.
+        center.throwsOnRequest = false
+        await scheduler.refresh()
+        #expect(center.requestCount == 2)
+        #expect(center.replaced.count == 2)
+        #expect(center.replaced.last?.isEmpty == false)
     }
 }
 
