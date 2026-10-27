@@ -404,4 +404,94 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(element("addCard.failure", in: app).waitForExistence(timeout: 5), "in-use message not shown")
         XCTAssertTrue(app.textFields["addCard.name"].exists, "form must stay open when the card is in use")
     }
+
+    /// Ayarlar → Kartlar: kart ekle, listede gör, aç, sil, liste yeniden boş.
+    /// Örnek verideki kartların hepsi kullanımda olduğundan önce yeni bir kart eklenir.
+    @MainActor
+    func testCardsScreenAddOpenAndDeleteCard() throws {
+        let app = launchHome(extraArguments: ["-ui-card-list-empty"])
+        // Boş depo ile Kartlar ekranı doğrudan açılır; gezinmeyi de sınamak için Ayarlar'dan gidilir.
+        // (Açık argüman ekranı zaten itilmiş açar; bu yüzden sıradan akışı ayrıca sınıyoruz.)
+        XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 10), "Cards screen not shown")
+        XCTAssertTrue(element("cards.empty", in: app).exists, "empty state must show with no cards")
+
+        try addAndDeleteCard(in: app, addIdentifier: "cards.empty.add")
+    }
+
+    @MainActor
+    func testSettingsCardsRowOpensCardsAndDeletesNewCard() throws {
+        let app = launchHome()
+        let gear = app.buttons["home.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
+        gear.tap()
+        let cardsRow = element("settings.cards", in: app)
+        XCTAssertTrue(cardsRow.waitForExistence(timeout: 5), "Cards row not shown in Settings")
+        cardsRow.tap()
+        XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 5), "Cards screen not shown")
+        // Örnek veride üç kart var, hepsi kullanımda.
+        XCTAssertTrue(element("cards.row.0", in: app).waitForExistence(timeout: 5), "sample cards not listed")
+        XCTAssertFalse(element("cards.empty", in: app).exists, "empty state must not show with cards")
+
+        // Yeni kart "Zzz Fresh" ada göre son sıraya girer; satır etiketiyle bulunur.
+        app.buttons["cards.add"].tap()
+        try fillAndSaveCard(named: "Zzz Fresh", in: app)
+        let fresh = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Zzz Fresh'")).firstMatch
+        XCTAssertTrue(fresh.waitForExistence(timeout: 5), "new card not listed")
+        XCTAssertTrue(element("cards.row.3", in: app).exists, "list must have four cards now")
+        fresh.tap()
+
+        let name = app.textFields["addCard.name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5), "edit form not shown")
+        XCTAssertEqual(name.value as? String, "Zzz Fresh", "name must be prefilled")
+        try deleteCardInOpenForm(in: app)
+
+        XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 5), "must return to the list")
+        XCTAssertFalse(
+            app.buttons.matching(NSPredicate(format: "label CONTAINS 'Zzz Fresh'")).firstMatch.exists,
+            "deleted card must leave the list"
+        )
+        XCTAssertFalse(element("cards.row.3", in: app).exists, "list must be back to three cards")
+    }
+
+    @MainActor
+    private func fillAndSaveCard(named title: String, in app: XCUIApplication) throws {
+        let name = app.textFields["addCard.name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5), "add card form not shown")
+        name.tap()
+        name.typeText(title)
+        let statement = app.textFields["addCard.statementDay"]
+        statement.tap()
+        statement.typeText("10")
+        let due = app.textFields["addCard.dueDay"]
+        due.tap()
+        due.typeText("20")
+        let save = app.buttons["addCard.save"]
+        XCTAssertTrue(save.isEnabled, "save must be enabled with a valid card")
+        save.tap()
+    }
+
+    @MainActor
+    private func deleteCardInOpenForm(in app: XCUIApplication) throws {
+        let delete = revealDelete(prefix: "addCard", in: app)
+        XCTAssertTrue(delete.exists, "delete button not found")
+        delete.tap()
+        let confirm = app.buttons["addCard.delete.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "confirmation not shown")
+        confirm.tap()
+    }
+
+    /// Boş durumdan: ekle, listede gör, aç, sil, boş durum geri gelir.
+    @MainActor
+    private func addAndDeleteCard(in app: XCUIApplication, addIdentifier: String) throws {
+        app.buttons[addIdentifier].tap()
+        try fillAndSaveCard(named: "Fresh", in: app)
+        let row = element("cards.row.0", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "new card not listed")
+        XCTAssertFalse(element("cards.empty", in: app).exists, "empty state must disappear")
+        row.tap()
+        XCTAssertTrue(app.textFields["addCard.name"].waitForExistence(timeout: 5), "edit form not shown")
+        try deleteCardInOpenForm(in: app)
+        XCTAssertTrue(element("cards.empty", in: app).waitForExistence(timeout: 5), "list must be empty again")
+        XCTAssertFalse(element("cards.row.0", in: app).exists, "no rows may remain")
+    }
 }
