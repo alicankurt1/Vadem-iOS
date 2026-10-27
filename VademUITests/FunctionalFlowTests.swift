@@ -110,7 +110,8 @@ final class FunctionalFlowTests: XCTestCase {
     /// Not: örnek veride kartlar vardır (boş depo açma bayrağı yok); önemli olan formun kart istememesidir.
     @MainActor
     func testAddInstallmentWithoutCardShowsPaymentOnHomeWithDueDay() throws {
-        let app = launchHome()
+        // Simülatör dili Türkçe olabilir; satır etiketi denetimi için arayüz İngilizceye sabitlenir.
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
         let title = "Cardless Phone"
 
         let add = app.buttons["home.add"]
@@ -131,7 +132,9 @@ final class FunctionalFlowTests: XCTestCase {
         // Kart seçilmedi: ödeme günü alanı var ve kaydet açık.
         let paymentDay = element("addInstallment.paymentDay", in: app)
         XCTAssertTrue(paymentDay.waitForExistence(timeout: 5), "payment day field not found without a card")
-        let increment = paymentDay.buttons["Increment"]
+        // Stepper kimliği kapsayıcıdadır; artır/azalt düğmeleri "<kimlik>-Increment" kimliğini alır
+        // (etiketleri dile bağlıdır, kimlik değildir).
+        let increment = element("addInstallment.paymentDay-Increment", in: app)
         XCTAssertTrue(increment.waitForExistence(timeout: 5), "payment day stepper has no increment button")
         // Varsayılan gün 1; iki artışla 3. gün.
         increment.tap()
