@@ -460,3 +460,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Verify: coder eski testleri kırmızı bıraktı (beklenen), test writer güncelledi. UI kapısı: işlevsel testte stepper artı düğmesi bulunamadı (blocker), test writer tek turda düzeltti. Reviewer: 2 minor, 2 nit (kabul).
 - **Sınır:** Örnek veri kartlı olduğu için "sıfır kart" durumu yalnızca view model ve sözleşme düzeyinde test edildi; boş mağaza başlatma bayrağı için harness değişikliği gerekir.
 - **Ders:** Zorunlu bir alanı opsiyonel yapmak şemayı etkiler; yeni şema sürümü + geçiş aşaması ekle, yayımlanmış sürümü yerinde değiştirme.
+
+### Koşu #148 — Tam UI galeri çekimini hızlandırma
+
+- **Ne yapıldı:** Tam galeri çekimi ~39 dk'dan ~17,7 dk'ya (1060 s, UI-CHECK: PASS, 222 ekran görüntüsü, 0 a11y sorunu) indi (PR #163, harness). `-ui-gallery-cards-only` ile kartlar AX5'te ~6000 pt aşağıda kalmıyor; üç varyant (light, light-AX5, dark) simulator klonlarında paralel koşuyor; dark geçişte audit atlanıyor (`UI_CHECK_DARK_AUDIT=1` açar); `timing.txt` ve `[ui-time]` özeti eklendi.
+- **Önce ölçüldü:** Light geçiş 1694 s = erişme 472, audit 443, başlatma 195, gezinme 163, bekleme 65; yalnızca galeri AX5 221 s. Optimizasyon tahminle değil bu dökümle yönlendirildi.
+- **Kalan darboğaz:** light-AX5 (~730 s); bütçe CLAUDE.md'de ~18 dk oldu.
+- **Ders:** Yavaş bir kapıyı hızlandırmadan önce zamanı aşamalara böl; en büyük kalemler (erişme, audit) hedeflenince kazanç paralellikten ve gereksiz işi atlamaktan geldi.
