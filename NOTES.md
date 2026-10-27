@@ -446,3 +446,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer yakaladı:** Yalnızca minor/nit: mağaza-kullanılamaz ekranı hâlâ sürümü gösteriyor (issue yalnızca Home diyor, kabul), ayar ikonu `.title3` yazı tipini kaybetti (diğer çubuk ikonlarıyla aynı oldu, kabul).
 - **Sınır:** Başlığın başlık (header) özelliği XCUITest ile doğrulanamadı; sistem gezinme başlığının varsayılanına güvenildi.
 - **Ders:** Özel başlık görünümü yerine sistem gezinme çubuğu başlığı kullanmak erişilebilirlik özelliğini bedavaya getirir ve test yükünü azaltır.
+
+### Koşu #156 — Bildirim izni isteği kaybolması
+
+- **Ne yapıldı:** `ReminderScheduler` "izin soruldu" bayrağını istek dönmeden önce açıyordu; istek hata fırlatırsa ya da uygulama aktif değilken yapılırsa (iOS uyarı göstermez) tek hak harcanıyordu. Bayrak artık yalnızca cevap gelince açılıyor, red kalıcı (PR #159, Faz 16). 9 dk, 0 düzeltme turu, 3 verify çalıştırması, 1 başarısız.
+- **Kapı neyi yakaladı:** Coder eski "hata = red" testini kırmızı bıraktı; verify yakaladı, test writer yeni kurala göre güncelledi. Reviewer: 2 minor, 1 nit (kabul).
+- **Sınır:** `UIApplication` taklit edilemediği için `.active` koruması otomatik test edilemedi; gerçek cihazda elle denenmeli.
+- **Ders:** "Bir kez yap" bayrağını eylemden önce değil, sonuç alındıktan sonra işaretle; yoksa başarısız deneme hakkı sessizce tüketir.

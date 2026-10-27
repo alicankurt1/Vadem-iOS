@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - The version label on the root screen now reads "Version 0.1.0" in a smaller primary-colored style, so it passes the accessibility audit (contrast, readable label) in light, dark and the largest Dynamic Type size; UI checks assert its text, position and size (#10, PR #12)
+- The reminder permission alert is no longer lost when the first request ends without an answer. The scheduler marked the permission as asked before the request returned, so a request that threw, or that was made while the app was not active (iOS shows no alert then), used up the only attempt and later saves never asked again. Now the request counts as made only after iOS answers; a refusal stays final. On iOS the request throws when the app is not active instead of wasting the attempt. Known limitations: the active-state guard has no automated test, any other thrown error is retried on every refresh, and the real alert is only checked by hand on a device (#156, PR #159)
 
 ### Pipeline
 
