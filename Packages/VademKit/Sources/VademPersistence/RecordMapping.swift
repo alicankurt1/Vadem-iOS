@@ -33,7 +33,8 @@ extension CardRecord {
 extension InstallmentRecord {
     convenience init(_ item: InstallmentItem) {
         self.init(
-            id: item.id, title: item.title, cardID: item.cardID, total: MoneyText.encode(item.plan.total),
+            id: item.id, title: item.title, cardID: item.cardID, paymentDay: item.paymentDay,
+            total: MoneyText.encode(item.plan.total),
             count: item.plan.count, firstYear: item.plan.firstMonth.year, firstMonth: item.plan.firstMonth.month
         )
     }
@@ -41,6 +42,7 @@ extension InstallmentRecord {
     func update(from item: InstallmentItem) {
         title = item.title
         cardID = item.cardID
+        paymentDay = item.paymentDay
         total = MoneyText.encode(item.plan.total)
         count = item.plan.count
         firstYear = item.plan.firstMonth.year
@@ -51,7 +53,7 @@ extension InstallmentRecord {
         guard let total = MoneyText.decode(total),
               let first = YearMonth(year: firstYear, month: firstMonth),
               let plan = InstallmentPlan(total: total, count: count, firstMonth: first),
-              let item = InstallmentItem(id: id, title: title, cardID: cardID, plan: plan) else {
+              let item = InstallmentItem(id: id, title: title, cardID: cardID, paymentDay: paymentDay, plan: plan) else {
             throw PersistenceError.invalidRecord(entity: "InstallmentRecord", id: id)
         }
         return item

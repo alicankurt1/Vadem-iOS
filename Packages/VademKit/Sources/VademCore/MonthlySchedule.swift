@@ -5,6 +5,8 @@ import Foundation
 ///
 /// - Installment payment `n` is on the statement cut in its month; it is due on
 ///   ``Card/dueDate(forStatementIn:)`` of that month.
+/// - An installment without a card is due in its own month, on its ``InstallmentItem/paymentDay``
+///   (clamped to the month's last day).
 /// - A subscription on a card charged on or before the card's statement day is on that
 ///   month's statement, otherwise on the next month's; it is due on that statement's due date.
 /// - A subscription without a card is due on its charge date.
@@ -27,7 +29,7 @@ public struct MonthlySchedule: Sendable, Hashable {
         public let title: String
         /// Installment number/count, or subscription.
         public let kind: Kind
-        /// The card the payment is charged to, or `nil` for a subscription paid another way.
+        /// The card the payment is charged to, or `nil` for an item paid another way.
         public let cardID: Card.ID?
         /// The amount due.
         public let amount: Money
@@ -50,8 +52,22 @@ public struct MonthlySchedule: Sendable, Hashable {
         var entries: [Entry] = []
 
         for item in installments {
+            guard let cardID = item.cardID else {
+                // Kartsız taksit kendi ayında, ödeme gününde ödenir; ekstre kayması yoktur.
+                if let payDay = item.paymentDay,
+                   let payment = item.plan.payments.first(where: { $0.month == month }) {
+                    entries.append(Entry(
+                        itemID: item.id, title: item.title,
+                        kind: .installment(number: payment.number, count: item.plan.count),
+                        cardID: nil, amount: payment.amount,
+                        // Kısa aylarda ödeme günü ayın son gününe kayar (abonelikteki gibi).
+                        dueDate: Card.DueDate(month: month, day: min(payDay, month.numberOfDays))
+                    ))
+                }
+                continue
+            }
             // Kartı bilinmeyen taksit atlanır.
-            guard let card = cardsByID[item.cardID] else { continue }
+            guard let card = cardsByID[cardID] else { continue }
             for payment in item.plan.payments {
                 // Ekstre ayı M-1 veya M olan taksitlerin vadesi M'de olabilir; diğerleri olamaz.
                 guard (0...1).contains(payment.month.months(until: month)),

@@ -10,11 +10,12 @@ struct InstallmentDraftTests {
     private static func draft(
         title: String = "Telefon",
         card: UUID? = InstallmentDraftTests.card,
+        paymentDay: Int = 15,
         total: Decimal? = 1200,
         count: Int = 3,
         month: YearMonth = InstallmentDraftTests.october
     ) -> InstallmentDraft {
-        InstallmentDraft(title: title, cardID: card, total: total, count: count, firstMonth: month)
+        InstallmentDraft(title: title, cardID: card, paymentDay: paymentDay, total: total, count: count, firstMonth: month)
     }
 
     @Test("A valid plan has no errors and makes an item")
@@ -68,12 +69,42 @@ struct InstallmentDraftTests {
         if !isValid { #expect(error == .countOutOfRange) }
     }
 
-    @Test("A missing card is an error")
-    func cardMissing() {
-        let draft = Self.draft(card: nil)
-        #expect(draft.error(for: .card) == .cardMissing)
-        #expect(!draft.isValid)
-        #expect(draft.makeItem() == nil)
+    @Test("Without a card a valid payment day is enough")
+    func cardLessValid() throws {
+        let draft = Self.draft(card: nil, paymentDay: 20)
+        #expect(draft.errors.isEmpty)
+        let item = try #require(draft.makeItem())
+        #expect(item.cardID == nil)
+        #expect(item.paymentDay == 20)
+    }
+
+    @Test("Without a card the payment day must be 1 to 31", arguments: [
+        (-5, false), (0, false), (1, true), (15, true), (28, true), (29, true), (30, true), (31, true),
+        (32, false), (100, false),
+    ])
+    func paymentDayWithoutCard(day: Int, isValid: Bool) {
+        let draft = Self.draft(card: nil, paymentDay: day)
+        #expect((draft.error(for: .paymentDay) == nil) == isValid)
+        if !isValid { #expect(draft.error(for: .paymentDay) == .paymentDayOutOfRange) }
+        #expect(draft.isValid == isValid)
+        #expect((draft.makeItem() != nil) == isValid)
+    }
+
+    @Test("With a card the payment day is ignored and not stored", arguments: [0, 15, 99, -1])
+    func paymentDayIgnoredWithCard(day: Int) throws {
+        let draft = Self.draft(paymentDay: day)
+        #expect(draft.error(for: .paymentDay) == nil)
+        #expect(draft.isValid)
+        let item = try #require(draft.makeItem())
+        #expect(item.cardID == Self.card)
+        #expect(item.paymentDay == nil)
+    }
+
+    @Test("A card-less draft still enforces the other rules")
+    func cardLessOtherRules() {
+        #expect(Self.draft(title: " ", card: nil).error(for: .title) == .titleEmpty)
+        #expect(Self.draft(card: nil, total: 0).makeItem() == nil)
+        #expect(Self.draft(card: nil, count: 0).makeItem() == nil)
     }
 
     @Test("The last payment may not pass December 9999", arguments: [
@@ -94,8 +125,8 @@ struct InstallmentDraftTests {
 
     @Test("Every broken rule is listed, in field order, one per field")
     func allErrors() {
-        let draft = Self.draft(title: " ", card: nil, total: nil, count: 0)
-        #expect(draft.errors == [.titleEmpty, .cardMissing, .amountMissing, .countOutOfRange])
+        let draft = Self.draft(title: " ", card: nil, paymentDay: 0, total: nil, count: 0)
+        #expect(draft.errors == [.titleEmpty, .paymentDayOutOfRange, .amountMissing, .countOutOfRange])
         #expect(draft.makeItem() == nil)
         #expect(Set(draft.errors.map(\.field)).count == draft.errors.count)
     }
@@ -103,7 +134,7 @@ struct InstallmentDraftTests {
     @Test("Each error belongs to its field", arguments: [
         (InstallmentDraft.ValidationError.titleEmpty, InstallmentDraft.Field.title),
         (.titleTooLong, .title),
-        (.cardMissing, .card),
+        (.paymentDayOutOfRange, .paymentDay),
         (.amountMissing, .amount),
         (.amountNotPositive, .amount),
         (.countOutOfRange, .count),

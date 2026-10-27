@@ -48,7 +48,7 @@ public struct AssistantPayment: Sendable, Hashable, Codable {
     public let amount: AssistantAmount
     /// The due date as `"YYYY-MM-DD"`.
     public let dueDate: String
-    /// The card's name, made prompt-safe; `nil` for a subscription paid without a card.
+    /// The card's name, made prompt-safe; `nil` for a payment without a card.
     public let cardName: PromptSafeText?
     /// Installment or subscription.
     public let kind: Kind

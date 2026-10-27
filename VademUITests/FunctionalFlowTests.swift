@@ -105,6 +105,53 @@ final class FunctionalFlowTests: XCTestCase {
         )
     }
 
+    /// #155: kart eklemeden taksit eklenir. Kart seçilmez ("No card" kalır), ödeme günü alanı görünür,
+    /// gün 3 yapılır; kayıttan sonra Home satırı "No card" ve doğru vade gününü ("due 3 October") gösterir.
+    /// Not: örnek veride kartlar vardır (boş depo açma bayrağı yok); önemli olan formun kart istememesidir.
+    @MainActor
+    func testAddInstallmentWithoutCardShowsPaymentOnHomeWithDueDay() throws {
+        // Simülatör dili Türkçe olabilir; satır etiketi denetimi için arayüz İngilizceye sabitlenir.
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let title = "Cardless Phone"
+
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
+        add.tap()
+        app.buttons["home.add.installment"].tap()
+
+        let titleField = app.textFields["addInstallment.title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
+        titleField.tap()
+        titleField.typeText(title)
+
+        let amount = app.textFields["addInstallment.amount"]
+        XCTAssertTrue(amount.waitForExistence(timeout: 5), "amount field not found")
+        amount.tap()
+        amount.typeText("1200")
+
+        // Kart seçilmedi: ödeme günü alanı var ve kaydet açık.
+        let paymentDay = element("addInstallment.paymentDay", in: app)
+        XCTAssertTrue(paymentDay.waitForExistence(timeout: 5), "payment day field not found without a card")
+        // Stepper kimliği kapsayıcıdadır; artır/azalt düğmeleri "<kimlik>-Increment" kimliğini alır
+        // (etiketleri dile bağlıdır, kimlik değildir).
+        let increment = element("addInstallment.paymentDay-Increment", in: app)
+        XCTAssertTrue(increment.waitForExistence(timeout: 5), "payment day stepper has no increment button")
+        // Varsayılan gün 1; iki artışla 3. gün.
+        increment.tap()
+        increment.tap()
+
+        let save = app.buttons["addInstallment.save"]
+        XCTAssertTrue(save.isEnabled, "save must be enabled without a card once title and amount are filled")
+        save.tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
+        // Form Home'un seçili ayıyla (Ekim 2026) açılır; ödeme Ekim'in 3'ündedir.
+        XCTAssertTrue(scrollToRow(titled: title, in: app), "saved card-less installment '\(title)' not shown on Home")
+        let saved = row(titled: title, in: app)
+        XCTAssertTrue(saved.label.contains("due 3 October"), "row must show the chosen due day, got: \(saved.label)")
+        XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
+    }
+
     @MainActor
     func testAnalyticsOpensFromHomeAndGoesBack() throws {
         let app = launchHome()

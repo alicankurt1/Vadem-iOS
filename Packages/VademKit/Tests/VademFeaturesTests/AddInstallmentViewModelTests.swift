@@ -114,7 +114,9 @@ struct AddInstallmentViewModelTests {
         let (model, _) = try Self.makeModel()
         model.showAllErrors()
         #expect(model.errorMessage(for: .title) != nil)
-        #expect(model.errorMessage(for: .card) != nil)
+        // Kart artık isteğe bağlı: boş kart da, varsayılan ödeme günü de hata değildir.
+        #expect(model.errorMessage(for: .card) == nil)
+        #expect(model.errorMessage(for: .paymentDay) == nil)
         #expect(model.errorMessage(for: .amount) != nil)
         #expect(model.errorMessage(for: .count) == nil)
         #expect(model.errorMessage(for: .firstMonth) == nil)
@@ -140,14 +142,72 @@ struct AddInstallmentViewModelTests {
         #expect(!model.canSave)
     }
 
-    @Test("Card message depends on whether any card exists")
-    func cardMessages() throws {
-        let (withCards, _) = try Self.makeModel()
-        withCards.showAllErrors()
-        #expect(withCards.errorMessage(for: .card) == "Choose a card.")
-        let (noCards, _) = try Self.makeModel(cards: [])
-        noCards.showAllErrors()
-        #expect(noCards.errorMessage(for: .card) == "Add a card first.")
+    @Test("The card is optional: no card never shows a card error, with or without saved cards")
+    func cardIsOptional() throws {
+        for cards in [[Self.card()], []] {
+            let (model, _) = try Self.makeModel(cards: cards)
+            model.showAllErrors()
+            #expect(model.cardID == nil)
+            #expect(model.errorMessage(for: .card) == nil)
+        }
+    }
+
+    @Test("A payment day outside 1 to 31 without a card has a message", arguments: [0, -1, 32, 100])
+    func paymentDayMessage(day: Int) throws {
+        let (model, _) = try Self.makeModel()
+        model.paymentDay = day
+        #expect(model.errorMessage(for: .paymentDay) == "Choose a payment day from 1 to 31.")
+        #expect(!model.canSave)
+    }
+
+    @Test("An out-of-range payment day is ignored while a card is chosen")
+    func paymentDayIgnoredWithCard() throws {
+        let (model, repository) = try Self.makeModel()
+        Self.fillValid(model)
+        model.paymentDay = 99
+        #expect(model.errorMessage(for: .paymentDay) == nil)
+        #expect(model.canSave)
+        #expect(model.save())
+        #expect(try repository.installments().first?.paymentDay == nil)
+    }
+
+    @Test("A user with no cards can save an installment on a payment day")
+    func saveWithoutAnyCard() throws {
+        let (model, repository) = try Self.makeModel(cards: [])
+        model.title = "Telefon"
+        model.amountText = "1200"
+        model.count = 3
+        model.paymentDay = 17
+        #expect(model.cards.isEmpty)
+        #expect(model.canSave)
+        #expect(model.save())
+        let stored = try #require(try repository.installments().first)
+        #expect(try repository.installments().count == 1)
+        #expect(stored.cardID == nil)
+        #expect(stored.paymentDay == 17)
+    }
+
+    @Test("The payment day starts at the given initial day")
+    func initialPaymentDay() {
+        let model = AddInstallmentViewModel(
+            repository: InMemoryPaymentRepository(), initialMonth: Self.october, initialPaymentDay: 9, locale: Self.turkish
+        )
+        #expect(model.paymentDay == 9)
+    }
+
+    @Test("Editing a card-less installment loads its payment day and can move it to a card")
+    func editCardless() throws {
+        let (_, repository) = try Self.makeModel(cards: [])
+        let plan = try #require(InstallmentPlan(total: Money(600), count: 3, firstMonth: Self.october))
+        let item = try #require(InstallmentItem(title: "Okul", cardID: nil, paymentDay: 23, plan: plan))
+        try repository.save(item)
+        let model = AddInstallmentViewModel(repository: repository, editing: item, locale: Self.turkish)
+        #expect(model.cardID == nil)
+        #expect(model.paymentDay == 23)
+        model.paymentDay = 30
+        #expect(model.save())
+        #expect(try repository.installments().first?.paymentDay == 30)
+        #expect(try repository.installments().first?.id == item.id)
     }
 
     @Test("Title longer than the limit has a message")
@@ -289,7 +349,7 @@ struct AddInstallmentViewModelTests {
         #expect(!model.save())
         #expect(try repository.installments().isEmpty)
         #expect(model.errorMessage(for: .title) != nil)
-        #expect(model.errorMessage(for: .card) != nil)
+        #expect(model.errorMessage(for: .card) == nil)
         #expect(model.errorMessage(for: .amount) != nil)
     }
 

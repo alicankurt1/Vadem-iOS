@@ -43,7 +43,10 @@ public final class InMemoryPaymentRepository: PaymentRepository {
     }
 
     public func save(_ item: InstallmentItem) throws {
-        guard cardsByID[item.cardID] != nil else { throw RepositoryError.unknownCard }
+        // Kartsız taksit (nil) serbest; kart verilmişse kayıtlı olmalı.
+        if let cardID = item.cardID, cardsByID[cardID] == nil {
+            throw RepositoryError.unknownCard
+        }
         installmentsByID[item.id] = item
     }
 

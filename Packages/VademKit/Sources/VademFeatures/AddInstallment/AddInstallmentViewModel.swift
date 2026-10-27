@@ -5,7 +5,8 @@ import VademCore
 /// Drives the add-installment form: field values, per-field errors and saving through ``PaymentRepository``.
 ///
 /// Validation comes from ``InstallmentDraft``. A field's error is shown only after the field
-/// was changed, or after ``showAllErrors()`` / a failed ``save()``.
+/// was changed, or after ``showAllErrors()`` / a failed ``save()``. The card is optional:
+/// without a card the installment is paid on ``paymentDay``.
 /// Created with ``init(repository:editing:locale:)`` the form edits a saved installment:
 /// fields start with its values, ``save()`` replaces it (same `id`) and ``delete()`` removes it.
 @MainActor
@@ -30,8 +31,10 @@ public final class AddInstallmentViewModel: Identifiable {
 
     /// The title as typed.
     public var title: String = "" { didSet { touched.insert(.title) } }
-    /// The chosen card, or `nil` while none is chosen.
+    /// The chosen card, or `nil` when the installment is not charged to a card.
     public var cardID: Card.ID? { didSet { touched.insert(.card) } }
+    /// The day of the month a card-less installment is paid on; used only while ``cardID`` is `nil`.
+    public var paymentDay: Int { didSet { touched.insert(.paymentDay) } }
     /// The total as typed, with the locale's decimal separator (e.g. `"1.499,90"` in Turkish).
     public var amountText: String = "" { didSet { touched.insert(.amount) } }
     /// The number of monthly payments.
@@ -57,13 +60,20 @@ public final class AddInstallmentViewModel: Identifiable {
     private var touched: Set<InstallmentDraft.Field> = []
     private var showsAllErrors = false
 
-    /// Creates an empty form whose first month is `initialMonth`, and loads the cards.
+    /// Creates an empty form whose first month is `initialMonth` and payment day is
+    /// `initialPaymentDay`, and loads the cards.
     ///
     /// `locale` decides the decimal and grouping separators of ``amountText``.
-    public init(repository: any PaymentRepository, initialMonth: YearMonth, locale: Locale = .current) {
+    public init(
+        repository: any PaymentRepository,
+        initialMonth: YearMonth,
+        initialPaymentDay: Int = InstallmentItem.supportedPaymentDays.lowerBound,
+        locale: Locale = .current
+    ) {
         self.repository = repository
         self.locale = locale
         self.firstMonth = initialMonth
+        self.paymentDay = initialPaymentDay
         self.cardID = nil
         self.editingID = nil
         self.firstMonthOptions = Self.months(around: initialMonth)
@@ -79,6 +89,7 @@ public final class AddInstallmentViewModel: Identifiable {
         self.editingID = item.id
         self.title = item.title
         self.cardID = item.cardID
+        self.paymentDay = item.paymentDay ?? InstallmentItem.supportedPaymentDays.lowerBound
         self.amountText = AmountInput.text(for: item.plan.total.amount, locale: locale)
         self.count = item.plan.count
         self.firstMonth = item.plan.firstMonth
@@ -101,6 +112,7 @@ public final class AddInstallmentViewModel: Identifiable {
         InstallmentDraft(
             title: title,
             cardID: cardID,
+            paymentDay: paymentDay,
             total: Self.parseAmount(amountText, locale: locale),
             count: count,
             firstMonth: firstMonth
@@ -205,10 +217,9 @@ public final class AddInstallmentViewModel: Identifiable {
             return String(localized: "Enter a title.", bundle: .module)
         case .titleTooLong:
             return String(localized: "Use at most \(InstallmentItem.maxTitleLength) characters.", bundle: .module)
-        case .cardMissing:
-            return cards.isEmpty
-                ? String(localized: "Add a card first.", bundle: .module)
-                : String(localized: "Choose a card.", bundle: .module)
+        case .paymentDayOutOfRange:
+            let days = InstallmentItem.supportedPaymentDays
+            return String(localized: "Choose a payment day from \(days.lowerBound) to \(days.upperBound).", bundle: .module)
         case .amountMissing:
             return AmountInput.missingMessage(for: amountText, locale: locale)
         case .amountNotPositive:

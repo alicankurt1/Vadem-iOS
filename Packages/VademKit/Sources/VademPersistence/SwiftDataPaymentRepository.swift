@@ -43,7 +43,7 @@ public final class SwiftDataPaymentRepository: PaymentRepository {
         // Kullanımdaki kart silinemez; ilişki olmadığı için kural burada uygulanır.
         let target: UUID? = id
         let installmentCount = try context.fetchCount(
-            FetchDescriptor<InstallmentRecord>(predicate: #Predicate { $0.cardID == id })
+            FetchDescriptor<InstallmentRecord>(predicate: #Predicate { $0.cardID == target })
         )
         let subscriptionCount = try context.fetchCount(
             FetchDescriptor<SubscriptionRecord>(predicate: #Predicate { $0.cardID == target })
@@ -67,7 +67,10 @@ public final class SwiftDataPaymentRepository: PaymentRepository {
     }
 
     public func save(_ item: InstallmentItem) throws {
-        guard try cardExists(id: item.cardID) else { throw RepositoryError.unknownCard }
+        // Kartsız taksit (nil) serbest; kart verilmişse kayıtlı olmalı.
+        if let cardID = item.cardID, try !cardExists(id: cardID) {
+            throw RepositoryError.unknownCard
+        }
         let id = item.id
         if let record = try context.fetch(FetchDescriptor<InstallmentRecord>(predicate: #Predicate { $0.id == id })).first {
             record.update(from: item)
