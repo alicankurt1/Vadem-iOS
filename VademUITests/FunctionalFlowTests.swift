@@ -383,6 +383,118 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertFalse(scrollToRow(titled: "Laptop", in: app), "deleted installment must not appear on Home")
     }
 
+    // MARK: - Abonelik akışı (#166)
+
+    /// Kart seçmeden abonelik eklenir: kart "No card" kalır, yenileme günü stepper ile 3 yapılır;
+    /// kayıttan sonra Home satırı "No card" ve doğru vade gününü ("due 3 October") gösterir.
+    @MainActor
+    func testAddSubscriptionWithoutCardShowsPaymentOnHomeWithDueDay() throws {
+        // Satır etiketi denetimi için arayüz İngilizceye sabitlenir (#155 testiyle aynı).
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let title = "Cardless Streaming"
+
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
+        add.tap()
+        app.buttons["home.add.subscription"].tap()
+
+        let titleField = app.textFields["addSubscription.title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
+        titleField.tap()
+        titleField.typeText(title)
+
+        let amount = app.textFields["addSubscription.amount"]
+        XCTAssertTrue(amount.waitForExistence(timeout: 5), "amount field not found")
+        amount.tap()
+        amount.typeText("99")
+
+        // Kart seçilmez. Stepper kimliği kapsayıcıdadır; düğmeler "<kimlik>-Increment" alır.
+        let increment = element("addSubscription.renewalDay-Increment", in: app)
+        XCTAssertTrue(increment.waitForExistence(timeout: 5), "renewal day stepper has no increment button")
+        // Varsayılan gün 1; iki artışla 3. gün.
+        increment.tap()
+        increment.tap()
+
+        let save = app.buttons["addSubscription.save"]
+        XCTAssertTrue(save.isEnabled, "save must be enabled without a card once title and amount are filled")
+        save.tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
+        // Form Home'un seçili ayıyla (Ekim 2026) açılır; çekim Ekim'in 3'ündedir.
+        XCTAssertTrue(scrollToRow(titled: title, in: app), "saved card-less subscription '\(title)' not shown on Home")
+        let saved = row(titled: title, in: app)
+        XCTAssertTrue(saved.label.contains("due 3 October"), "row must show the chosen due day, got: \(saved.label)")
+        XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
+    }
+
+    @MainActor
+    func testEditSubscriptionFromHomeSavesNewTitle() throws {
+        let app = launchHome()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "Home not shown")
+        XCTAssertTrue(scrollToRow(titled: "Netflix", in: app), "sample subscription 'Netflix' not shown on Home")
+        row(titled: "Netflix", in: app).tap()
+
+        // Form kayıtlı değerlerle açılır.
+        let titleField = app.textFields["addSubscription.title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "edit form not shown")
+        XCTAssertEqual(titleField.value as? String, "Netflix", "title must be prefilled")
+        XCTAssertTrue(app.buttons["addSubscription.save"].isEnabled, "save must be enabled with the saved values")
+
+        // İmleci sona almak için sağ kenara dokunulur (dikey eksenli alan).
+        titleField.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+        titleField.typeText(" Plus")
+        app.buttons["addSubscription.save"].tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
+        XCTAssertTrue(scrollToRow(titled: "Netflix Plus", in: app), "edited title not shown on Home")
+    }
+
+    @MainActor
+    func testDeleteSubscriptionFromHomeRemovesPayment() throws {
+        let app = launchHome()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "Home not shown")
+        XCTAssertTrue(scrollToRow(titled: "Gym", in: app), "sample subscription 'Gym' not shown on Home")
+        row(titled: "Gym", in: app).tap()
+
+        let delete = revealDelete(prefix: "addSubscription", in: app)
+        XCTAssertTrue(delete.exists, "delete button not found")
+        delete.tap()
+
+        // Önce onay istenir; vazgeçince form açık kalır.
+        let cancel = app.buttons["addSubscription.delete.cancel"].firstMatch
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5), "confirmation not shown")
+        cancel.tap()
+        XCTAssertTrue(app.textFields["addSubscription.title"].exists, "form must stay open after cancelling")
+
+        revealDelete(prefix: "addSubscription", in: app).tap()
+        let confirm = app.buttons["addSubscription.delete.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "confirmation not shown")
+        confirm.tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after deleting")
+        XCTAssertFalse(scrollToRow(titled: "Gym", in: app), "deleted subscription must not appear on Home")
+    }
+
+    @MainActor
+    func testCancelAddSubscriptionLeavesHomeUnchanged() throws {
+        let app = launchHome()
+
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
+        add.tap()
+        app.buttons["home.add.subscription"].tap()
+
+        let titleField = app.textFields["addSubscription.title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
+        titleField.tap()
+        titleField.typeText("Cancelled sub")
+
+        app.buttons["addSubscription.cancel"].tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after cancel")
+        XCTAssertFalse(scrollToRow(titled: "Cancelled sub", in: app), "cancelled subscription must not appear on Home")
+    }
+
     @MainActor
     func testDeleteCardInUseShowsMessageAndKeepsForm() throws {
         let app = launchHome()
