@@ -197,6 +197,26 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testHomeHasNoVersionAndSettingsShowsVersion() throws {
+        let app = launchHome()
+
+        let gear = app.buttons["home.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
+        // Başlık gezinme çubuğunda; Home'da sürüm metni yok (#154).
+        XCTAssertTrue(app.staticTexts["Vadem"].exists, "Vadem title must show on Home")
+        let versionQuery = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Version ", "Sürüm "))
+        XCTAssertEqual(versionQuery.count, 0, "Home must not show a version text")
+
+        gear.tap()
+        let version = app.staticTexts["settings.version"]
+        XCTAssertTrue(version.waitForExistence(timeout: 5), "Settings must show the app version")
+        XCTAssertNotNil(
+            version.label.wholeMatch(of: /(Version|Sürüm) [0-9]+(\.[0-9]+)*/),
+            "version label '\(version.label)' has an unexpected format"
+        )
+    }
+
+    @MainActor
     func testSettingsTogglesRemindersAndPicksTiming() throws {
         let app = launchHome()
 
