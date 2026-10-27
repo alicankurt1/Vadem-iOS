@@ -1,6 +1,9 @@
 import Foundation
 import UserNotifications
 import VademCore
+#if os(iOS)
+import UIKit
+#endif
 
 /// ``ReminderCenter`` backed by `UNUserNotificationCenter`; the only place that imports `UserNotifications`.
 @MainActor
@@ -30,9 +33,18 @@ public final class SystemReminderCenter: ReminderCenter {
         }
     }
 
+    /// Throws ``SceneNotActiveError`` without asking when the app is not active: iOS shows no alert
+    /// then, so the request would end without an answer (the scheduler retries on its next refresh).
     public func requestAuthorization() async throws -> Bool {
-        try await center.requestAuthorization(options: [.alert, .sound])
+        #if os(iOS)
+        // Uygulama etkin değilken sistem izin penceresini göstermez; cevapsız istek harcanmasın.
+        guard UIApplication.shared.applicationState == .active else { throw SceneNotActiveError() }
+        #endif
+        return try await center.requestAuthorization(options: [.alert, .sound])
     }
+
+    /// Thrown by ``requestAuthorization()`` when the app is not active, so no alert could be shown.
+    public struct SceneNotActiveError: Error {}
 
     public func replacePending(_ reminders: [PlannedReminder]) async throws {
         // Yalnızca uygulamanın "due-" hatırlatmaları silinir; başka bekleyen istek varsa korunur.

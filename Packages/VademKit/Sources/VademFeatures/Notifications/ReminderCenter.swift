@@ -19,6 +19,7 @@ public protocol ReminderCenter {
     /// The current permission.
     func authorizationStatus() async -> ReminderAuthorization
     /// Asks the user for permission; returns `true` when it is granted.
+    /// Throws when the request got no answer (e.g. the alert could not be shown); callers may ask again.
     func requestAuthorization() async throws -> Bool
     /// Removes every pending request whose id starts with `"due-"` (see ``PlannedReminder/id``), then schedules
     /// `reminders` (title, body, at `fireDate`). An empty array only clears them.

@@ -6,7 +6,9 @@ import VademCore
 /// ``refresh()`` first reads the ``ReminderPreferences``: when reminders are off it clears the
 /// pending reminders and never asks for permission. Otherwise it plans the timing's kinds and then:
 /// - nothing to plan: clears the pending reminders;
-/// - permission not asked yet: asks once (only when there is something to send), schedules if granted;
+/// - permission not asked yet: asks (only when there is something to send), schedules if granted;
+///   after an answer it never asks again in this process, but a request that throws (no answer,
+///   e.g. the scene was not active) is retried on the next refresh;
 /// - denied: does nothing and never asks again;
 /// - allowed: replaces the pending reminders with the plan.
 ///
@@ -20,7 +22,8 @@ public final class ReminderScheduler {
     private let now: () -> Date
     private let formatAmount: (Money) -> String
 
-    // Bu oturumda izin bir kez istendi; cevap ne olursa olsun tekrar sorulmaz.
+    // Bu oturumda izin isteği bir cevap aldı; cevap ne olursa olsun tekrar sorulmaz.
+    // İstek hata verirse (cevap yok) bayrak konmaz, sonraki yenileme yeniden sorar.
     private var hasRequestedAuthorization = false
     // Aynı anda iki yenileme izin penceresini iki kez açmasın: süren yenileme bir tur daha yapar.
     private var isRefreshing = false
@@ -97,8 +100,16 @@ public final class ReminderScheduler {
             return
         case .notDetermined:
             guard !hasRequestedAuthorization else { return }
+            let granted: Bool
+            do {
+                granted = try await center.requestAuthorization()
+            } catch {
+                // İstek cevap almadan bitti (ör. sahne etkin değildi): soru sorulmuş sayılmaz,
+                // sonraki yenileme (kayıt ya da öne gelme) yeniden dener.
+                return
+            }
+            // Bayrak ancak cevaptan sonra konur; cevap ne olursa olsun bu oturumda tekrar sorulmaz.
             hasRequestedAuthorization = true
-            let granted = (try? await center.requestAuthorization()) ?? false
             if granted {
                 try? await center.replacePending(reminders)
             }
