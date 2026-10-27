@@ -55,9 +55,13 @@ public final class SettingsViewModel: Identifiable {
     @ObservationIgnored private let center: (any ReminderCenter)?
     @ObservationIgnored private let scheduler: ReminderScheduler?
     @ObservationIgnored private let openSystemSettingsAction: @MainActor () -> Void
+    // Kartlar ekranının deposu; nil ise "Kartlar" satırı gösterilmez.
+    @ObservationIgnored private let repository: (any PaymentRepository)?
 
-    /// Loads the preferences from `dependencies.store`.
-    public init(dependencies: SettingsDependencies) {
+    /// Loads the preferences from `dependencies.store`. `repository` backs the Cards screen
+    /// (``makeCardListModel()``); `nil` hides the Cards row.
+    public init(dependencies: SettingsDependencies, repository: (any PaymentRepository)? = nil) {
+        self.repository = repository
         self.store = dependencies.store
         self.center = dependencies.center
         self.scheduler = dependencies.scheduler
@@ -86,6 +90,14 @@ public final class SettingsViewModel: Identifiable {
     /// `true` when reminders are on but the system permission is denied: the screen explains
     /// it and offers ``openSystemSettings()``.
     public var showsPermissionDenied: Bool { preferences.isEnabled && authorization == .denied }
+
+    /// `true` when the Cards row is shown (a repository was given).
+    public var showsCards: Bool { repository != nil }
+
+    /// A new Cards screen model on the injected repository, or `nil` without one.
+    public func makeCardListModel() -> CardListViewModel? {
+        repository.map { CardListViewModel(repository: $0) }
+    }
 
     /// Turns reminders on or off: saves at once, then refreshes the scheduler and the permission.
     ///

@@ -479,6 +479,26 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testCardsScreen() throws {
+        // Kartlar listesi; AX5'te uzar, son kartın işaretçisine kaydırılır.
+        try capture(
+            screen: "cards",
+            launchArguments: ["-ui-sample-data", "-ui-card-list"],
+            sections: [.top, .scrolled(to: "cards.row.2", named: "last")]
+        )
+    }
+
+    @MainActor
+    func testCardsScreenEmpty() throws {
+        // Boş durum: açıklama ve kart ekleme düğmesi.
+        try capture(
+            screen: "cards-empty",
+            launchArguments: ["-ui-sample-data", "-ui-card-list-empty"],
+            sections: [.top]
+        )
+    }
+
+    @MainActor
     func testSettingsDenied() throws {
         // İzin reddedilmiş: açıklama ve sistem Ayarları düğmesi görünür.
         try capture(

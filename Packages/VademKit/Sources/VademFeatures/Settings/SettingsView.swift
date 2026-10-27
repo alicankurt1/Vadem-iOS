@@ -9,6 +9,7 @@ import VademCore
 /// Identifiers: `settings.reminders` (toggle), `settings.timing` (row), the pushed list
 /// `settings.timing.options` with `settings.timing.option.<index>`, `settings.permissionDenied`
 /// (explanation), `settings.openSystemSettings`, `settings.version` (app version) and `settings.done`.
+/// When ``SettingsViewModel/showsCards`` is `true`, a Cards row (`settings.cards`) pushes the ``CardListView``.
 @MainActor
 public struct SettingsView: View {
     /// The launch argument that opens Home with this sheet already presented (UI check).
@@ -24,6 +25,8 @@ public struct SettingsView: View {
 
     @State private var model: SettingsViewModel
     @State private var isChoosingTiming = false
+    // İtilmiş Kartlar ekranının modeli; nil iken ekran itilmemiştir.
+    @State private var cardListModel: CardListViewModel?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -31,8 +34,19 @@ public struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     /// Creates the sheet for `model`.
+    ///
+    /// In debug builds, ``CardListView/launchArgument`` (or ``CardListView/emptyLaunchArgument``)
+    /// pushes the Cards screen right away, for the UI check.
     public init(model: SettingsViewModel) {
         _model = State(initialValue: model)
+        var initialCardListModel: CardListViewModel?
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains(CardListView.launchArgument) || arguments.contains(CardListView.emptyLaunchArgument) {
+            initialCardListModel = model.makeCardListModel()
+        }
+        #endif
+        _cardListModel = State(initialValue: initialCardListModel)
     }
 
     public var body: some View {
@@ -62,6 +76,9 @@ public struct SettingsView: View {
                 if model.showsPermissionDenied {
                     permissionDeniedCard
                 }
+                if model.showsCards {
+                    cardsCard
+                }
                 versionCard
             }
             .foregroundStyle(Color.vademTextPrimary)
@@ -72,6 +89,11 @@ public struct SettingsView: View {
                     options: timingOptions,
                     selection: Binding(get: { model.timing }, set: { model.setTiming($0) })
                 )
+            }
+            .navigationDestination(isPresented: cardListPresented) {
+                if let cardListModel {
+                    CardListView(model: cardListModel)
+                }
             }
             .navigationTitle(Text("Settings", bundle: .module))
             #if os(iOS)
@@ -130,6 +152,39 @@ public struct SettingsView: View {
         }
     }
 
+    private var cardListPresented: Binding<Bool> {
+        Binding(
+            get: { cardListModel != nil },
+            set: { if !$0 { cardListModel = nil } }
+        )
+    }
+
+    // Kartlar satırı: kart listesini iter. ChoiceRow gibi düz düğme ve Dynamic Type ile büyüyen ok.
+    private var cardsCard: some View {
+        FormCard {
+            Button {
+                cardListModel = model.makeCardListModel()
+            } label: {
+                HStack(spacing: 8) {
+                    Text("Cards", bundle: .module)
+                        .font(.body)
+                        .foregroundStyle(Color.vademTextPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color.vademBrand)
+                        .accessibilityHidden(true)
+                }
+                .multilineTextAlignment(.leading)
+                .frame(minHeight: FormLayout.minRowHeight)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("Opens a list", bundle: .module))
+            .accessibilityIdentifier("settings.cards")
+        }
+    }
+
     // Uygulama sürümü (Home'dan buraya taşındı); düz metin, Dynamic Type ile sarılır.
     private var versionCard: some View {
         FormCard {
@@ -148,7 +203,7 @@ public struct SettingsView: View {
 
 #if DEBUG
 #Preview("Default") {
-    SettingsView(model: SettingsViewModel(dependencies: .inMemory()))
+    SettingsView(model: SettingsViewModel(dependencies: .inMemory(), repository: HomeSampleData.makeRepository()))
 }
 
 #Preview("Denied") {

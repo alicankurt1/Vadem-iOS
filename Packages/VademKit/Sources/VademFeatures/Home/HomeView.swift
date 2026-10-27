@@ -46,7 +46,8 @@ public struct HomeView: View {
     /// ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument`` and
     /// ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
     /// month in its edit form. ``SettingsView/launchArgument`` (or ``SettingsView/deniedLaunchArgument``)
-    /// opens the settings sheet. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
+    /// opens the settings sheet; ``CardListView/launchArgument`` (or ``CardListView/emptyLaunchArgument``)
+    /// opens it with the Cards screen pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
     /// ``AssistantView/launchArgument`` the assistant chat.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
@@ -97,7 +98,9 @@ public struct HomeView: View {
         } else if arguments.contains(AddCardView.editLaunchArgument) {
             initialAddCardModel = model.cardSubtotals.first.flatMap { model.makeEditCardModel(id: $0.id) }
         } else if arguments.contains(SettingsView.launchArgument)
-                    || arguments.contains(SettingsView.deniedLaunchArgument) {
+                    || arguments.contains(SettingsView.deniedLaunchArgument)
+                    || arguments.contains(CardListView.launchArgument)
+                    || arguments.contains(CardListView.emptyLaunchArgument) {
             initialSettingsModel = model.makeSettingsModel()
         }
         #endif
@@ -153,8 +156,8 @@ public struct HomeView: View {
         .sheet(item: $addSubscriptionModel, onDismiss: reloadAfterForm) { addSubscriptionModel in
             AddSubscriptionView(model: addSubscriptionModel)
         }
-        // Ayarlar veriyi değiştirmez; zamanlayıcı her tercih değişikliğinde zaten yenilenir.
-        .sheet(item: $settingsModel) { settingsModel in
+        // Ayarlar'daki Kartlar ekranı kartları değiştirebilir; sayfa kapanınca Home yeniden yüklenir.
+        .sheet(item: $settingsModel, onDismiss: reloadAfterForm) { settingsModel in
             SettingsView(model: settingsModel)
         }
     }
