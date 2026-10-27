@@ -474,3 +474,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Reviewer: 2 minor, 1 nit; uzun satır ve yanlış test yorumu düzeltildi, "makeCardListModel() opsiyonel" kabul edildi (satır zaten gizli). UI kapısı: yalnızca `cards-last` = `cards` notu (3 kart, içerik sonu), 0 a11y sorunu.
 - **Kapanan boşluk:** #67'deki "ödemesi olmayan kart UI'dan silinemiyor" sınırlaması bu ekranla kalktı; Ayarlar sheet'i üzerinde kart ekleme sheet'i işlevsel testle doğrulandı.
 - **Ders:** Önceki PR'ın bilinen sınırlaması ayrı issue olarak yazıldığında, sonraki koşu mevcut formları yeniden kullanarak küçük ve hızlı kapanıyor.
+
+### Koşu #166 — Abonelik akışı işlevsel testleri
+
+- **Ne yapıldı:** `FunctionalFlowTests`'e dört test eklendi: kartsız abonelik ekleme, başlık düzenleme, silme (önce iptal, sonra onay), formda iptal (PR #169). Yalnızca test; üretim kodu değişmedi, coder atlandı. 18 dk, 2 verify çalıştırması, 0 başarısız, 0 düzeltme turu.
+- **Kapı neyi yakaladı:** Reviewer: 2 minor, 1 nit, hepsi kabul edildi (test sabit örnek tarihe "October" dayanıyor, `row(titled:)` alt dize eşleşmesi kullanıyor). `UI-FUNCTIONAL: PASS`; ekran değişmediği için capture atlandı.
+- **Ders:** Kabul kriterleri net ve yalnızca test kapsamındaki issue ilk seferde geçiyor; mevcut test desenini (#155) yeniden kullanmak hem hızlı hem tutarlı.
