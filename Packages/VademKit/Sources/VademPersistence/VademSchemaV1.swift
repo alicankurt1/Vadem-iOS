@@ -82,15 +82,3 @@ public enum VademSchemaV1: VersionedSchema {
         }
     }
 }
-
-// Güncel şemanın kayıtları; depo ve eşleme kodu sürüm adını tekrar etmez.
-typealias CardRecord = VademSchemaV1.CardRecord
-typealias InstallmentRecord = VademSchemaV1.InstallmentRecord
-typealias SubscriptionRecord = VademSchemaV1.SubscriptionRecord
-
-/// The migration plan for the store. V1 is the only version, so there are no stages yet.
-public enum VademMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] { [VademSchemaV1.self] }
-
-    public static var stages: [MigrationStage] { [] }
-}

@@ -340,22 +340,6 @@
         }
       }
     },
-    "Add a card first." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add a card first."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Önce bir kart ekleyin."
-          }
-        }
-      }
-    },
     "Add a card to start tracking installments." : {
       "localizations" : {
         "en" : {
@@ -888,34 +872,19 @@
         }
       }
     },
-    "Choose a card" : {
+    "Choose a payment day from %lld to %lld." : {
+      "comment" : "Installment form error: payment day out of range",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose a card"
+            "value" : "Choose a payment day from %lld to %lld."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kart seçin"
-          }
-        }
-      }
-    },
-    "Choose a card." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose a card."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bir kart seçin."
+            "value" : "%lld ile %lld arasında bir ödeme günü seçin."
           }
         }
       }
@@ -2121,6 +2090,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödendi"
+          }
+        }
+      }
+    },
+    "Paid on day %lld" : {
+      "comment" : "Installment form stepper without a card: payment day of the month",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paid on day %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her ayın %lld. günü ödenir"
           }
         }
       }

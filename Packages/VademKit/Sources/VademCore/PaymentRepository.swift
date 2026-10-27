@@ -30,7 +30,7 @@ public protocol PaymentRepository {
     /// `caseInsensitiveCompare(_:)`, then by `id.uuidString`.
     func installments() throws -> [InstallmentItem]
     /// Inserts `item`, or replaces the saved installment with the same `id`.
-    /// - Throws: ``RepositoryError/unknownCard`` if `item.cardID` is not a saved card.
+    /// - Throws: ``RepositoryError/unknownCard`` if `item.cardID` is set and not a saved card.
     func save(_ item: InstallmentItem) throws
     /// Deletes the installment with `id`; an unknown `id` is a no-op.
     func deleteInstallment(id: InstallmentItem.ID) throws

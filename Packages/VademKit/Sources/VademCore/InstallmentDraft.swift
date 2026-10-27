@@ -4,11 +4,15 @@ import Foundation
 ///
 /// ``errors`` lists every rule the draft breaks, one error per field at most;
 /// ``makeItem(id:)`` returns an ``InstallmentItem`` only when there are none.
+/// The card is optional: without a card the draft needs a valid ``paymentDay``; with a card
+/// the card decides the due day and ``paymentDay`` is ignored. The draft does not check that
+/// ``cardID`` is a saved card; saving through ``PaymentRepository`` rejects unknown cards.
 public struct InstallmentDraft: Sendable, Hashable {
     /// A field of the draft, so a form can show each error under its own field.
     public enum Field: Sendable, Hashable, CaseIterable {
         case title
         case card
+        case paymentDay
         case amount
         case count
         case firstMonth
@@ -20,8 +24,8 @@ public struct InstallmentDraft: Sendable, Hashable {
         case titleEmpty
         /// The trimmed title is longer than ``InstallmentItem/maxTitleLength``.
         case titleTooLong
-        /// No card is chosen.
-        case cardMissing
+        /// No card is chosen and the payment day is outside ``InstallmentItem/supportedPaymentDays``.
+        case paymentDayOutOfRange
         /// No amount was given (empty or not a number).
         case amountMissing
         /// The amount, rounded to kuruş, is zero or negative.
@@ -35,7 +39,7 @@ public struct InstallmentDraft: Sendable, Hashable {
         public var field: Field {
             switch self {
             case .titleEmpty, .titleTooLong: return .title
-            case .cardMissing: return .card
+            case .paymentDayOutOfRange: return .paymentDay
             case .amountMissing, .amountNotPositive: return .amount
             case .countOutOfRange: return .count
             case .firstMonthOutOfRange: return .firstMonth
@@ -45,8 +49,10 @@ public struct InstallmentDraft: Sendable, Hashable {
 
     /// The title as typed; trimmed when the item is made.
     public var title: String
-    /// The chosen card, or `nil` when none is chosen.
+    /// The chosen card, or `nil` when the installment is paid some other way.
     public var cardID: Card.ID?
+    /// The day of the month a card-less installment is paid on; ignored while ``cardID`` is set.
+    public var paymentDay: Int
     /// The purchase total in TRY, or `nil` when no valid number was entered.
     public var total: Decimal?
     /// The number of monthly payments.
@@ -55,9 +61,17 @@ public struct InstallmentDraft: Sendable, Hashable {
     public var firstMonth: YearMonth
 
     /// Creates a draft from raw form values.
-    public init(title: String, cardID: Card.ID?, total: Decimal?, count: Int, firstMonth: YearMonth) {
+    public init(
+        title: String,
+        cardID: Card.ID?,
+        paymentDay: Int = InstallmentItem.supportedPaymentDays.lowerBound,
+        total: Decimal?,
+        count: Int,
+        firstMonth: YearMonth
+    ) {
         self.title = title
         self.cardID = cardID
+        self.paymentDay = paymentDay
         self.total = total
         self.count = count
         self.firstMonth = firstMonth
@@ -72,8 +86,9 @@ public struct InstallmentDraft: Sendable, Hashable {
         } else if trimmed.count > InstallmentItem.maxTitleLength {
             result.append(.titleTooLong)
         }
-        if cardID == nil {
-            result.append(.cardMissing)
+        // Kart seçiliyse vade günü karttan gelir; ödeme günü yalnızca kartsızken denetlenir.
+        if cardID == nil, !InstallmentItem.supportedPaymentDays.contains(paymentDay) {
+            result.append(.paymentDayOutOfRange)
         }
         if let total {
             // Money kuruşa yuvarladığı için 0,001 gibi değerler de sıfır sayılır.
@@ -102,11 +117,13 @@ public struct InstallmentDraft: Sendable, Hashable {
 
     /// The installment the draft describes, or `nil` while ``errors`` is not empty.
     public func makeItem(id: UUID = UUID()) -> InstallmentItem? {
-        guard isValid, let cardID, let total,
+        guard isValid, let total,
               let plan = InstallmentPlan(total: Money(total), count: count, firstMonth: firstMonth) else {
             return nil
         }
-        return InstallmentItem(id: id, title: title, cardID: cardID, plan: plan)
+        return InstallmentItem(
+            id: id, title: title, cardID: cardID, paymentDay: cardID == nil ? paymentDay : nil, plan: plan
+        )
     }
 
     private static let lastSupportedMonth = YearMonth(year: YearMonth.supportedYears.upperBound, month: 12)!

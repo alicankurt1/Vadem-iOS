@@ -119,10 +119,12 @@ public struct SpendingAnalytics: Sendable, Hashable {
     }
 
     /// The last month with an installment payment due ("debt-free month" for installments),
-    /// or `nil` when there are no installments (items with an unknown card do not count).
+    /// or `nil` when there are no installments (items with an unknown card do not count;
+    /// card-less items do).
     public var lastPaymentMonth: YearMonth? {
         let knownCardIDs = Set(cards.map(\.id))
-        let known = installments.filter { knownCardIDs.contains($0.cardID) }
+        // Kartsız taksit her zaman sayılır; kartlıysa kart bilinmeli.
+        let known = installments.filter { $0.cardID.map(knownCardIDs.contains) ?? true }
         // Vade, ekstre ayında veya sonraki ayda olur; son vade en geç son ekstre ayı + 1'dedir.
         guard let lastStatement = known.map(\.plan.lastMonth).max() else { return nil }
         // 9999-12'den sonrası temsil edilemez; `adding(months:)` çökmesin diye elenir.

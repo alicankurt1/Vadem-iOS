@@ -1,8 +1,10 @@
 import SwiftUI
 import VademCore
 
-/// The add-installment form, shown as a sheet from Home: title, card, total amount,
-/// number of installments and first due month.
+/// The add-installment form, shown as a sheet from Home: title, optional card, payment day
+/// (only without a card; with a card the card decides the due day), total amount,
+/// number of installments and first due month. A card can be added from the card list,
+/// but is never required.
 ///
 /// Each invalid field shows its error below it (once touched); Save stays disabled while
 /// the form is invalid. No continuous animations, so it is idle under `-ui-static-motion`.
@@ -71,6 +73,16 @@ public struct AddInstallmentView: View {
                         // Satır bizim çizdiğimiz bir düğme (ChoiceRow); seçim itilen listede (OptionList) yapılır.
                         ChoiceRow(title: String(localized: "Card", bundle: .module), value: cardTitle) { choice = .card }
                             .accessibilityIdentifier("addInstallment.card")
+                    }
+                    if model.cardID == nil {
+                        // Kartsız taksitte vade günü kullanıcıdan gelir; kartlıda karttan.
+                        field(.paymentDay) {
+                            Stepper(value: $model.paymentDay, in: InstallmentItem.supportedPaymentDays) {
+                                Text("Paid on day \(model.paymentDay)", bundle: .module)
+                                    .foregroundStyle(Color.vademTextPrimary)
+                            }
+                            .accessibilityIdentifier("addInstallment.paymentDay")
+                        }
                     }
                     field(.amount) {
                         // Klavye yerel ondalık ayracını gösterir; metin view model'de Decimal'e çevrilir.
@@ -180,7 +192,7 @@ public struct AddInstallmentView: View {
     }
 
     private static let identifierPrefix = "addInstallment"
-    private static var noCardTitle: String { String(localized: "Choose a card", bundle: .module) }
+    private static var noCardTitle: String { String(localized: "No card", bundle: .module) }
 
     private var cardTitle: String {
         model.cards.first { $0.id == model.cardID }?.name ?? Self.noCardTitle
@@ -212,6 +224,7 @@ public struct AddInstallmentView: View {
         switch field {
         case .title: return "title"
         case .card: return "card"
+        case .paymentDay: return "paymentDay"
         case .amount: return "amount"
         case .count: return "count"
         case .firstMonth: return "firstMonth"
