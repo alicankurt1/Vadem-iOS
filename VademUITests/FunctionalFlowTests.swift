@@ -405,13 +405,13 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(app.textFields["addCard.name"].exists, "form must stay open when the card is in use")
     }
 
-    /// Ayarlar → Kartlar: kart ekle, listede gör, aç, sil, liste yeniden boş.
+    /// Kartlar ekranı (`-ui-card-list-empty` ile doğrudan açılır): kart ekle, listede gör, aç, sil, liste yeniden boş.
     /// Örnek verideki kartların hepsi kullanımda olduğundan önce yeni bir kart eklenir.
     @MainActor
     func testCardsScreenAddOpenAndDeleteCard() throws {
         let app = launchHome(extraArguments: ["-ui-card-list-empty"])
-        // Boş depo ile Kartlar ekranı doğrudan açılır; gezinmeyi de sınamak için Ayarlar'dan gidilir.
-        // (Açık argüman ekranı zaten itilmiş açar; bu yüzden sıradan akışı ayrıca sınıyoruz.)
+        // Boş depo ile Kartlar ekranı açılış argümanıyla doğrudan açılır; Ayarlar'dan gezinme yapılmaz.
+        // (Ayarlar → Kartlar gezinmesi testSettingsCardsRowOpensCardsAndDeletesNewCard'da sınanır.)
         XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 10), "Cards screen not shown")
         XCTAssertTrue(element("cards.empty", in: app).exists, "empty state must show with no cards")
 
