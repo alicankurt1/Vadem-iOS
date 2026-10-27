@@ -32,10 +32,22 @@ final class UICheckTests: XCTestCase {
         ProcessInfo.processInfo.environment["UI_CHECK_APPEARANCE"].flatMap(Appearance.init(rawValue:))
     }
 
-    /// Bu koşuda yakalanacak varyantlar: script bir görünüm verdiyse sadece onunkiler.
+    /// Bu koşuda yakalanacak varyantlar: script bir varyant verdiyse (paralel simülatörler, #148) yalnızca o,
+    /// yoksa bir görünüm verdiyse sadece onunkiler.
     static var variants: [Variant] {
+        let environment = ProcessInfo.processInfo.environment
+        if let name = environment["UI_CHECK_VARIANT"], !name.isEmpty {
+            return allVariants.filter { $0.name == name }
+        }
         guard let active = activeAppearance else { return allVariants }
         return allVariants.filter { $0.appearance == active }
+    }
+
+    /// Koyu görünümde erişilebilirlik denetimi atlanır (görüntü ve görünüm kontrolü kalır): denetim bölüm başına ~6 sn,
+    /// koyu geçişin yarısı; kontrast bulguları zaten not ve token oranları birim testlerde (#148).
+    /// `UI_CHECK_DARK_AUDIT=1` koyuda da çalıştırır.
+    static func auditsRun(for variant: Variant) -> Bool {
+        variant.appearance == .light || ProcessInfo.processInfo.environment["UI_CHECK_DARK_AUDIT"] == "1"
     }
 
     override func setUpWithError() throws {
@@ -797,7 +809,7 @@ final class UICheckTests: XCTestCase {
         }
         try capture(
             screen: "gallery",
-            launchArguments: ["-ui-gallery"],
+            launchArguments: ["-ui-gallery", "-ui-gallery-cards-only"],
             sections: cardParts
         ) { app, variant in
             XCTAssertTrue(
@@ -968,12 +980,20 @@ final class UICheckTests: XCTestCase {
         navigate: (XCUIApplication, Variant) -> Void = { _, _ in }
     ) throws {
         for variant in Self.variants {
+            // Süre ölçümü: `[ui-time]` satırları script tarafından özetlenir (#148).
+            var times: [String] = []
+            func timed<T>(_ label: String, _ work: () throws -> T) rethrows -> T {
+                let start = Date()
+                defer { times.append("[ui-time] \(screen)__\(variant.name) \(label) \(String(format: "%.1f", Date().timeIntervalSince(start)))") }
+                return try work()
+            }
+
             let app = XCUIApplication()
             app.launchArguments += Self.commonLaunchArguments + launchArguments
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", variant.contentSize]
-            app.launch()
+            timed("launch") { app.launch() }
             defer { app.terminate() }
-            navigate(app, variant)
+            timed("navigate") { navigate(app, variant) }
 
             var notes: [String] = []
             var previous: (name: String, png: Data)?
@@ -982,13 +1002,13 @@ final class UICheckTests: XCTestCase {
                 let shot = section.name.isEmpty ? screen : "\(screen)-\(section.name)"
                 let name = "\(shot)__\(variant.name)"
 
-                if let reason = section.reach(app) {
+                if let reason = timed("reach:\(section.name.isEmpty ? "top" : section.name)", { section.reach(app) }) {
                     XCTFail("[ui-check] \(name): section '\(section.name)' could not be scrolled into view — \(reason)")
                     continue
                 }
 
                 // Kaydırma göstergesi gibi kısa animasyonlar bitmeden denetim zaman aşımına uğruyordu (#33).
-                let screenshot = Self.settledScreenshot(of: app)
+                let screenshot = timed("settle") { Self.settledScreenshot(of: app) }
                 let attachment = XCTAttachment(screenshot: screenshot)
                 attachment.name = name
                 attachment.lifetime = .keepAlways
@@ -1015,8 +1035,9 @@ final class UICheckTests: XCTestCase {
 
                 // Her sorun ayrı bir test hatası olur. Denetimin kendisi hata verirse (ör. zaman aşımı)
                 // raporlanır ve döngü devam eder; önceden bu durumda kalan varyantlar hiç yakalanmıyordu.
+                guard Self.auditsRun(for: variant) else { continue }
                 do {
-                    let findings = try Self.audit(app)
+                    let findings = try timed("audit:\(section.name.isEmpty ? "top" : section.name)") { try Self.audit(app) }
                     // Apple'ın kontrast ölçümü gradyan ve yarı saydam zeminlerde koşudan koşuya değişiyor (#59):
                     // renkleri sağlam öğeler bile bazen geçemiyor. Bu yüzden kontrast bulguları hata değil not
                     // olur; token çiftlerinin oranını `TokenContrastTests`, kart yüzlerini `CardContrastTests`
@@ -1060,6 +1081,11 @@ final class UICheckTests: XCTestCase {
                     XCTFail("[a11y] \(name): audit did not complete — \(error.localizedDescription)")
                 }
             }
+
+            let timing = XCTAttachment(string: times.joined(separator: "\n"))
+            timing.name = "timing-\(screen)__\(variant.name)"
+            timing.lifetime = .keepAlways
+            add(timing)
 
             if !notes.isEmpty {
                 let attachment = XCTAttachment(string: notes.joined(separator: "\n"))

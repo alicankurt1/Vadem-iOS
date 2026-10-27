@@ -11,6 +11,8 @@
 #                     An unknown name fails the run and lists the available tests.
 #   UI_CHECK_APPEARANCES  appearances to run, space separated (default: "light dark"); "light" alone
 #                     halves a targeted run. The AX5 text variant runs in the light pass.
+#   UI_CHECK_DARK_AUDIT  1 = also run the accessibility audit in the dark pass (default: skipped, saves ~4 min;
+#                     screenshots and the appearance check still run)
 #   UI_CHECK_TEST_TIMEOUT  per-test time allowance in seconds (default: 180)
 #
 # Output: .build/ui-check/latest/
@@ -59,8 +61,6 @@ print(max(found)[1] if found else "")
 [ -n "$UDID" ] || fail "no available simulator named '$DEVICE'"
 
 echo "▶ simulator '$DEVICE' ($UDID)"
-xcrun simctl boot "$UDID" >/dev/null 2>&1
-xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || fail "simulator did not boot"
 
 # Seçici koşu: "gallery,addCardForm" → -only-testing:…/testGalleryScreen -only-testing:…/testAddCardForm
 # Adlar UICheckTests'teki gerçek test metotlarına karşı doğrulanır; bilinmeyen ad koşuyu durdurur.
@@ -93,33 +93,69 @@ xcodebuild build-for-testing -project Vadem.xcodeproj -scheme Vadem -destination
 
 # Görünüm test içinden değil simctl ile ayarlanır; test hangi görünümde olduğunu
 # TEST_RUNNER_UI_CHECK_APPEARANCE → UI_CHECK_APPEARANCE ortam değişkeninden okur.
-# Paralel test kapalı: paralel koşu simülatörün bir kopyasını kullanır, ayar oraya geçmez.
-# Test başına 180 sn sınır: XCTest arada uygulamayı bulurken dakikalarca takılıyordu (#37);
-# sağlıklı bir galeri geçişi ~75 sn sürer.
+# Her varyant (light-default, dark-default, light-AX5) kendi simülatör kopyasında ve aynı anda koşar (#148):
+# tek simülatörde sırayla ~39 dk sürüyordu. Paralel test (-parallel-testing-enabled) kapalı kalır, çünkü
+# onun kopyaları görünüm ayarını taşımaz; kopyaları burada kendimiz kurarız, böylece görünüm her birinde ayrı ayarlanır.
+# Test başına 180 sn sınır: XCTest arada uygulamayı bulurken dakikalarca takılıyordu (#37).
+JOBS=()
 for appearance in $APPEARANCES; do
-  echo "▶ ui-tests ($appearance${UI_CHECK_ONLY:+, only: $UI_CHECK_ONLY})"
-  xcrun simctl ui "$UDID" appearance "$appearance"
-  TEST_RUNNER_UI_CHECK_APPEARANCE="$appearance" xcodebuild test-without-building \
-    -project Vadem.xcodeproj -scheme Vadem -destination "$DEST" \
+  case "$appearance" in
+    light) JOBS+=("light-default:light" "light-AX5:light") ;;
+    dark) JOBS+=("dark-default:dark") ;;
+  esac
+done
+
+# Kopyalar yalnızca kapalı bir simülatörden alınır.
+xcrun simctl shutdown "$UDID" >/dev/null 2>&1
+CLONES=()
+cleanup() {
+  for clone in "${CLONES[@]:-}"; do
+    [ -n "$clone" ] && { xcrun simctl shutdown "$clone" >/dev/null 2>&1; xcrun simctl delete "$clone" >/dev/null 2>&1; }
+  done
+}
+trap cleanup EXIT
+
+run_job() {
+  local variant="$1" appearance="$2" clone="$3"
+  xcrun simctl boot "$clone" >/dev/null 2>&1
+  xcrun simctl bootstatus "$clone" -b >/dev/null 2>&1 || { echo "simulator did not boot" >"$OUT/test-$variant.log"; return; }
+  xcrun simctl ui "$clone" appearance "$appearance"
+  TEST_RUNNER_UI_CHECK_APPEARANCE="$appearance" TEST_RUNNER_UI_CHECK_VARIANT="$variant" \
+    TEST_RUNNER_UI_CHECK_DARK_AUDIT="${UI_CHECK_DARK_AUDIT:-}" xcodebuild test-without-building \
+    -project Vadem.xcodeproj -scheme Vadem -destination "platform=iOS Simulator,id=$clone" \
     "${ONLY_TESTING[@]}" \
     -parallel-testing-enabled NO \
     -test-timeouts-enabled YES -default-test-execution-time-allowance "${UI_CHECK_TEST_TIMEOUT:-180}" \
-    -resultBundlePath "$OUT/UICheck-$appearance.xcresult" \
-    -quiet >"$OUT/test-$appearance.log" 2>&1
-  [ -d "$OUT/UICheck-$appearance.xcresult" ] || fail "no result bundle for $appearance" "$OUT/test-$appearance.log"
-  xcrun xcresulttool export attachments --path "$OUT/UICheck-$appearance.xcresult" \
-    --output-path "$OUT/export-$appearance" >/dev/null 2>&1
-  xcrun xcresulttool get test-results tests --path "$OUT/UICheck-$appearance.xcresult" --compact \
-    >"$OUT/tests-$appearance.json" 2>/dev/null
+    -resultBundlePath "$OUT/UICheck-$variant.xcresult" \
+    -quiet >"$OUT/test-$variant.log" 2>&1
+  [ -d "$OUT/UICheck-$variant.xcresult" ] || return
+  xcrun xcresulttool export attachments --path "$OUT/UICheck-$variant.xcresult" \
+    --output-path "$OUT/export-$variant" >/dev/null 2>&1
+  xcrun xcresulttool get test-results tests --path "$OUT/UICheck-$variant.xcresult" --compact \
+    >"$OUT/tests-$variant.json" 2>/dev/null
+}
+
+PIDS=()
+for job in "${JOBS[@]}"; do
+  variant="${job%%:*}"; appearance="${job##*:}"
+  clone=$(xcrun simctl clone "$UDID" "ui-check-$variant-$$") || fail "could not clone simulator for $variant"
+  CLONES+=("$clone")
+  echo "▶ ui-tests ($variant${UI_CHECK_ONLY:+, only: $UI_CHECK_ONLY}) on $clone"
+  run_job "$variant" "$appearance" "$clone" &
+  PIDS+=($!)
 done
-xcrun simctl ui "$UDID" appearance light
+wait "${PIDS[@]}"
+for job in "${JOBS[@]}"; do
+  variant="${job%%:*}"
+  [ -d "$OUT/UICheck-$variant.xcresult" ] || fail "no result bundle for $variant" "$OUT/test-$variant.log"
+done
 echo "  done in $(( $(date +%s) - start ))s"
 
-python3 - "$OUT" $APPEARANCES <<'PY'
+python3 - "$OUT" "${JOBS[@]%%:*}" <<'PY'
 import json, os, re, shutil, sys
 out, appearances = sys.argv[1], sys.argv[2:]
 
-shots, failures, notes = [], [], []
+shots, failures, notes, times = [], [], [], []
 
 def walk(node):
     # Her "Failure Message" düğümü ayrı bir hata; summary ise test başına sadece ilkini verir.
@@ -129,7 +165,7 @@ def walk(node):
     for child in node.get("children", []):
         walk(child)
 
-for appearance in appearances:
+for appearance in appearances:  # varyant adları (light-default, ...)
     # Ekleri insan okunur adlarla kopyala; sadece görüntüler (Xcode'un otomatik .mp4 kaydı hariç).
     export = os.path.join(out, f"export-{appearance}")
     manifest = os.path.join(export, "manifest.json")
@@ -140,6 +176,7 @@ for appearance in appearances:
                 if a["exportedFileName"].lower().endswith(".txt"):
                     # Xcode hata metinlerini de .txt ekler; sadece bizim notlar alınır.
                     lines = open(os.path.join(export, a["exportedFileName"])).read().splitlines()
+                    times += [l for l in lines if l.startswith("[ui-time]")]
                     notes += [l for l in lines if l.startswith(("[ui-note]", "[a11y-hidden]", "[a11y-flaky]", "[a11y-contrast]"))]
                     continue
                 if not a["exportedFileName"].lower().endswith((".png", ".jpg", ".jpeg")):
@@ -174,6 +211,21 @@ with open(os.path.join(out, "report.md"), "w") as r:
     r.writelines(f"- {t}\n" for t in other)
     r.write(f"\n## Notes ({len(notes)}, not failures)\n\n")
     r.writelines(f"- {t}\n" for t in notes)
+
+# Süre özeti (#148): zaman nereye gidiyor? Toplam, adım türüne göre ve en yavaş 10 adım.
+open(os.path.join(out, "timing.txt"), "w").write("\n".join(times) + ("\n" if times else ""))
+if times:
+    rows = []
+    for l in times:
+        _, key, step, secs = l.split(" ")
+        rows.append((key, step.split(":")[0], step, float(secs)))
+    kinds, variants_ = {}, {}
+    for key, kind, _, secs in rows:
+        kinds[kind] = kinds.get(kind, 0) + secs
+        variants_[key.split("__")[1]] = variants_.get(key.split("__")[1], 0) + secs
+    print("  time by step: " + ", ".join(f"{k} {v:.0f}s" for k, v in sorted(kinds.items(), key=lambda i: -i[1])))
+    print("  time by variant: " + ", ".join(f"{k} {v:.0f}s" for k, v in sorted(variants_.items())))
+    print("  slowest steps: " + "; ".join(f"{k} {s} {t:.0f}s" for k, _, s, t in sorted(rows, key=lambda r: -r[3])[:10]))
 
 print(f"  screenshots: {len(shots)}  a11y issues: {len(a11y)}  other failures: {len(other)}  notes: {len(notes)}")
 for t in a11y + other + notes:
