@@ -56,7 +56,7 @@ Principles:
 - [x] **Phase 13 — Widget + App Intents (Siri)**: pure payment summary (#105, PR #106), App Intents and Siri shortcuts (#108, PR #109), home-screen widget extension (#111, PR #112). The App Group for the widget's bundle id and the Siri/widget behaviour are only checked by hand on a device.
 - [x] **Phase 14 — Swift Charts analytics**: pure spending analytics (#115, PR #118), monthly totals bar chart screen (#116, PR #119), card breakdown donut and debt-free insight (#117, PR #122). Chart rendering and VoiceOver reading are only checked by hand on a device.
 - [x] **Phase 15 — On-device AI assistant**: read-only queries and tools (#125, PR #128), Foundation Models engine (#126, PR #130), chat screen (#127, PR #132). The real model is only checked by hand on an iOS 26 device with Apple Intelligence.
-- [ ] **Phase 16 — Polish & release**: TR/EN, accessibility, icon, privacy manifest + policy, screenshots, App Store submission.
+- [ ] **Phase 16 — Polish & release**: TR/EN, accessibility, icon, privacy manifest + policy, screenshots, App Store submission. Merged so far: Home header (#154, PR #157), reminder permission retry (#156, PR #159).
 
 ## Next up
 
