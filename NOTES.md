@@ -429,3 +429,13 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Reviewer yakaladı:** Minor: ikon şeridinin uçlarında kart kenarında dikiş görünüyordu (şerit kart şekline kırpılarak düzeltildi). Widget iddiaları doğrulanmadı (kabul edildi).
 - **Sınır:** Açık ikon simülatör Home Screen'de görüldü; koyu ikon simülatörde değişmedi. PNG ve derlenmiş katalog doğru, ama koyu ve tinted varyantlar cihazda henüz bakılmadı.
 - **Ders:** Sürüm numarası tek yerde (xcconfig) durunca hedefler arasında kayma olmaz; görsel varlıkta "dosya doğru" ile "ekranda doğru görünüyor" ayrı kanıttır.
+
+### Mülakat sorusu: Sürüm ve build numaralarını hedef bazlı ayarlardan çıkarıp tek xcconfig'e neden taşırsın, app ile widget'ın sürümü farklı olursa ne bozulur?
+
+**Cevap:**
+- **Tek kaynak:** Sürüm 8 build ayarında (app, widget, test hedefleri × Debug/Release) tekrar ederse biri güncellenmeden kalır; tek `Config/Shared.xcconfig` satırı kaymayı imkânsız kılar, sürüm artışı tek satırlık bir diff olur.
+- **Neden xcconfig:** Metin dosyası olduğu için diff'te okunur, merge çakışması `.pbxproj`'dan çok daha azdır, CI ve script'ler (`agvtool` yerine düz satır değişimi) kolayca okuyup yazar. `.pbxproj` hedef seviyesi ayarı xcconfig'i ezer, bu yüzden hedef seviyesi boş kalmalı.
+- **Farklı sürüm olursa:** Uygulama uzantısı (widget) ana uygulamayla aynı `CFBundleShortVersionString` ve `CFBundleVersion` değerlerini taşımak zorunda; farklıysa App Store Connect yüklemeyi "uzantı sürümü uygulamayla uyuşmuyor" diye doğrulamada reddedebilir, ve aynı build numarasıyla ikinci yükleme de reddedilir.
+- **Test:** `AppStoreReadinessTests` xcconfig'te iki anahtarın olduğunu ve `.pbxproj`'da hiç bulunmadığını denetler; biri hedef seviyesine geri sızarsa kapı kırmızı olur.
+- **SOLID:** Single Responsibility (sürüm tek yerde yaşar, ikon script'i yalnızca PNG üretir) ve Open/Closed (yeni ikon varyantı yeni bir `Palette` değeri, çizim kodu değişmez).
+- **Ders:** "Her yerde aynı olmalı" olan değer tek yerde tanımlanmalı ve bunu bir test korumalı; yoksa tutarlılık sadece dikkate bağlı kalır.
