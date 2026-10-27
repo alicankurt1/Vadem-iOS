@@ -25,11 +25,15 @@ public enum Fixture {
     public static func installment(
         _ title: String = "Telefon",
         id: UUID = UUID(),
-        card: Card.ID,
+        card: Card.ID?,
+        paymentDay: Int = 15,
         plan: InstallmentPlan? = nil
     ) throws -> InstallmentItem {
         let value = try plan ?? Fixture.plan()
-        return try #require(InstallmentItem(id: id, title: title, cardID: card, plan: value))
+        // Ödeme günü yalnızca kartsız taksitte verilir; kartlıda karttan gelir.
+        return try #require(InstallmentItem(
+            id: id, title: title, cardID: card, paymentDay: card == nil ? paymentDay : nil, plan: value
+        ))
     }
 
     public static func subscriptionItem(

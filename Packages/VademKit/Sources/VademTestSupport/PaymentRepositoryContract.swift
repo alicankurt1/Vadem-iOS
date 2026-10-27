@@ -252,6 +252,53 @@ public enum PaymentRepositoryContract {
         #expect(after.first?.plan.amount(in: try Fixture.month(2027, 3)) == .zero)
     }
 
+    public static func installmentWithoutCardNeedsNoCard(_ repo: any PaymentRepository) throws {
+        // Hiç kart yokken bile kartsız taksit kaydedilebilir ve ödeme günüyle geri okunur.
+        let item = try Fixture.installment("Telefon", card: nil, paymentDay: 31)
+        try repo.save(item)
+        let stored = try #require(try repo.installments().first)
+        #expect(try repo.installments().count == 1)
+        #expect(stored == item)
+        #expect(stored.cardID == nil)
+        #expect(stored.paymentDay == 31)
+        #expect(try repo.cards().isEmpty)
+    }
+
+    public static func cardlessInstallmentDoesNotBlockCardDeletion(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        try repo.save(Fixture.installment(card: nil, paymentDay: 5))
+        try repo.deleteCard(id: card.id)
+        #expect(try repo.cards().isEmpty)
+        #expect(try repo.installments().count == 1)
+    }
+
+    public static func installmentCanSwitchBetweenCardAndNoCard(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        let id = Fixture.id(1)
+        let withCard = try Fixture.installment(id: id, card: card.id)
+        let withoutCard = try Fixture.installment(id: id, card: nil, paymentDay: 7)
+        try repo.save(withCard)
+        try repo.save(withoutCard)
+        #expect(try repo.installments() == [withoutCard])
+        // Kart artık kullanılmıyor, silinebilir.
+        try repo.deleteCard(id: card.id)
+        #expect(try repo.cards().isEmpty)
+        #expect(try repo.installments() == [withoutCard])
+    }
+
+    public static func draftInstallmentWithoutCardIsStored(_ repo: any PaymentRepository) throws {
+        let draft = InstallmentDraft(
+            title: "Telefon", cardID: nil, paymentDay: 28, total: 1200, count: 3, firstMonth: try Fixture.month(2026, 11)
+        )
+        let item = try #require(draft.makeItem(id: Fixture.id(1)))
+        try repo.save(item)
+        #expect(try repo.installments() == [item])
+        #expect(try repo.installments().first?.paymentDay == 28)
+        #expect(try repo.cards().isEmpty)
+    }
+
     // MARK: Abonelikler
 
     public static func subscriptionsSortedByTitle(_ repo: any PaymentRepository) throws {
@@ -448,6 +495,10 @@ public enum PaymentRepositoryContract {
         Scenario(name: "An installment for a deleted card is rejected", run: installmentForDeletedCardThrows),
         Scenario(name: "An installment can be deleted", run: deletesInstallment),
         Scenario(name: "Deleting an unknown installment id is a no-op", run: deletingUnknownInstallmentIsNoOp),
+        Scenario(name: "An installment without a card is saved without any cards", run: installmentWithoutCardNeedsNoCard),
+        Scenario(name: "An installment without a card does not block card deletion", run: cardlessInstallmentDoesNotBlockCardDeletion),
+        Scenario(name: "An installment can switch between a card and no card", run: installmentCanSwitchBetweenCardAndNoCard),
+        Scenario(name: "An installment draft without a card is stored", run: draftInstallmentWithoutCardIsStored),
         Scenario(name: "Subscriptions are sorted by title", run: subscriptionsSortedByTitle),
         Scenario(name: "Subscriptions with the same title are sorted by id", run: subscriptionsWithSameTitleSortedByID),
         Scenario(name: "Subscription titles use non-localized case-insensitive order", run: subscriptionTitlesUseNonLocalizedCaseInsensitiveCompare),

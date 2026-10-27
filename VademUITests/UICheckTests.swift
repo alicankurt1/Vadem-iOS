@@ -121,6 +121,56 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testAddInstallmentFormNoCard() throws {
+        // Kartsız durum (#155): kart seçilmediğinde ödeme günü alanı görünür.
+        try capture(
+            screen: "add-installment-no-card",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top, .scrolled(to: "addInstallment.firstMonth", named: "first-month")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["addInstallment.title"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-no-card__\(variant.name): title field not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallment.paymentDay"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-no-card__\(variant.name): payment day field not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddInstallmentFormWithCard() throws {
+        // Kart seçilince ödeme günü alanı kaybolur (vade günü karttan gelir).
+        try capture(
+            screen: "add-installment-with-card",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addInstallment.card"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] add-installment-with-card__\(variant.name): card row not found"
+            )
+            row.tap()
+            let option = app.descendants(matching: .any)["addInstallment.option.1"]
+            XCTAssertTrue(
+                option.waitForExistence(timeout: 5),
+                "[ui-check] add-installment-with-card__\(variant.name): first card option not found"
+            )
+            option.tap()
+            XCTAssertTrue(
+                app.textFields["addInstallment.title"].waitForExistence(timeout: 5),
+                "[ui-check] add-installment-with-card__\(variant.name): form did not return after choosing a card"
+            )
+            XCTAssertFalse(
+                app.descendants(matching: .any)["addInstallment.paymentDay"].exists,
+                "[ui-check] add-installment-with-card__\(variant.name): payment day must be hidden with a card"
+            )
+        }
+    }
+
     // MARK: Türkçe yakalamalar (#136)
     // Aynı ekranlar Türkçe arayüz ve yerel ayarla açılır; açık modda varsayılan ve AX5 metin boyutu
     // yakalanır. Kesilen/taşan metin erişilebilirlik denetimi ve ekran görüntülerinde görünür.
