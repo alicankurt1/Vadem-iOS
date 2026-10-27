@@ -453,3 +453,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Coder eski "hata = red" testini kırmızı bıraktı; verify yakaladı, test writer yeni kurala göre güncelledi. Reviewer: 2 minor, 1 nit (kabul).
 - **Sınır:** `UIApplication` taklit edilemediği için `.active` koruması otomatik test edilemedi; gerçek cihazda elle denenmeli.
 - **Ders:** "Bir kez yap" bayrağını eylemden önce değil, sonuç alındıktan sonra işaretle; yoksa başarısız deneme hakkı sessizce tüketir.
+
+### Koşu #155 — Taksitte kart isteğe bağlı
+
+- **Ne yapıldı:** `InstallmentItem.cardID` opsiyonel oldu; kartsız taksit ödeme günüyle (1–31) her ay o gün vadeye giriyor. Kalıcılık için yeni `VademSchemaV2` ve hafif V1→V2 geçişi eklendi, V1'e dokunulmadı (PR #161, Faz 16). 27 dk, 0 düzeltme turu, 4 verify çalıştırması, 1 başarısız.
+- **Kapı neyi yakaladı:** Verify: coder eski testleri kırmızı bıraktı (beklenen), test writer güncelledi. UI kapısı: işlevsel testte stepper artı düğmesi bulunamadı (blocker), test writer tek turda düzeltti. Reviewer: 2 minor, 2 nit (kabul).
+- **Sınır:** Örnek veri kartlı olduğu için "sıfır kart" durumu yalnızca view model ve sözleşme düzeyinde test edildi; boş mağaza başlatma bayrağı için harness değişikliği gerekir.
+- **Ders:** Zorunlu bir alanı opsiyonel yapmak şemayı etkiler; yeni şema sürümü + geçiş aşaması ekle, yayımlanmış sürümü yerinde değiştirme.
