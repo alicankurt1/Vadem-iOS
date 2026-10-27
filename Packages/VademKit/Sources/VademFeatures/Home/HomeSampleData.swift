@@ -82,7 +82,10 @@ public enum HomeSampleData {
         // Kartlar ekranının boş durumu için boş depo.
         let isEmpty = ProcessInfo.processInfo.arguments.contains(CardListView.emptyLaunchArgument)
         return HomeViewModel(
-            repository: isEmpty ? InMemoryPaymentRepository() : makeRepository(), today: today, calendar: calendar, settings: settings,
+            repository: isEmpty ? InMemoryPaymentRepository() : makeRepository(),
+            today: today,
+            calendar: calendar,
+            settings: settings,
             assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments)
         )
     }
