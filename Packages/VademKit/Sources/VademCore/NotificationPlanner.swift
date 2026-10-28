@@ -70,6 +70,7 @@ public enum NotificationPlanner {
         cards: [Card],
         installments: [InstallmentItem],
         subscriptions: [SubscriptionItem],
+        oneTimePayments: [OneTimePaymentItem] = [],
         lookaheadMonths: Int = NotificationPlanner.defaultLookaheadMonths,
         kinds: Set<PlannedReminder.Kind> = [.dayBefore, .dueDay],
         formatAmount: (Money) -> String
@@ -88,7 +89,8 @@ public enum NotificationPlanner {
             count: scannedMonths + 1,
             cards: cards,
             installments: installments,
-            subscriptions: subscriptions
+            subscriptions: subscriptions,
+            oneTimePayments: oneTimePayments
         )
 
         var reminders: [PlannedReminder] = []

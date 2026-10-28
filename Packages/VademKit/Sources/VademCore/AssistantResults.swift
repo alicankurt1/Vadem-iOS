@@ -40,6 +40,8 @@ public struct AssistantPayment: Sendable, Hashable, Codable {
         case installment
         /// A subscription charge.
         case subscription
+        /// A one-time payment.
+        case oneTime
     }
 
     /// The item's title, made prompt-safe.
@@ -50,7 +52,7 @@ public struct AssistantPayment: Sendable, Hashable, Codable {
     public let dueDate: String
     /// The card's name, made prompt-safe; `nil` for a payment without a card.
     public let cardName: PromptSafeText?
-    /// Installment or subscription.
+    /// Installment, subscription or one-time payment.
     public let kind: Kind
     /// For installments: the payment number (1-based); otherwise `nil`.
     public let installmentNumber: Int?
@@ -69,6 +71,10 @@ public struct AssistantPayment: Sendable, Hashable, Codable {
             self.installmentCount = count
         case .subscription:
             self.kind = .subscription
+            self.installmentNumber = nil
+            self.installmentCount = nil
+        case .oneTime:
+            self.kind = .oneTime
             self.installmentNumber = nil
             self.installmentCount = nil
         }

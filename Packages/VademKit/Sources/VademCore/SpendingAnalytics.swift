@@ -13,21 +13,25 @@ public struct SpendingAnalytics: Sendable, Hashable {
         public let installments: Money
         /// The exact sum of the subscription charges due in ``month``.
         public let subscriptions: Money
-        /// ``installments`` + ``subscriptions``; equals ``MonthlySchedule/total`` of the month.
+        /// The exact sum of the one-time payments due in ``month``.
+        public let oneTimePayments: Money
+        /// ``installments`` + ``subscriptions`` + ``oneTimePayments``; equals
+        /// ``MonthlySchedule/total`` of the month.
         public let total: Money
 
-        /// Creates a month's figures; ``total`` is always ``installments`` + ``subscriptions``.
-        public init(month: YearMonth, installments: Money, subscriptions: Money) {
+        /// Creates a month's figures; ``total`` is always the sum of the three parts.
+        public init(month: YearMonth, installments: Money, subscriptions: Money, oneTimePayments: Money = .zero) {
             self.month = month
             self.installments = installments
             self.subscriptions = subscriptions
-            self.total = installments + subscriptions
+            self.oneTimePayments = oneTimePayments
+            self.total = installments + subscriptions + oneTimePayments
         }
     }
 
     /// What one card (or no card) is due in one month.
     public struct CardShare: Sendable, Hashable {
-        /// The card, or `nil` for subscriptions paid without a card (the `noCard` share).
+        /// The card, or `nil` for payments without a card (the `noCard` share).
         public let card: Card?
         /// The exact sum due in the month for this card.
         public let total: Money
@@ -45,16 +49,26 @@ public struct SpendingAnalytics: Sendable, Hashable {
     private let cards: [Card]
     private let installments: [InstallmentItem]
     private let subscriptions: [SubscriptionItem]
+    private let oneTimePayments: [OneTimePaymentItem]
 
     /// Builds analytics over the given cards and their items.
-    public init(cards: [Card], installments: [InstallmentItem], subscriptions: [SubscriptionItem]) {
+    public init(
+        cards: [Card],
+        installments: [InstallmentItem],
+        subscriptions: [SubscriptionItem],
+        oneTimePayments: [OneTimePaymentItem] = []
+    ) {
         self.cards = cards
         self.installments = installments
         self.subscriptions = subscriptions
+        self.oneTimePayments = oneTimePayments
     }
 
     private func schedule(for month: YearMonth) -> MonthlySchedule {
-        MonthlySchedule(month: month, cards: cards, installments: installments, subscriptions: subscriptions)
+        MonthlySchedule(
+            month: month, cards: cards, installments: installments,
+            subscriptions: subscriptions, oneTimePayments: oneTimePayments
+        )
     }
 
     /// The totals of `count` consecutive months starting at `start`, in order.
@@ -70,14 +84,19 @@ public struct SpendingAnalytics: Sendable, Hashable {
             let month = start.adding(months: offset)
             var installmentsSum = Money.zero
             var subscriptionsSum = Money.zero
+            var oneTimeSum = Money.zero
             for entry in schedule(for: month).entries {
                 switch entry.kind {
                 case .installment: installmentsSum = installmentsSum + entry.amount
                 case .subscription: subscriptionsSum = subscriptionsSum + entry.amount
+                case .oneTime: oneTimeSum = oneTimeSum + entry.amount
                 }
             }
             // Toplam, parçaların toplamıdır; yuvarlama kayması olamaz.
-            return MonthTotal(month: month, installments: installmentsSum, subscriptions: subscriptionsSum)
+            return MonthTotal(
+                month: month, installments: installmentsSum,
+                subscriptions: subscriptionsSum, oneTimePayments: oneTimeSum
+            )
         }
     }
 
