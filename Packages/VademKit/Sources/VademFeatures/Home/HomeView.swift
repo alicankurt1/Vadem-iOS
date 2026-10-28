@@ -5,9 +5,10 @@ import VademCore
 ///
 /// The app's "Vadem" title and version label sit at the top, above the month. Below the month
 /// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
-/// (`home.add`) that opens the ``AddFlowSheet`` (Installment and Subscription run their quick steps in the
-/// sheet) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
-/// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
+/// (`home.add`) that opens the ``AddFlowSheet`` (Installment, Subscription and Payment run their quick steps
+/// in the sheet) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
+/// Tapping a payment row (`home.row.<index>`) opens its form in edit mode (a one-time payment opens the
+/// ``EditOneTimePaymentView``); tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
 /// On iOS 26+, a sparkles button next to Analytics (`home.assistant`) pushes the ``AssistantView``
@@ -22,6 +23,8 @@ public struct HomeView: View {
     @State private var addCardModel: AddCardViewModel?
     // Açık abonelik formunun modeli; nil iken sayfa kapalı.
     @State private var addSubscriptionModel: AddSubscriptionViewModel?
+    // Açık tek seferlik ödeme düzenleme formunun modeli; nil iken sayfa kapalı.
+    @State private var editOneTimeModel: EditOneTimePaymentViewModel?
     // Açık ayarlar sayfasının modeli; nil iken sayfa kapalı.
     @State private var settingsModel: SettingsViewModel?
     // Açık Analytics ekranının modeli; nil iken ekran itilmemiştir.
@@ -37,6 +40,8 @@ public struct HomeView: View {
     @State private var addFlowGalleryStep: AddFlowGalleryStep?
     // UI kontrolü için doğrudan bir adımında açılan abonelik akışı; nil iken kapalı.
     @State private var subscriptionFlowModel: SubscriptionFlowViewModel?
+    // UI kontrolü için doğrudan bir adımında açılan tek seferlik ödeme akışı; nil iken kapalı.
+    @State private var oneTimeFlowModel: OneTimeFlowViewModel?
     #endif
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -67,19 +72,24 @@ public struct HomeView: View {
     /// ``AddFlowGalleryView`` at that shared step, with the first card as the last used one.
     /// ``SubscriptionFlowStep/launchArgument`` (`-ui-add-subscription-flow-<step>`, debug only) opens the
     /// ``SubscriptionFlowView`` at that step, with the first card as the last used one and, after the
-    /// amount step, a ₺149,90 amount.
+    /// amount step, a ₺149,90 amount. ``OneTimeFlowStep/launchArgument`` (`-ui-add-onetime-flow-<step>`,
+    /// debug only) does the same for the ``OneTimeFlowView`` (amount ₺1.500 after the amount step), and
+    /// ``EditOneTimePaymentView/editLaunchArgument`` (`-ui-edit-onetime`) opens the first saved one-time
+    /// payment in its edit form.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddSheetPresented = false
         var initialAddModel: AddInstallmentViewModel?
         var initialAddCardModel: AddCardViewModel?
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
+        var initialEditOneTimeModel: EditOneTimePaymentViewModel?
         var initialSettingsModel: SettingsViewModel?
         var initialAnalyticsModel: AnalyticsViewModel?
         var initialAssistantModel: AssistantViewModel?
         #if DEBUG
         var initialAddFlowGalleryStep: AddFlowGalleryStep?
         var initialSubscriptionFlowModel: SubscriptionFlowViewModel?
+        var initialOneTimeFlowModel: OneTimeFlowViewModel?
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AnalyticsView.launchArgument) {
             initialAnalyticsModel = model.makeAnalyticsModel()
@@ -117,6 +127,11 @@ public struct HomeView: View {
                 .filter { $0.entry.kind == .subscription }
                 .compactMap { model.makeEditSubscriptionModel(id: $0.entry.itemID) }
                 .first
+        } else if arguments.contains(EditOneTimePaymentView.editLaunchArgument) {
+            // Örnek veride tek seferlik ödeme başka ayda olabilir; depodaki ilki açılır.
+            initialEditOneTimeModel = model.oneTimePaymentIDs().lazy
+                .compactMap { model.makeEditOneTimeModel(id: $0) }
+                .first
         } else if arguments.contains(AddCardView.editLaunchArgument) {
             initialAddCardModel = model.cardSubtotals.first.flatMap { model.makeEditCardModel(id: $0.id) }
         } else if arguments.contains(SettingsView.launchArgument)
@@ -135,16 +150,24 @@ public struct HomeView: View {
             initialSubscriptionFlowModel = model.makeSubscriptionFlowModel(
                 start: step, amount: step == .amount ? nil : Decimal(14990) / 100
             )
+        } else if let step = OneTimeFlowStep.step(in: arguments) {
+            // Kart adımında bir seçim görünsün diye ilk kart son kullanılan sayılır; tutar Decimal.
+            initialOneTimeFlowModel = model.makeOneTimeFlowModel(
+                start: step, amount: step == .amount ? nil : Decimal(1_500),
+                lastUsedCardID: model.pickerCards().first?.id
+            )
         } else {
             initialAddFlowGalleryStep = AddFlowGalleryStep.step(in: arguments)
         }
         _addFlowGalleryStep = State(initialValue: initialAddFlowGalleryStep)
         _subscriptionFlowModel = State(initialValue: initialSubscriptionFlowModel)
+        _oneTimeFlowModel = State(initialValue: initialOneTimeFlowModel)
         #endif
         _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
+        _editOneTimeModel = State(initialValue: initialEditOneTimeModel)
         _settingsModel = State(initialValue: initialSettingsModel)
         _analyticsModel = State(initialValue: initialAnalyticsModel)
         _assistantModel = State(initialValue: initialAssistantModel)
@@ -194,6 +217,9 @@ public struct HomeView: View {
         .sheet(item: $addSubscriptionModel, onDismiss: reloadAfterForm) { addSubscriptionModel in
             AddSubscriptionView(model: addSubscriptionModel)
         }
+        .sheet(item: $editOneTimeModel, onDismiss: reloadAfterForm) { editOneTimeModel in
+            EditOneTimePaymentView(model: editOneTimeModel)
+        }
         // Ayarlar'daki Kartlar ekranı kartları değiştirebilir; sayfa kapanınca Home yeniden yüklenir.
         .sheet(item: $settingsModel, onDismiss: reloadAfterForm) { settingsModel in
             SettingsView(model: settingsModel)
@@ -204,7 +230,8 @@ public struct HomeView: View {
             AddFlowSheet(
                 makeInstallmentFlow: { model.makeInstallmentFlowModel() },
                 makeSubscriptionFlow: { model.makeSubscriptionFlowModel() },
-                makeAddCardModel: model.makeAddCardModel
+                makeAddCardModel: model.makeAddCardModel,
+                makeOneTimeFlow: { model.makeOneTimeFlowModel() }
             ) { kind in
                 pendingAddKind = kind
                 isAddSheetPresented = false
@@ -220,6 +247,9 @@ public struct HomeView: View {
         }
         .sheet(item: $subscriptionFlowModel, onDismiss: reloadAfterForm) { flowModel in
             SubscriptionFlowView(model: flowModel, makeAddCardModel: model.makeAddCardModel)
+        }
+        .sheet(item: $oneTimeFlowModel, onDismiss: reloadAfterForm) { flowModel in
+            OneTimeFlowView(model: flowModel)
         }
         #endif
     }
@@ -561,7 +591,7 @@ public struct HomeView: View {
         return String(localized: "Payments on \(dayText)", bundle: .module, comment: "The argument is a day, e.g. 12 October")
     }
 
-    // Satırın kalemine göre taksit ya da abonelik formu düzenleme modunda açılır.
+    // Satırın kalemine göre taksit, abonelik ya da tek seferlik ödeme formu düzenleme modunda açılır.
     private func edit(_ row: HomeViewModel.Row) {
         switch row.entry.kind {
         case .installment:
@@ -569,8 +599,7 @@ public struct HomeView: View {
         case .subscription:
             addSubscriptionModel = model.makeEditSubscriptionModel(id: row.entry.itemID)
         case .oneTime:
-            // Tek seferlik ödemenin düzenleme formu henüz yok (#192); dokunma bir şey yapmaz.
-            break
+            editOneTimeModel = model.makeEditOneTimeModel(id: row.entry.itemID)
         }
     }
 

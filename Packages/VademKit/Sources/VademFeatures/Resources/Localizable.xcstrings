@@ -504,22 +504,6 @@
         }
       }
     },
-    "Adding a one-off payment is coming soon." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adding a one-off payment is coming soon."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tek seferlik ödeme ekleme yakında geliyor."
-          }
-        }
-      }
-    },
     "All of its charges are removed. This cannot be undone." : {
       "localizations" : {
         "en" : {
@@ -1038,6 +1022,22 @@
         }
       }
     },
+    "Choose a day from 1 to %lld." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a day from 1 to %lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ile %lld arasında bir gün seçin."
+          }
+        }
+      }
+    },
     "Choose a payment day from %lld to %lld." : {
       "comment" : "Installment form error: payment day out of range",
       "localizations" : {
@@ -1117,22 +1117,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Renkler"
-          }
-        }
-      }
-    },
-    "Coming soon" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Coming soon"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yakında"
           }
         }
       }
@@ -1282,6 +1266,22 @@
         }
       }
     },
+    "Delete payment" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeyi sil"
+          }
+        }
+      }
+    },
     "Delete subscription" : {
       "localizations" : {
         "en" : {
@@ -1326,6 +1326,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu taksit silinsin mi?"
+          }
+        }
+      }
+    },
+    "Delete this payment?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this payment?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ödeme silinsin mi?"
           }
         }
       }
@@ -1396,6 +1412,23 @@
         }
       }
     },
+    "Doctor" : {
+      "comment" : "Quick title chip of the one-time payment flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doctor"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doktor"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "en" : {
@@ -1412,6 +1445,22 @@
         }
       }
     },
+    "Due date" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due date"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son ödeme tarihi"
+          }
+        }
+      }
+    },
     "Due day" : {
       "localizations" : {
         "en" : {
@@ -1424,6 +1473,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Son ödeme günü"
+          }
+        }
+      }
+    },
+    "Due month" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son ödeme ayı"
           }
         }
       }
@@ -1504,6 +1569,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taksiti düzenle"
+          }
+        }
+      }
+    },
+    "Edit payment" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeyi düzenle"
           }
         }
       }
@@ -1697,6 +1778,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mobilya"
+          }
+        }
+      }
+    },
+    "Gift" : {
+      "comment" : "Quick title chip of the one-time payment flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gift"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hediye"
           }
         }
       }
@@ -2837,6 +2935,22 @@
         }
       }
     },
+    "Pick a date" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a date"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarih seç"
+          }
+        }
+      }
+    },
     "Pills" : {
       "comment" : "Design gallery section",
       "localizations" : {
@@ -2964,6 +3078,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Her ayın %lld. günü yenilenir"
+          }
+        }
+      }
+    },
+    "Repair" : {
+      "comment" : "Quick title chip of the one-time payment flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repair"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamir"
           }
         }
       }
@@ -3293,6 +3424,23 @@
         }
       }
     },
+    "Tax" : {
+      "comment" : "Quick title chip of the one-time payment flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tax"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergi"
+          }
+        }
+      }
+    },
     "That question was too long for me. Try a shorter one." : {
       "localizations" : {
         "en" : {
@@ -3519,6 +3667,38 @@
         }
       }
     },
+    "The payment could not be deleted. Please try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The payment could not be deleted. Please try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme silinemedi. Lütfen tekrar deneyin."
+          }
+        }
+      }
+    },
+    "The payment could not be saved. Please try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The payment could not be saved. Please try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme kaydedilemedi. Lütfen tekrar deneyin."
+          }
+        }
+      }
+    },
     "The subscription could not be deleted. Please try again." : {
       "localizations" : {
         "en" : {
@@ -3584,6 +3764,22 @@
         }
       }
     },
+    "This cannot be undone." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This cannot be undone."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu işlem geri alınamaz."
+          }
+        }
+      }
+    },
     "This card is used by installments or subscriptions. Delete or move them first." : {
       "localizations" : {
         "en" : {
@@ -3645,6 +3841,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu ay"
+          }
+        }
+      }
+    },
+    "Ticket" : {
+      "comment" : "Quick title chip of the one-time payment flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ticket"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilet"
           }
         }
       }
@@ -3907,6 +4120,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borcum ne zaman biter?"
+          }
+        }
+      }
+    },
+    "When is it due?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When is it due?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne zaman ödenecek?"
           }
         }
       }
@@ -4204,6 +4433,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "vadesi %@"
+          }
+        }
+      }
+    },
+    "e.g. Dentist" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "e.g. Dentist"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ör. Diş hekimi"
           }
         }
       }
