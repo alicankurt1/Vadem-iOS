@@ -874,7 +874,7 @@ final class UICheckTests: XCTestCase {
 
     @MainActor
     func testAddFlowPaymentPlaceholder() throws {
-        // Ödeme seçilince sayfanın içinde "yakında" adımı (akış kabuğu: ilerleme, geri, kapat).
+        // Ödeme seçilince sayfanın içinde tek seferlik akışın tutar adımı (akış kabuğu: ilerleme, geri, kapat).
         try capture(
             screen: "add-payment",
             launchArguments: ["-ui-sample-data", "-ui-add-sheet"],
@@ -884,8 +884,8 @@ final class UICheckTests: XCTestCase {
             XCTAssertTrue(payment.waitForExistence(timeout: 5), "[ui-check] add-payment__\(variant.name): payment option not found")
             payment.tap()
             XCTAssertTrue(
-                app.descendants(matching: .any)["add.sheet.comingSoon"].waitForExistence(timeout: 5),
-                "[ui-check] add-payment__\(variant.name): coming soon step not found"
+                app.buttons["keypad.digit.1"].waitForExistence(timeout: 5),
+                "[ui-check] add-payment__\(variant.name): one-time flow amount step not found"
             )
         }
     }
@@ -1595,6 +1595,131 @@ final class UICheckTests: XCTestCase {
             XCTAssertTrue(
                 app.buttons["subscriptionFlow.save"].isEnabled,
                 "[ui-check] add-subscription-flow-summary__\(variant.name): save must be enabled with the sample amount"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddOneTimeFlowAmount() throws {
+        try capture(
+            screen: "add-onetime-flow-amount",
+            launchArguments: ["-ui-sample-data", "-ui-add-onetime-flow-amount"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.buttons["keypad.digit.1"].waitForExistence(timeout: 5),
+                "[ui-check] add-onetime-flow-amount__\(variant.name): keypad not found"
+            )
+            XCTAssertFalse(
+                app.buttons["flow.continue"].isEnabled,
+                "[ui-check] add-onetime-flow-amount__\(variant.name): continue must be disabled without an amount"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddOneTimeFlowDate() throws {
+        try capture(
+            screen: "add-onetime-flow-date",
+            launchArguments: ["-ui-sample-data", "-ui-add-onetime-flow-date"],
+            sections: [.top]
+        ) { app, variant in
+            for index in 0..<3 {
+                XCTAssertTrue(
+                    app.descendants(matching: .any)["oneTimeFlow.date.chip.\(index)"].waitForExistence(timeout: 5),
+                    "[ui-check] add-onetime-flow-date__\(variant.name): date chip \(index) not found"
+                )
+            }
+        }
+    }
+
+    @MainActor
+    func testAddOneTimeFlowCard() throws {
+        try capture(
+            screen: "add-onetime-flow-card",
+            launchArguments: ["-ui-sample-data", "-ui-add-onetime-flow-card"],
+            sections: [.top, .scrolled(to: "cardPicker.newCard", named: "new-card")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["cardPicker.noCard"].waitForExistence(timeout: 5),
+                "[ui-check] add-onetime-flow-card__\(variant.name): 'No card' row not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["cardPicker.newCard"].exists,
+                "[ui-check] add-onetime-flow-card__\(variant.name): 'New card' row not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddOneTimeFlowTitle() throws {
+        try capture(
+            screen: "add-onetime-flow-title",
+            launchArguments: ["-ui-sample-data", "-ui-add-onetime-flow-title"],
+            sections: [.top, .scrolled(to: "oneTimeFlow.skip", named: "skip")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["oneTimeFlow.title.chip.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-onetime-flow-title__\(variant.name): first title chip not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["oneTimeFlow.skip"].exists,
+                "[ui-check] add-onetime-flow-title__\(variant.name): Skip button not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddOneTimeFlowSummary() throws {
+        try capture(
+            screen: "add-onetime-flow-summary",
+            launchArguments: ["-ui-sample-data", "-ui-add-onetime-flow-summary"],
+            sections: [.top, .scrolled(to: "oneTimeFlow.save", named: "save")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["oneTimeFlow.summary"].waitForExistence(timeout: 5),
+                "[ui-check] add-onetime-flow-summary__\(variant.name): summary not found"
+            )
+            XCTAssertTrue(
+                app.buttons["oneTimeFlow.save"].isEnabled,
+                "[ui-check] add-onetime-flow-summary__\(variant.name): save must be enabled with the sample amount"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditOneTimePaymentForm() throws {
+        // Dolu tek seferlik ödeme formu.
+        try capture(
+            screen: "edit-onetime",
+            launchArguments: ["-ui-sample-data", "-ui-edit-onetime"],
+            sections: [.top, .scrolled(to: "editOneTime.delete", named: "delete")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.textFields["editOneTime.title"].waitForExistence(timeout: 5),
+                "[ui-check] edit-onetime__\(variant.name): title field not found"
+            )
+            XCTAssertTrue(
+                app.buttons["editOneTime.save"].isEnabled,
+                "[ui-check] edit-onetime__\(variant.name): save must be enabled with the saved values"
+            )
+        }
+    }
+
+    @MainActor
+    func testEditOneTimePaymentDeleteConfirmation() throws {
+        // Tek seferlik ödeme silme onayı açık.
+        try capture(
+            screen: "edit-onetime-confirm",
+            launchArguments: ["-ui-sample-data", "-ui-edit-onetime"],
+            sections: [.top]
+        ) { app, variant in
+            let delete = revealDelete(prefix: "editOneTime", in: app)
+            XCTAssertTrue(delete.exists, "[ui-check] edit-onetime-confirm__\(variant.name): delete button not found")
+            delete.tap()
+            XCTAssertTrue(
+                app.buttons["editOneTime.delete.confirm"].firstMatch.waitForExistence(timeout: 5),
+                "[ui-check] edit-onetime-confirm__\(variant.name): confirmation not shown"
             )
         }
     }

@@ -83,7 +83,7 @@ final class FunctionalFlowTests: XCTestCase {
         // Ödeme: akış sayfanın içinde başlar; geri düğmesi seçime döner, kapat Home'a döner.
         add.tap()
         chooseInSheet("payment", in: app)
-        XCTAssertTrue(element("add.sheet.comingSoon", in: app).waitForExistence(timeout: 5), "payment flow did not start")
+        XCTAssertTrue(app.buttons["keypad.digit.1"].waitForExistence(timeout: 5), "payment flow did not start on the amount step")
         XCTAssertTrue(element("flow.progress", in: app).exists, "progress must be shown")
         app.buttons["flow.back"].tap()
         XCTAssertTrue(element("add.sheet.installment", in: app).waitForExistence(timeout: 5), "back must return to the options")
@@ -823,5 +823,106 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertFalse(element("add.sheet.installment", in: app).exists, "sheet must be gone")
         XCTAssertTrue(scrollToRow(titled: "Subscription, ", in: app), "saved subscription with the default title not shown on Home")
         XCTAssertTrue(row(titled: "Subscription, ", in: app).label.contains("No card"), "row must show no card")
+    }
+
+    // MARK: - Tek seferlik ödeme hızlı adımları (#192)
+
+    /// Sadece tutar yazılır; tarih (Bugün), kart (No card) ve başlık (Skip) varsayılanlarla geçilir;
+    /// kayıt varsayılan başlıkla Home'da (Ekim, bugünün ayı) görünür.
+    @MainActor
+    func testOneTimePaymentQuickStepsWithOnlyAmountSavesAndShowsOnHome() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
+        add.tap()
+        chooseInSheet("payment", in: app)
+
+        // Tutar: 1 4 9; tutar yokken devam kapalıdır.
+        let continueButton = app.buttons["flow.continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 5), "continue button not found")
+        XCTAssertFalse(continueButton.isEnabled, "continue must be disabled without an amount")
+        for digit in ["1", "4", "9"] {
+            app.buttons["keypad.digit.\(digit)"].tap()
+        }
+        XCTAssertTrue(continueButton.isEnabled, "continue must be enabled with an amount")
+        continueButton.tap()
+
+        // Tarih: ilk çip (Today).
+        let today = element("oneTimeFlow.date.chip.0", in: app)
+        XCTAssertTrue(today.waitForExistence(timeout: 5), "date chip not found")
+        today.tap()
+
+        // Kart: "No card".
+        let noCard = element("cardPicker.noCard", in: app)
+        XCTAssertTrue(noCard.waitForExistence(timeout: 5), "'No card' row not found")
+        noCard.tap()
+
+        // Başlık: Skip.
+        let skip = app.buttons["oneTimeFlow.skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 5), "Skip button not found")
+        skip.tap()
+
+        // Özet: tek Kaydet düğmesi.
+        let save = app.buttons["oneTimeFlow.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "save button not found on the summary")
+        XCTAssertTrue(element("oneTimeFlow.summary", in: app).exists, "summary not shown")
+        XCTAssertTrue(save.isEnabled, "save must be enabled")
+        save.tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "sheet must be dismissed after saving")
+        XCTAssertTrue(scrollToRow(titled: "Payment, ", in: app), "saved payment with the default title not shown on Home")
+        XCTAssertTrue(row(titled: "Payment, ", in: app).label.contains("No card"), "row must show no card")
+    }
+
+    @MainActor
+    func testEditOneTimePaymentFromHomeSavesNewTitle() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let next = app.buttons["home.nextMonth"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "next month button not found on Home")
+        next.tap()
+        XCTAssertTrue(scrollToRow(titled: "Dentist", in: app), "sample one-time payment 'Dentist' not shown in November")
+        row(titled: "Dentist", in: app).tap()
+
+        // Form kayıtlı değerlerle açılır.
+        let titleField = app.textFields["editOneTime.title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "edit form not shown")
+        XCTAssertEqual(titleField.value as? String, "Dentist", "title must be prefilled")
+        XCTAssertTrue(app.buttons["editOneTime.save"].isEnabled, "save must be enabled with the saved values")
+
+        titleField.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+        titleField.typeText(" Visit")
+        app.buttons["editOneTime.save"].tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
+        XCTAssertTrue(scrollToRow(titled: "Dentist Visit", in: app), "edited title not shown on Home")
+    }
+
+    @MainActor
+    func testDeleteOneTimePaymentFromHomeRemovesPayment() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let next = app.buttons["home.nextMonth"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "next month button not found on Home")
+        next.tap()
+        XCTAssertTrue(scrollToRow(titled: "Dentist", in: app), "sample one-time payment 'Dentist' not shown in November")
+        row(titled: "Dentist", in: app).tap()
+
+        let delete = revealDelete(prefix: "editOneTime", in: app)
+        XCTAssertTrue(delete.exists, "delete button not found")
+        delete.tap()
+
+        // Önce onay istenir; vazgeçince form açık kalır.
+        let cancel = app.buttons["editOneTime.delete.cancel"].firstMatch
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5), "confirmation not shown")
+        cancel.tap()
+        XCTAssertTrue(app.textFields["editOneTime.title"].exists, "form must stay open after cancelling")
+
+        revealDelete(prefix: "editOneTime", in: app).tap()
+        let confirm = app.buttons["editOneTime.delete.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "confirmation not shown")
+        confirm.tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after deleting")
+        XCTAssertFalse(scrollToRow(titled: "Dentist", in: app), "deleted one-time payment must not appear on Home")
     }
 }
