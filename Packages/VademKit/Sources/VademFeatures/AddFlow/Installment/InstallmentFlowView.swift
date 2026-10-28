@@ -125,7 +125,8 @@ public struct InstallmentFlowView: View {
                     .init(value: .nextMonth, title: String(localized: "Next month", bundle: .module)),
                     .init(value: .other, title: Self.otherTitle),
                 ],
-                selection: model.monthChoice, identifierPrefix: "addInstallmentFlow.month"
+                // Yan yana dizilince büyük yazıda kırpılıyordu (a11y denetimi); sayı adımı gibi alt alta.
+                selection: model.monthChoice, identifierPrefix: "addInstallmentFlow.month", stacked: true
             ) { choice in
                 move { model.chooseMonth(choice) }
             }
