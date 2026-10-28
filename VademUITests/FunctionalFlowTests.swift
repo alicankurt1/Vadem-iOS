@@ -44,6 +44,90 @@ final class FunctionalFlowTests: XCTestCase {
         return target.exists
     }
 
+    /// Add sayfasındaki büyük düğmelerden birini seçer (`add.sheet.<kind>`).
+    @MainActor
+    private func chooseInSheet(_ kind: String, in app: XCUIApplication) {
+        let button = element("add.sheet.\(kind)", in: app)
+        XCTAssertTrue(button.waitForExistence(timeout: 5), "add sheet option \(kind) not found")
+        button.tap()
+    }
+
+    @MainActor
+    func testAddSheetShowsThreeOptionsStartsFlowAndCloseReturnsHome() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
+        add.tap()
+
+        // Sayfa üç seçeneği gösterir.
+        for kind in ["installment", "subscription", "payment"] {
+            XCTAssertTrue(element("add.sheet.\(kind)", in: app).waitForExistence(timeout: 5), "option \(kind) not shown")
+        }
+
+        // Taksit: mevcut form açılır, iptal Home'a döner.
+        chooseInSheet("installment", in: app)
+        XCTAssertTrue(app.textFields["addInstallment.title"].waitForExistence(timeout: 5), "installment flow did not start")
+        app.buttons["addInstallment.cancel"].tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after cancelling the form")
+
+        // Abonelik aynı şekilde.
+        add.tap()
+        chooseInSheet("subscription", in: app)
+        XCTAssertTrue(app.textFields["addSubscription.title"].waitForExistence(timeout: 5), "subscription flow did not start")
+        app.buttons["addSubscription.cancel"].tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after cancelling the form")
+
+        // Ödeme: akış sayfanın içinde başlar; geri düğmesi seçime döner, kapat Home'a döner.
+        add.tap()
+        chooseInSheet("payment", in: app)
+        XCTAssertTrue(element("add.sheet.comingSoon", in: app).waitForExistence(timeout: 5), "payment flow did not start")
+        XCTAssertTrue(element("flow.progress", in: app).exists, "progress must be shown")
+        app.buttons["flow.back"].tap()
+        XCTAssertTrue(element("add.sheet.installment", in: app).waitForExistence(timeout: 5), "back must return to the options")
+        chooseInSheet("payment", in: app)
+        XCTAssertTrue(app.buttons["flow.close"].waitForExistence(timeout: 5), "close button not found")
+        app.buttons["flow.close"].tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after closing")
+        XCTAssertFalse(element("add.sheet.installment", in: app).exists, "sheet must be dismissed")
+
+        // Seçenekler ekranındaki kapat düğmesi de Home'a döner.
+        add.tap()
+        let close = app.buttons["add.sheet.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 5), "sheet close button not found")
+        close.tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after closing the sheet")
+        XCTAssertFalse(element("add.sheet.title", in: app).exists, "sheet must be dismissed")
+    }
+
+    @MainActor
+    func testAddFlowKeypadTypesAmountAndContinueNeedsPositiveAmount() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-add-flow-keypad"])
+        let continueButton = app.buttons["flow.continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 10), "continue button not found")
+        XCTAssertFalse(continueButton.isEnabled, "continue must be disabled with no amount")
+        app.buttons["keypad.digit.1"].tap()
+        app.buttons["keypad.digit.5"].tap()
+        app.buttons["keypad.separator"].tap()
+        app.buttons["keypad.digit.5"].tap()
+        XCTAssertTrue(continueButton.isEnabled, "continue must be enabled with an amount above zero")
+        app.buttons["keypad.delete"].tap()
+        app.buttons["keypad.delete"].tap()
+        app.buttons["keypad.delete"].tap()
+        app.buttons["keypad.delete"].tap()
+        XCTAssertFalse(continueButton.isEnabled, "continue must be disabled again when the amount is cleared")
+    }
+
+    @MainActor
+    func testAddFlowChipAutoAdvancesToCardPicker() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-add-flow-chips"])
+        let chip = element("flow.period.chip.0", in: app)
+        XCTAssertTrue(chip.waitForExistence(timeout: 10), "chip not found")
+        chip.tap()
+        // Çip seçimi kendiliğinden bir sonraki adıma (kart seçimi) geçirir.
+        XCTAssertTrue(element("cardPicker.noCard", in: app).waitForExistence(timeout: 5), "card picker step did not show after choosing a chip")
+        XCTAssertTrue(element("cardPicker.newCard", in: app).exists, "'New card' row must be visible")
+    }
+
     @MainActor
     func testAddInstallmentFromHomeShowsPaymentOnHome() throws {
         try addInstallmentAndFindItOnHome(extraArguments: [])
@@ -63,8 +147,8 @@ final class FunctionalFlowTests: XCTestCase {
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
-        // `home.add` bir menü (Installment / Subscription): önce taksit seçilir.
-        app.buttons["home.add.installment"].tap()
+        // `home.add` Add sayfasını açar: önce taksit seçilir.
+        chooseInSheet("installment", in: app)
 
         // Boş formda kaydet kapalı.
         let titleField = app.textFields["addInstallment.title"]
@@ -117,7 +201,7 @@ final class FunctionalFlowTests: XCTestCase {
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
-        app.buttons["home.add.installment"].tap()
+        chooseInSheet("installment", in: app)
 
         let titleField = app.textFields["addInstallment.title"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
@@ -310,7 +394,7 @@ final class FunctionalFlowTests: XCTestCase {
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
-        app.buttons["home.add.installment"].tap()
+        chooseInSheet("installment", in: app)
 
         let titleField = app.textFields["addInstallment.title"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
@@ -396,7 +480,7 @@ final class FunctionalFlowTests: XCTestCase {
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
-        app.buttons["home.add.subscription"].tap()
+        chooseInSheet("subscription", in: app)
 
         let titleField = app.textFields["addSubscription.title"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
@@ -482,7 +566,7 @@ final class FunctionalFlowTests: XCTestCase {
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
-        app.buttons["home.add.subscription"].tap()
+        chooseInSheet("subscription", in: app)
 
         let titleField = app.textFields["addSubscription.title"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")

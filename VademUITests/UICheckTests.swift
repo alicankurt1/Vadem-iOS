@@ -853,6 +853,127 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    // MARK: Ekleme akışı kabuğu (#188)
+
+    @MainActor
+    func testAddFlowSheet() throws {
+        // Home'daki Add sayfası: üç büyük seçenek.
+        try capture(
+            screen: "add-sheet",
+            launchArguments: ["-ui-sample-data", "-ui-add-sheet"],
+            sections: [.top, .scrolled(to: "add.sheet.payment", named: "payment")]
+        ) { app, variant in
+            for kind in ["installment", "subscription", "payment"] {
+                XCTAssertTrue(
+                    app.descendants(matching: .any)["add.sheet.\(kind)"].waitForExistence(timeout: 5),
+                    "[ui-check] add-sheet__\(variant.name): \(kind) option not found"
+                )
+            }
+        }
+    }
+
+    @MainActor
+    func testAddFlowPaymentPlaceholder() throws {
+        // Ödeme seçilince sayfanın içinde "yakında" adımı (akış kabuğu: ilerleme, geri, kapat).
+        try capture(
+            screen: "add-payment",
+            launchArguments: ["-ui-sample-data", "-ui-add-sheet"],
+            sections: [.top]
+        ) { app, variant in
+            let payment = app.descendants(matching: .any)["add.sheet.payment"]
+            XCTAssertTrue(payment.waitForExistence(timeout: 5), "[ui-check] add-payment__\(variant.name): payment option not found")
+            payment.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["add.sheet.comingSoon"].waitForExistence(timeout: 5),
+                "[ui-check] add-payment__\(variant.name): coming soon step not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddFlowKeypadStep() throws {
+        // Büyük tutar tuş takımı: Devam kapalı (tutar yok).
+        try capture(
+            screen: "add-flow-keypad",
+            launchArguments: ["-ui-sample-data", "-ui-add-flow-keypad"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["keypad.display"].waitForExistence(timeout: 5),
+                "[ui-check] add-flow-keypad__\(variant.name): keypad display not found"
+            )
+            XCTAssertFalse(app.buttons["flow.continue"].isEnabled, "[ui-check] add-flow-keypad__\(variant.name): continue must be disabled without an amount")
+        }
+    }
+
+    @MainActor
+    func testAddFlowKeypadTyped() throws {
+        // Tutar yazılmış tuş takımı: Devam açık.
+        try capture(
+            screen: "add-flow-keypad-typed",
+            launchArguments: ["-ui-sample-data", "-ui-add-flow-keypad"],
+            sections: [.top]
+        ) { app, variant in
+            let one = app.buttons["keypad.digit.1"]
+            XCTAssertTrue(one.waitForExistence(timeout: 5), "[ui-check] add-flow-keypad-typed__\(variant.name): key 1 not found")
+            one.tap()
+            app.buttons["keypad.digit.4"].tap()
+            app.buttons["keypad.digit.9"].tap()
+            app.buttons["keypad.digit.9"].tap()
+            app.buttons["keypad.separator"].tap()
+            app.buttons["keypad.digit.9"].tap()
+            XCTAssertTrue(app.buttons["flow.continue"].isEnabled, "[ui-check] add-flow-keypad-typed__\(variant.name): continue must be enabled")
+        }
+    }
+
+    @MainActor
+    func testAddFlowChipsStep() throws {
+        // Seçim çipleri adımı (seçili çip yok).
+        try capture(
+            screen: "add-flow-chips",
+            launchArguments: ["-ui-sample-data", "-ui-add-flow-chips"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["flow.period.chip.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-flow-chips__\(variant.name): first chip not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddFlowCardPickerStep() throws {
+        // Kart seçimi adımı: kartlar, görünür "Kart yok" ve "+ Yeni kart"; parçalar kendi işaretçilerinde.
+        try capture(
+            screen: "add-flow-card",
+            launchArguments: ["-ui-sample-data", "-ui-add-flow-card"],
+            sections: [.top, .scrolled(to: "cardPicker.newCard", named: "new-card")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["cardPicker.noCard"].waitForExistence(timeout: 5),
+                "[ui-check] add-flow-card__\(variant.name): 'No card' row not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["cardPicker.newCard"].exists,
+                "[ui-check] add-flow-card__\(variant.name): 'New card' row not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddFlowSheetTurkish() throws {
+        try capture(
+            screen: "add-sheet-tr",
+            launchArguments: ["-ui-sample-data", "-ui-add-sheet", "-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["add.sheet.installment"].waitForExistence(timeout: 5),
+                "[ui-check] add-sheet-tr__\(variant.name): installment option not found"
+            )
+        }
+    }
+
     @MainActor
     func testGalleryDesign() throws {
         // Hero, satırlar ve hap düğmeler kendi parçalarında yakalanır (#82); ayrı test, 3 dk sınırı için.
