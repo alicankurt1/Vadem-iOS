@@ -1,5 +1,8 @@
+#if DEBUG
 import SwiftUI
 import VademCore
+
+// Yalnızca debug derlemesinde: UI kontrolünün ortak adım ekranlarını açtığı örnek akış.
 
 /// The shared add-flow steps of the ``AddFlowGalleryView``, in order.
 public enum AddFlowGalleryStep: String, CaseIterable, Sendable, Identifiable {
@@ -129,7 +132,6 @@ public struct AddFlowGalleryView: View {
     }
 }
 
-#if DEBUG
 #Preview {
     let model = HomeSampleData.makeViewModel()
     return AddFlowGalleryView(cards: model.pickerCards(), lastUsedCardID: nil, makeAddCardModel: model.makeAddCardModel)

@@ -32,8 +32,10 @@ public struct HomeView: View {
     @State private var isAddSheetPresented: Bool
     // Ekle sayfasında seçilen tür; sayfa kapanınca o türün formu açılır.
     @State private var pendingAddKind: AddFlowKind?
+    #if DEBUG
     // UI kontrolü için açılan ortak adım galerisinin başlangıç adımı; nil iken kapalı.
     @State private var addFlowGalleryStep: AddFlowGalleryStep?
+    #endif
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -58,12 +60,11 @@ public struct HomeView: View {
     /// pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
     /// ``AssistantView/launchArgument`` the assistant chat. ``AddFlowSheet/launchArgument``
     /// (`-ui-add-sheet`) opens the Add sheet; ``AddFlowGalleryStep/launchArgument``
-    /// (`-ui-add-flow-keypad`, `-ui-add-flow-chips`, `-ui-add-flow-card`) opens the
+    /// (`-ui-add-flow-keypad`, `-ui-add-flow-chips`, `-ui-add-flow-card`, debug only) opens the
     /// ``AddFlowGalleryView`` at that shared step, with the first card as the last used one.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddSheetPresented = false
-        var initialAddFlowGalleryStep: AddFlowGalleryStep?
         var initialAddModel: AddInstallmentViewModel?
         var initialAddCardModel: AddCardViewModel?
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
@@ -71,6 +72,7 @@ public struct HomeView: View {
         var initialAnalyticsModel: AnalyticsViewModel?
         var initialAssistantModel: AssistantViewModel?
         #if DEBUG
+        var initialAddFlowGalleryStep: AddFlowGalleryStep?
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AnalyticsView.launchArgument) {
             initialAnalyticsModel = model.makeAnalyticsModel()
@@ -121,9 +123,9 @@ public struct HomeView: View {
         } else {
             initialAddFlowGalleryStep = AddFlowGalleryStep.step(in: arguments)
         }
+        _addFlowGalleryStep = State(initialValue: initialAddFlowGalleryStep)
         #endif
         _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
-        _addFlowGalleryStep = State(initialValue: initialAddFlowGalleryStep)
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
@@ -187,6 +189,7 @@ public struct HomeView: View {
                 isAddSheetPresented = false
             }
         }
+        #if DEBUG
         // Yeni kart eklenmiş olabilir; galeri kapanınca Home yeniden yüklenir.
         .sheet(item: $addFlowGalleryStep, onDismiss: reloadAfterForm) { step in
             AddFlowGalleryView(
@@ -194,6 +197,7 @@ public struct HomeView: View {
                 makeAddCardModel: model.makeAddCardModel
             )
         }
+        #endif
     }
 
     // Ekle sayfasında seçilen türün mevcut formu açılır; sayfa seçimsiz kapandıysa bir şey olmaz.

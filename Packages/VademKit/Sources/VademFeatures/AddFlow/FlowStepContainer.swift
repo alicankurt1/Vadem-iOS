@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// One step of an add flow: back and close buttons, a segmented progress bar ("Step 2 of 3"),
+/// One step of an add flow: back and close buttons, a "Step 2 of 3" caption over a segmented progress bar,
 /// the step's question as a header and its content (one decision); an optional Continue button
 /// sits below for steps that are not decided by a single tap (e.g. the amount keypad).
 ///
@@ -54,6 +54,8 @@ public struct FlowStepContainer<Content: View>: View {
                     Text(title)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Color.vademTextPrimary)
+                        // Metin her boyutta tam yüksekliğini alır, sarılır; asla kırpılmaz.
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("flow.title")
@@ -87,18 +89,28 @@ public struct FlowStepContainer<Content: View>: View {
         .frame(minHeight: 52)
     }
 
-    // Adım başına bir dilim; geçilen ve mevcut adımlar dolu. VoiceOver "Adım 2 / 3" duyar.
+    // Görünen "Adım 2 / 3" metni ve altında adım başına bir dilim; geçilen ve mevcut adımlar dolu.
+    // Erişilebilirlik öğesi görünen metnin kendisi: yalnızca 6 pt'lik çubuğun üstündeki bir etiket
+    // denetimde "dokunma alanı küçük" sayılıyordu. Çubuk yalnızca görsel.
     private var progressBar: some View {
-        HStack(spacing: 6) {
-            ForEach(1...stepCount, id: \.self) { step in
-                Capsule()
-                    .fill(step <= stepNumber ? Color.vademBrand : Color.vademSeparator)
-                    .frame(height: 6)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Step \(stepNumber) of \(stepCount)", bundle: .module)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.vademTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 6) {
+                ForEach(1...stepCount, id: \.self) { step in
+                    Capsule()
+                        .fill(step <= stepNumber ? Color.vademBrand : Color.vademSeparator)
+                        .frame(height: 6)
+                }
             }
+            .animation(Motion.animation(Motion.quick, reduceMotion: reduceMotion), value: stepNumber)
+            .accessibilityHidden(true)
         }
-        .animation(Motion.animation(Motion.quick, reduceMotion: reduceMotion), value: stepNumber)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("Step \(stepNumber) of \(stepCount)", bundle: .module))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isStaticText)
         .accessibilityIdentifier("flow.progress")
     }
 

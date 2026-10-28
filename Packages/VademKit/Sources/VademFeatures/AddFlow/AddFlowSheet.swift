@@ -74,10 +74,12 @@ public struct AddFlowSheet: View {
                     Text("What do you want to add?", bundle: .module)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Color.vademTextPrimary)
+                        // Metin her boyutta tam yüksekliğini alır, sarılır; asla kırpılmaz.
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 4)
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("add.sheet.title")
-                        .padding(.bottom, 4)
                     ForEach(AddFlowKind.allCases) { kind in
                         kindButton(kind)
                     }
@@ -94,26 +96,37 @@ public struct AddFlowSheet: View {
         Button {
             select(kind)
         } label: {
-            HStack(spacing: 16) {
+            // Erişilebilir yazı boyutlarında simge metnin üstünde ve ok gizli: metin tüm genişliği
+            // alır, kelimeler ortadan bölünmez. AnyLayout metinlerin kimliğini korur.
+            let stacked = dynamicTypeSize.isAccessibilitySize
+            let layout = stacked
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+            layout {
                 Image(systemName: kind.systemImage)
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(Color.vademBrand)
-                    .frame(minWidth: 32)
+                    .frame(minWidth: 32, alignment: .leading)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(kind.title)
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(Color.vademTextPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     Text(kind.subtitle)
                         .font(.subheadline)
                         .foregroundStyle(Color.vademTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .multilineTextAlignment(.leading)
-                Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.vademTextSecondary)
-                    .accessibilityHidden(true)
+                if !stacked {
+                    Image(systemName: "chevron.right")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Color.vademTextSecondary)
+                        .accessibilityHidden(true)
+                }
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
@@ -139,16 +152,21 @@ public struct AddFlowSheet: View {
             },
             onClose: { dismiss() }
         ) {
+            // İki metin ayrı öğe: birleşik etiket ikinci metnin çerçevesiyle ölçülüp "kırpılmış" sayılıyordu.
             VStack(alignment: .leading, spacing: 8) {
                 Text("Coming soon", bundle: .module)
                     .font(.headline)
                     .foregroundStyle(Color.vademTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Text("Adding a one-off payment is coming soon.", bundle: .module)
                     .font(.body)
                     .foregroundStyle(Color.vademTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
+            .multilineTextAlignment(.leading)
+            .accessibilityElement(children: .contain)
             .accessibilityIdentifier("add.sheet.comingSoon")
         }
     }
