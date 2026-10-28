@@ -2404,6 +2404,22 @@
         }
       }
     },
+    "Shows the month calendar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows the month calendar"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayın takvimini gösterir"
+          }
+        }
+      }
+    },
     "Something went wrong" : {
       "localizations" : {
         "en" : {
