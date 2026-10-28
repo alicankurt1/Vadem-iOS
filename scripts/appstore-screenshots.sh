@@ -71,7 +71,7 @@ total=0
 BOOTED=()
 cleanup() {
   for udid in "${BOOTED[@]:-}"; do
-    [ -n "$udid" ] && xcrun simctl shutdown "$udid" >/dev/null 2>&1
+    [ -n "$udid" ] && { xcrun simctl status_bar "$udid" clear >/dev/null 2>&1; xcrun simctl shutdown "$udid" >/dev/null 2>&1; }
   done
 }
 trap cleanup EXIT
@@ -91,8 +91,11 @@ for device in "${DEVICE_LIST[@]}"; do
     -destination "platform=iOS Simulator,id=$udid" -quiet \
     >"$WORK/build-$slug.log" 2>&1 || fail "build failed" "$WORK/build-$slug.log"
 
-  xcrun simctl boot "$udid" >/dev/null 2>&1
-  BOOTED+=("$udid")
+  # Yalnızca bu script'in açtığı simülatör sonda kapatılır; kullanıcının açık simülatörüne dokunulmaz.
+  if ! xcrun simctl list devices booted | grep -q "$udid"; then
+    xcrun simctl boot "$udid" >/dev/null 2>&1
+    BOOTED+=("$udid")
+  fi
   xcrun simctl bootstatus "$udid" -b >/dev/null 2>&1 || fail "simulator did not boot"
   xcrun simctl ui "$udid" appearance light
   xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 \
@@ -147,7 +150,6 @@ PY
       failures=$((failures + 1))
     fi
   done
-  xcrun simctl status_bar "$udid" clear >/dev/null 2>&1
 done
 
 echo "  done in $(( $(date +%s) - start ))s, $total screenshots expected"
