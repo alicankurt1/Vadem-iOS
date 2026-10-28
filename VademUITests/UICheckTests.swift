@@ -479,6 +479,20 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testPrivacyPolicyScreen() throws {
+        // Uzun metin: üstten başlar, son bölümün başlığına kaydırılır (6 bölüm: 0...5).
+        try capture(
+            screen: "privacy-policy",
+            launchArguments: ["-ui-sample-data", "-ui-privacy-policy"],
+            sections: [
+                .top,
+                .scrolled(to: "privacy.policy.section.2", named: "middle"),
+                .scrolled(to: "privacy.policy.section.5", named: "last"),
+            ]
+        )
+    }
+
+    @MainActor
     func testCardsScreen() throws {
         // Kartlar listesi; AX5'te uzar, son kartın işaretçisine kaydırılır.
         try capture(

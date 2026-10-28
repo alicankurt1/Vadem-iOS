@@ -531,6 +531,24 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testSettingsPrivacyRowOpensPolicyAndGoesBack() throws {
+        let app = launchHome()
+        let gear = app.buttons["home.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
+        gear.tap()
+        let privacyRow = element("settings.privacy", in: app)
+        XCTAssertTrue(privacyRow.waitForExistence(timeout: 5), "Privacy row not shown in Settings")
+        privacyRow.tap()
+        XCTAssertTrue(element("privacy.policy", in: app).waitForExistence(timeout: 5), "Privacy policy not shown")
+        XCTAssertTrue(element("privacy.policy.intro", in: app).exists, "policy intro text not shown")
+
+        // Gezinme çubuğundaki geri düğmesiyle Ayarlar'a dönülür.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(element("settings.privacy", in: app).waitForExistence(timeout: 5), "must return to Settings")
+        XCTAssertFalse(element("privacy.policy", in: app).exists, "policy must close after going back")
+    }
+
+    @MainActor
     func testSettingsCardsRowOpensCardsAndDeletesNewCard() throws {
         let app = launchHome()
         let gear = app.buttons["home.settings"]
