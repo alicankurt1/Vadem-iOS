@@ -22,6 +22,9 @@ struct TokenContrastTests {
         Pair(foreground: "dueToday", background: "surface"),  // Silme satırı (#88)
         Pair(foreground: "dueSoon", background: "dueSoonBackground"),
         Pair(foreground: "dueLater", background: "dueLaterBackground"),
+        // Analytics çubuk grafiğinde tek seferlik ödeme serisi (#191); grafik düz zeminde çizilir.
+        Pair(foreground: "dueSoon", background: "background"),
+        Pair(foreground: "dueSoon", background: "surface"),
         Pair(foreground: "textPrimary", background: "background"),
         Pair(foreground: "textPrimary", background: "surface"),
         Pair(foreground: "textSecondary", background: "background"),
