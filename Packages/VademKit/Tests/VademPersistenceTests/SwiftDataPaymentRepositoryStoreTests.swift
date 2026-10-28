@@ -342,30 +342,42 @@ struct SwiftDataPaymentRepositoryStoreTests {
     @Test("A stored card with an empty name throws instead of crashing")
     func invalidCardThrows() throws {
         let id = Fixture.id(1)
-        let repository = try repository(withStored: VademSchemaV2.CardRecord(id: id, name: "", statementDay: 10, dueDay: 20))
+        let repository = try repository(withStored: VademSchemaV3.CardRecord(id: id, name: "", statementDay: 10, dueDay: 20))
         expectInvalidRecord(id: id) { _ = try repository.cards() }
     }
 
     @Test("A stored card with day 0 throws instead of crashing")
     func invalidCardDayThrows() throws {
         let id = Fixture.id(1)
-        let repository = try repository(withStored: VademSchemaV2.CardRecord(id: id, name: "Bonus", statementDay: 0, dueDay: 20))
+        let repository = try repository(withStored: VademSchemaV3.CardRecord(id: id, name: "Bonus", statementDay: 0, dueDay: 20))
         expectInvalidRecord(id: id) { _ = try repository.cards() }
     }
 
     @Test("A stored installment with unreadable money throws", arguments: ["", "abc", "12abc", "NaN", "0", "-10"])
     func invalidInstallmentTotalThrows(total: String) throws {
         let id = Fixture.id(2)
-        let repository = try repository(withStored: VademSchemaV2.InstallmentRecord(
+        let repository = try repository(withStored: VademSchemaV3.InstallmentRecord(
             id: id, title: "Telefon", cardID: Fixture.id(1), paymentDay: nil, total: total, count: 3, firstYear: 2026, firstMonth: 1
         ))
         expectInvalidRecord(id: id) { _ = try repository.installments() }
     }
 
+    @Test("A stored one-time payment with invalid values throws", arguments: [
+        ("", 2026, 6, 15), ("0", 2026, 6, 15), ("-5", 2026, 6, 15), ("abc", 2026, 6, 15),
+        ("10", 2026, 13, 15), ("10", 2026, 6, 31), ("10", 2026, 6, 0), ("10", 2026, 2, 30),
+    ])
+    func invalidOneTimePaymentThrows(amount: String, year: Int, month: Int, day: Int) throws {
+        let id = Fixture.id(3)
+        let repository = try repository(withStored: VademSchemaV3.OneTimePaymentRecord(
+            id: id, title: "Vergi", cardID: nil, amount: amount, dueYear: year, dueMonth: month, dueDay: day
+        ))
+        expectInvalidRecord(id: id) { _ = try repository.oneTimePayments() }
+    }
+
     @Test("A stored installment with an invalid month throws")
     func invalidInstallmentMonthThrows() throws {
         let id = Fixture.id(2)
-        let repository = try repository(withStored: VademSchemaV2.InstallmentRecord(
+        let repository = try repository(withStored: VademSchemaV3.InstallmentRecord(
             id: id, title: "Telefon", cardID: Fixture.id(1), paymentDay: nil, total: "1200", count: 3, firstYear: 2026, firstMonth: 13
         ))
         expectInvalidRecord(id: id) { _ = try repository.installments() }
@@ -380,7 +392,7 @@ struct SwiftDataPaymentRepositoryStoreTests {
     ])
     func invalidInstallmentCardDayPairThrows(cardID: UUID?, paymentDay: Int?) throws {
         let id = Fixture.id(2)
-        let repository = try repository(withStored: VademSchemaV2.InstallmentRecord(
+        let repository = try repository(withStored: VademSchemaV3.InstallmentRecord(
             id: id, title: "Telefon", cardID: cardID, paymentDay: paymentDay, total: "1200", count: 3,
             firstYear: 2026, firstMonth: 1
         ))
@@ -401,8 +413,8 @@ struct SwiftDataPaymentRepositoryStoreTests {
 
         var testDescription: String { name }
 
-        func record(id: UUID) -> VademSchemaV2.SubscriptionRecord {
-            VademSchemaV2.SubscriptionRecord(
+        func record(id: UUID) -> VademSchemaV3.SubscriptionRecord {
+            VademSchemaV3.SubscriptionRecord(
                 id: id, title: title, cardID: nil, amount: amount, period: period, renewalDay: renewalDay,
                 firstYear: firstYear, firstMonth: firstMonth, lastYear: lastYear, lastMonth: lastMonth
             )

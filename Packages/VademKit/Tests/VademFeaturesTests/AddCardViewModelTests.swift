@@ -17,6 +17,9 @@ struct AddCardViewModelTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws { throw Failure() }
         func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
     }
 
     private static func fill(_ model: AddCardViewModel, name: String = "Bonus", statement: String = "10", due: String = "20") {

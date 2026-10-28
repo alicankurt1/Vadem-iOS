@@ -21,6 +21,9 @@ struct PaymentSummaryProviderTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws { throw Failure() }
         func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
     }
 
     private static var calendar: Calendar {

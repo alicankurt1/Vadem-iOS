@@ -90,22 +90,3 @@ public enum VademSchemaV2: VersionedSchema {
         }
     }
 }
-
-// Güncel şemanın kayıtları; depo ve eşleme kodu sürüm adını tekrar etmez.
-typealias CardRecord = VademSchemaV2.CardRecord
-typealias InstallmentRecord = VademSchemaV2.InstallmentRecord
-typealias SubscriptionRecord = VademSchemaV2.SubscriptionRecord
-
-/// The migration plan for the store: V1 → V2 is a lightweight stage (an attribute becomes
-/// optional and an optional attribute is added), so every saved record is kept as is.
-public enum VademMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] { [VademSchemaV1.self, VademSchemaV2.self] }
-
-    public static var stages: [MigrationStage] { [migrateV1toV2] }
-
-    // V1 → V2: `InstallmentRecord.cardID` isteğe bağlı olur, `paymentDay` eklenir (eski kayıtlarda nil).
-    // Hesaplanan özellik: MigrationStage Sendable değil, statik saklı değer olamaz.
-    static var migrateV1toV2: MigrationStage {
-        .lightweight(fromVersion: VademSchemaV1.self, toVersion: VademSchemaV2.self)
-    }
-}

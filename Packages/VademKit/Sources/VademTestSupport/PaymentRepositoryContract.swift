@@ -13,6 +13,7 @@ public enum PaymentRepositoryContract {
         #expect(try repo.cards().isEmpty)
         #expect(try repo.installments().isEmpty)
         #expect(try repo.subscriptions().isEmpty)
+        #expect(try repo.oneTimePayments().isEmpty)
     }
 
     public static func cardsSortedByNameCaseInsensitive(_ repo: any PaymentRepository) throws {
@@ -466,6 +467,162 @@ public enum PaymentRepositoryContract {
         #expect(storedSubscription == subscription)
     }
 
+    // MARK: Tek seferlik ödemeler
+
+    public static func oneTimePaymentsSortedByDueDateThenTitle(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        // Başlık sırası ile tarih sırası çelişecek şekilde seçildi.
+        let lastYear = try Fixture.oneTimePayment("Zımba", card: card.id, due: Fixture.month(2025, 12), day: 31)
+        let marchEarly = try Fixture.oneTimePayment("Vergi", card: nil, due: Fixture.month(2026, 3), day: 2)
+        let marchLateA = try Fixture.oneTimePayment("Aidat", card: card.id, due: Fixture.month(2026, 3), day: 20)
+        let marchLateB = try Fixture.oneTimePayment("harç", card: nil, due: Fixture.month(2026, 3), day: 20)
+        let june = try Fixture.oneTimePayment("Ayna", card: card.id, due: Fixture.month(2026, 6), day: 1)
+        for item in [june, marchLateB, lastYear, marchLateA, marchEarly] {
+            try repo.save(item)
+        }
+        #expect(try repo.oneTimePayments() == [lastYear, marchEarly, marchLateA, marchLateB, june])
+    }
+
+    public static func oneTimePaymentsWithSameDateAndTitleSortedByID(_ repo: any PaymentRepository) throws {
+        // Aynı gün, harf duyarsız olarak aynı başlık: eşitlik id ile bozulur (…1 < …2 < …3).
+        let due = try Fixture.month(2026, 4)
+        let second = try Fixture.oneTimePayment("vergi", id: Fixture.id(2), card: nil, due: due, day: 9)
+        let third = try Fixture.oneTimePayment("VERGI", id: Fixture.id(3), card: nil, due: due, day: 9)
+        let first = try Fixture.oneTimePayment("Vergi", id: Fixture.id(1), card: nil, due: due, day: 9)
+        for item in [third, first, second] {
+            try repo.save(item)
+        }
+        #expect(try repo.oneTimePayments() == [first, second, third])
+    }
+
+    public static func savingOneTimePaymentWithSameIDReplacesIt(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        let original = try Fixture.oneTimePayment("Vergi", id: Fixture.id(1), card: card.id)
+        let updated = try Fixture.oneTimePayment(
+            "Vergi (yeni)", id: Fixture.id(1), card: nil, amount: Decimal(string: "999.99")!,
+            due: Fixture.month(2027, 2), day: 28
+        )
+        try repo.save(original)
+        try repo.save(updated)
+        #expect(try repo.oneTimePayments() == [updated])
+        // Eski kart artık kullanılmıyor.
+        try repo.deleteCard(id: card.id)
+        #expect(try repo.cards().isEmpty)
+    }
+
+    public static func oneTimePaymentWithUnknownCardThrows(_ repo: any PaymentRepository) throws {
+        try repo.save(Fixture.card(id: Fixture.id(1)))
+        let item = try Fixture.oneTimePayment(card: Fixture.id(2))
+        #expect(throws: RepositoryError.unknownCard) { try repo.save(item) }
+        #expect(try repo.oneTimePayments().isEmpty)
+    }
+
+    public static func oneTimePaymentForDeletedCardThrows(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        try repo.deleteCard(id: card.id)
+        #expect(throws: RepositoryError.unknownCard) { try repo.save(Fixture.oneTimePayment(card: card.id)) }
+        #expect(try repo.oneTimePayments().isEmpty)
+    }
+
+    public static func oneTimePaymentWithoutCardNeedsNoCard(_ repo: any PaymentRepository) throws {
+        let item = try Fixture.oneTimePayment(card: nil)
+        try repo.save(item)
+        #expect(try repo.oneTimePayments() == [item])
+        #expect(try repo.oneTimePayments().first?.cardID == nil)
+        #expect(try repo.cards().isEmpty)
+    }
+
+    public static func deletesOneTimePayment(_ repo: any PaymentRepository) throws {
+        let keep = try Fixture.oneTimePayment("Aidat", card: nil)
+        let remove = try Fixture.oneTimePayment("Vergi", card: nil)
+        try repo.save(keep)
+        try repo.save(remove)
+        try repo.deleteOneTimePayment(id: remove.id)
+        #expect(try repo.oneTimePayments() == [keep])
+    }
+
+    public static func deletingUnknownOneTimePaymentIsNoOp(_ repo: any PaymentRepository) throws {
+        let item = try Fixture.oneTimePayment(card: nil)
+        try repo.save(item)
+        try repo.deleteOneTimePayment(id: Fixture.id(99))
+        #expect(try repo.oneTimePayments() == [item])
+    }
+
+    public static func deletingCardInUseByOneTimePaymentThrows(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        let item = try Fixture.oneTimePayment(card: card.id)
+        try repo.save(card)
+        try repo.save(item)
+        #expect(throws: RepositoryError.cardInUse) { try repo.deleteCard(id: card.id) }
+        #expect(try repo.cards() == [card])
+        #expect(try repo.oneTimePayments() == [item])
+        // Ödeme silinince kart silinebilir.
+        try repo.deleteOneTimePayment(id: item.id)
+        try repo.deleteCard(id: card.id)
+        #expect(try repo.cards().isEmpty)
+    }
+
+    public static func oneTimePaymentWithoutCardDoesNotBlockCardDeletion(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        try repo.save(Fixture.oneTimePayment(card: nil))
+        try repo.deleteCard(id: card.id)
+        #expect(try repo.cards().isEmpty)
+        #expect(try repo.oneTimePayments().count == 1)
+    }
+
+    public static func oneTimePaymentsDoNotMixWithOtherKinds(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        let payment = try Fixture.oneTimePayment(card: card.id)
+        try repo.save(payment)
+        #expect(try repo.installments().isEmpty)
+        #expect(try repo.subscriptions().isEmpty)
+        try repo.save(Fixture.installment(card: card.id))
+        try repo.deleteOneTimePayment(id: payment.id)
+        #expect(try repo.installments().count == 1)
+        #expect(try repo.oneTimePayments().isEmpty)
+    }
+
+    public static func draftOneTimePaymentIsStoredAndReadBack(_ repo: any PaymentRepository) throws {
+        // Formdan gelen (kırpılmış başlık, kuruşa yuvarlanmış tutar) ödeme aynen geri okunur.
+        let card = try Fixture.card()
+        try repo.save(card)
+        let draft = OneTimePaymentDraft(
+            title: "  Vergi  ", cardID: card.id, amount: Decimal(string: "1499.90")!,
+            dueMonth: try Fixture.month(2028, 2), dueDay: 29
+        )
+        let item = try #require(draft.makeItem(id: Fixture.id(1)))
+        try repo.save(item)
+        let stored = try #require(try repo.oneTimePayments().first)
+        #expect(try repo.oneTimePayments().count == 1)
+        #expect(stored == item)
+        #expect(stored.title == "Vergi")
+        #expect(stored.amount == Money(Decimal(string: "1499.90")!))
+        #expect(stored.dueMonth == (try Fixture.month(2028, 2)))
+        #expect(stored.dueDay == 29)
+    }
+
+    public static func oneTimePaymentValuesComeBackExactly(_ repo: any PaymentRepository) throws {
+        let card = try Fixture.card()
+        try repo.save(card)
+        let item = try Fixture.oneTimePayment(
+            "Ev eşyası", id: Fixture.id(5), card: card.id, amount: Decimal(string: "1234567.89")!,
+            due: Fixture.month(2031, 12), day: 31
+        )
+        let tiny = try Fixture.oneTimePayment(
+            "Kuruş", id: Fixture.id(6), card: nil, amount: Decimal(string: "0.01")!,
+            due: Fixture.month(2031, 12), day: 1
+        )
+        try repo.save(item)
+        try repo.save(tiny)
+        #expect(try repo.oneTimePayments() == [tiny, item])
+        #expect(try repo.oneTimePayments().last?.amount == Money(Decimal(string: "1234567.89")!))
+    }
+
     /// Her senaryo bir test olarak koşar; adı test raporunda görünür.
     public struct Scenario: Sendable, CustomTestStringConvertible {
         public let name: String
@@ -513,5 +670,18 @@ public enum PaymentRepositoryContract {
         Scenario(name: "A subscription made from a draft without a card is stored", run: draftSubscriptionWithoutCardIsStored),
         Scenario(name: "A new subscription is charged in its months only", run: newSubscriptionChargesInItsMonths),
         Scenario(name: "Values come back exactly as saved", run: valuesComeBackExactlyAsSaved),
+        Scenario(name: "One-time payments are sorted by due date, then title", run: oneTimePaymentsSortedByDueDateThenTitle),
+        Scenario(name: "One-time payments with the same date and title are sorted by id", run: oneTimePaymentsWithSameDateAndTitleSortedByID),
+        Scenario(name: "Saving a one-time payment with an existing id replaces it", run: savingOneTimePaymentWithSameIDReplacesIt),
+        Scenario(name: "A one-time payment for an unknown card is rejected", run: oneTimePaymentWithUnknownCardThrows),
+        Scenario(name: "A one-time payment for a deleted card is rejected", run: oneTimePaymentForDeletedCardThrows),
+        Scenario(name: "A one-time payment without a card is saved without any cards", run: oneTimePaymentWithoutCardNeedsNoCard),
+        Scenario(name: "A one-time payment can be deleted", run: deletesOneTimePayment),
+        Scenario(name: "Deleting an unknown one-time payment id is a no-op", run: deletingUnknownOneTimePaymentIsNoOp),
+        Scenario(name: "A card used by a one-time payment cannot be deleted", run: deletingCardInUseByOneTimePaymentThrows),
+        Scenario(name: "A one-time payment without a card does not block card deletion", run: oneTimePaymentWithoutCardDoesNotBlockCardDeletion),
+        Scenario(name: "One-time payments stay separate from other kinds", run: oneTimePaymentsDoNotMixWithOtherKinds),
+        Scenario(name: "A one-time payment made from a draft is stored and read back", run: draftOneTimePaymentIsStoredAndReadBack),
+        Scenario(name: "One-time payment values come back exactly as saved", run: oneTimePaymentValuesComeBackExactly),
     ]
 }

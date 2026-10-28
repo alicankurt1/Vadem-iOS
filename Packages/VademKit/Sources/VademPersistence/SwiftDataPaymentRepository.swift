@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import VademCore
 
-/// A ``PaymentRepository`` that stores cards, installments and subscriptions with SwiftData.
+/// A ``PaymentRepository`` that stores cards, installments, subscriptions and one-time payments with SwiftData.
 ///
 /// Behaves exactly like `InMemoryPaymentRepository`: same order, same errors. Every write
 /// is saved to the store immediately; a failed save is rolled back and rethrown.
@@ -48,7 +48,10 @@ public final class SwiftDataPaymentRepository: PaymentRepository {
         let subscriptionCount = try context.fetchCount(
             FetchDescriptor<SubscriptionRecord>(predicate: #Predicate { $0.cardID == target })
         )
-        if installmentCount + subscriptionCount > 0 { throw RepositoryError.cardInUse }
+        let oneTimePaymentCount = try context.fetchCount(
+            FetchDescriptor<OneTimePaymentRecord>(predicate: #Predicate { $0.cardID == target })
+        )
+        if installmentCount + subscriptionCount + oneTimePaymentCount > 0 { throw RepositoryError.cardInUse }
         context.delete(record)
         try commit()
     }
@@ -109,6 +112,37 @@ public final class SwiftDataPaymentRepository: PaymentRepository {
 
     public func deleteSubscription(id: SubscriptionItem.ID) throws {
         try context.delete(model: SubscriptionRecord.self, where: #Predicate { $0.id == id })
+        try commit()
+    }
+
+    // MARK: One-time payments
+
+    public func oneTimePayments() throws -> [OneTimePaymentItem] {
+        try context.fetch(FetchDescriptor<OneTimePaymentRecord>())
+            .map { try $0.value() }
+            .sorted { lhs, rhs in
+                if lhs.dueMonth != rhs.dueMonth { return lhs.dueMonth < rhs.dueMonth }
+                if lhs.dueDay != rhs.dueDay { return lhs.dueDay < rhs.dueDay }
+                return RepositoryOrder.isOrdered(lhs.title, lhs.id, before: rhs.title, rhs.id)
+            }
+    }
+
+    public func save(_ item: OneTimePaymentItem) throws {
+        // Kartsız ödeme (nil) serbest; kart verilmişse kayıtlı olmalı.
+        if let cardID = item.cardID, try !cardExists(id: cardID) {
+            throw RepositoryError.unknownCard
+        }
+        let id = item.id
+        if let record = try context.fetch(FetchDescriptor<OneTimePaymentRecord>(predicate: #Predicate { $0.id == id })).first {
+            record.update(from: item)
+        } else {
+            context.insert(OneTimePaymentRecord(item))
+        }
+        try commit()
+    }
+
+    public func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws {
+        try context.delete(model: OneTimePaymentRecord.self, where: #Predicate { $0.id == id })
         try commit()
     }
 

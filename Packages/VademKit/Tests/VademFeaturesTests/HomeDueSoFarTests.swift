@@ -124,6 +124,9 @@ struct HomeDueSoFarTests {
             func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
             func save(_ item: SubscriptionItem) throws { throw Failure() }
             func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+            func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+            func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+            func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
         }
         let model = HomeViewModel(repository: Failing(), today: Self.date(2026, 10, 12), calendar: Self.calendar)
         #expect(model.dueSoFar == .zero)
