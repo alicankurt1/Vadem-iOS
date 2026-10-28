@@ -507,6 +507,12 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Fonksiyonel UI testi ilk çalışmada başarısız oldu: konumsal `navigationBars.buttons.element(boundBy: 0)` Ayarlar sayfasının arkasındaki Home'un `home.assistant` düğmesine denk geldi. Bu bir ürün hatası değil test hatasıydı; sayfanın kendi gezinme çubuğu seçilerek düzeltildi. Reviewer: 1 minor (metin iki yerde duruyor, senkronu zorlayan test yok; kabul edildi, belgeye not eklendi), 2 nit.
 - **Ders:** Sheet/push ekranlarında arkadaki ekranın öğeleri erişilebilirlik ağacında durur; konumsal sorgular yerine kapsamı belli (kendi gezinme çubuğu veya identifier) sorgular kullanılmalı.
 
+### Koşu #187 ve #188 — Tek seferlik ödeme alanı ve Add akışı kabuğu (Faz 17)
+
+- **Ne yapıldı:** #187 (PR #193, 26 dk, 0 düzeltme turu): `OneTimePaymentItem`, repository metotları, `VademSchemaV3` ve V2'den V3'e hafif geçiş; UI yok. #188 (PR #194, 58 dk, 5 verify, 2 düzeltme turu): tam yükseklikte Add sheet'i ve paylaşılan adım bileşenleri (konteyner, tuş takımı, chip, kart adımı). İki oturum paralel worktree'de çalıştı.
+- **Kapı neyi yakaladı:** UI capture'daki erişilebilirlik denetimi `presentationDetents` kaynaklı "Text clipped" bulgusu verdi (varsayılan ve AX5); detent kaldırıldı, sheet hep tam yükseklikte (yarım yükseklik açık soru). `flow.progress` dokunma alanı 6-7 pt idi, düzeltildi. Reviewer: galeri Release'e de giriyordu, `#if DEBUG` ile kapatıldı; "son kullanılan kart" kuralı şimdilik yalnızca galeride bağlı (kabul edildi).
+- **Ders:** İki PR de `metrics/runs.jsonl` sonuna satır ekleyince çakıştı; iki satır da tutularak çözüldü. Paralel çalışmada ortak, sadece-sona-eklenen dosyalar kaçınılmaz çakışma noktasıdır; çözüm basit ama unutulmamalı. Ayrıca alan modeli (#187) ile UI'nın (#188) ayrı issue'lara bölünmesi, ikisinin paralel ilerlemesini mümkün kıldı.
+
 ### Mülakat sorusu: Gizlilik politikası metni hem `docs/privacy.md`'de hem uygulamada duruyor; bu kopyalar ayrışırsa ne olur, tek kaynağa nasıl indirirsin?
 
 **Cevap:**
