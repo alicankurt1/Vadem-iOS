@@ -27,6 +27,9 @@ struct EditModeViewModelTests {
         func subscriptions() throws -> [SubscriptionItem] { storedSubscriptions }
         func save(_ item: SubscriptionItem) throws { throw Failure() }
         func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { [] }
+        func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
     }
 
     /// Hiçbir okuma çalışmaz.
@@ -41,6 +44,9 @@ struct EditModeViewModelTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws {}
         func deleteSubscription(id: SubscriptionItem.ID) throws {}
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws {}
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws {}
     }
 
     // MARK: Taksit

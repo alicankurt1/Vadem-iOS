@@ -19,6 +19,9 @@ struct CardListViewModelTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws { throw Failure() }
         func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
     }
 
     // Yalnızca ilk çağrıda başarılı olan, sonra hata veren depo: eski listenin temizlendiğini sınar.
@@ -35,6 +38,9 @@ struct CardListViewModelTests {
         func subscriptions() throws -> [SubscriptionItem] { try inner.subscriptions() }
         func save(_ item: SubscriptionItem) throws { try inner.save(item) }
         func deleteSubscription(id: SubscriptionItem.ID) throws { try inner.deleteSubscription(id: id) }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { try inner.oneTimePayments() }
+        func save(_ item: OneTimePaymentItem) throws { try inner.save(item) }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { try inner.deleteOneTimePayment(id: id) }
     }
 
     @Test("Empty repository shows the empty state")

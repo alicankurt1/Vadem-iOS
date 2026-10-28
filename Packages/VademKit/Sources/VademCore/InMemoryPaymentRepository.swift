@@ -10,6 +10,7 @@ public final class InMemoryPaymentRepository: PaymentRepository {
     private var cardsByID: [Card.ID: Card] = [:]
     private var installmentsByID: [InstallmentItem.ID: InstallmentItem] = [:]
     private var subscriptionsByID: [SubscriptionItem.ID: SubscriptionItem] = [:]
+    private var oneTimePaymentsByID: [OneTimePaymentItem.ID: OneTimePaymentItem] = [:]
 
     /// Creates an empty repository.
     public init() {}
@@ -26,9 +27,10 @@ public final class InMemoryPaymentRepository: PaymentRepository {
 
     public func deleteCard(id: Card.ID) throws {
         guard cardsByID[id] != nil else { return }
-        // Kullanımdaki kart silinemez; aksi halde taksit/abonelik sahipsiz kalırdı.
+        // Kullanımdaki kart silinemez; aksi halde taksit/abonelik/tek seferlik ödeme sahipsiz kalırdı.
         let isUsed = installmentsByID.values.contains { $0.cardID == id }
             || subscriptionsByID.values.contains { $0.cardID == id }
+            || oneTimePaymentsByID.values.contains { $0.cardID == id }
         if isUsed { throw RepositoryError.cardInUse }
         cardsByID[id] = nil
     }
@@ -70,6 +72,26 @@ public final class InMemoryPaymentRepository: PaymentRepository {
 
     public func deleteSubscription(id: SubscriptionItem.ID) throws {
         subscriptionsByID[id] = nil
+    }
+
+    public func oneTimePayments() throws -> [OneTimePaymentItem] {
+        oneTimePaymentsByID.values.sorted { lhs, rhs in
+            if lhs.dueMonth != rhs.dueMonth { return lhs.dueMonth < rhs.dueMonth }
+            if lhs.dueDay != rhs.dueDay { return lhs.dueDay < rhs.dueDay }
+            return Self.isOrdered(lhs.title, lhs.id, before: rhs.title, rhs.id)
+        }
+    }
+
+    public func save(_ item: OneTimePaymentItem) throws {
+        // Kartsız ödeme (nil) serbest; kart verilmişse kayıtlı olmalı.
+        if let cardID = item.cardID, cardsByID[cardID] == nil {
+            throw RepositoryError.unknownCard
+        }
+        oneTimePaymentsByID[item.id] = item
+    }
+
+    public func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws {
+        oneTimePaymentsByID[id] = nil
     }
 
     // Sözlük sırası belirsiz olduğu için eşitlikte id ile ayırıyoruz; sonuç her zaman aynı.

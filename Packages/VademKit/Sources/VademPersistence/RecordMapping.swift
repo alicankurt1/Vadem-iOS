@@ -112,6 +112,35 @@ extension SubscriptionRecord {
     }
 }
 
+extension OneTimePaymentRecord {
+    convenience init(_ item: OneTimePaymentItem) {
+        self.init(
+            id: item.id, title: item.title, cardID: item.cardID, amount: MoneyText.encode(item.amount),
+            dueYear: item.dueMonth.year, dueMonth: item.dueMonth.month, dueDay: item.dueDay
+        )
+    }
+
+    func update(from item: OneTimePaymentItem) {
+        title = item.title
+        cardID = item.cardID
+        amount = MoneyText.encode(item.amount)
+        dueYear = item.dueMonth.year
+        dueMonth = item.dueMonth.month
+        dueDay = item.dueDay
+    }
+
+    func value() throws -> OneTimePaymentItem {
+        guard let amount = MoneyText.decode(amount),
+              let month = YearMonth(year: dueYear, month: dueMonth),
+              let item = OneTimePaymentItem(
+                  id: id, title: title, cardID: cardID, amount: amount, dueMonth: month, dueDay: dueDay
+              ) else {
+            throw PersistenceError.invalidRecord(entity: "OneTimePaymentRecord", id: id)
+        }
+        return item
+    }
+}
+
 // Tutar, yerel ayardan bağımsız tam ondalık metin olarak saklanır ("1234567.89").
 // Okurken metin, yazdığımız biçimin aynısı olmalı; "12abc" gibi kısmen okunabilen
 // ya da "1.005" gibi yuvarlanacak değerler sessizce kabul edilmez.

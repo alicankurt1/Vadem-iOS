@@ -20,11 +20,11 @@ public enum VademPersistence {
         case file(URL)
     }
 
-    /// Creates a container for ``VademSchemaV2`` with ``VademMigrationPlan``; a V1 store is migrated.
+    /// Creates a container for ``VademSchemaV3`` with ``VademMigrationPlan``; a V1 or V2 store is migrated.
     ///
     /// CloudKit is always off: data never leaves the device.
     public static func makeContainer(storage: Storage) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: VademSchemaV2.self)
+        let schema = Schema(versionedSchema: VademSchemaV3.self)
         let configuration = switch storage {
         case .appGroup:
             ModelConfiguration(schema: schema, groupContainer: .identifier(appGroupIdentifier), cloudKitDatabase: .none)
