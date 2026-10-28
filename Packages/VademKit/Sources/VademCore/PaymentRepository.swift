@@ -2,15 +2,15 @@ import Foundation
 
 /// Errors a ``PaymentRepository`` throws when a change would break a rule.
 public enum RepositoryError: Error, Sendable, Hashable {
-    /// The card is still referenced by an installment or a subscription.
+    /// The card is still referenced by an installment, a subscription or a one-time payment.
     case cardInUse
     /// The item refers to a card that has not been saved.
     case unknownCard
 }
 
-/// Saves and loads cards, installments and subscriptions.
+/// Saves and loads cards, installments, subscriptions and one-time payments.
 ///
-/// One protocol for all three keeps the shared rule in one place: a card that is
+/// One protocol for all of them keeps the shared rule in one place: a card that is
 /// still in use cannot be deleted. ``InMemoryPaymentRepository`` is the reference
 /// implementation; every implementation must behave the same.
 ///
@@ -23,7 +23,8 @@ public protocol PaymentRepository {
     /// Inserts `card`, or replaces the saved card with the same `id`.
     func save(_ card: Card) throws
     /// Deletes the card with `id`; an unknown `id` is a no-op.
-    /// - Throws: ``RepositoryError/cardInUse`` if an installment or a subscription refers to it.
+    /// - Throws: ``RepositoryError/cardInUse`` if an installment, a subscription or a one-time
+    ///   payment refers to it.
     func deleteCard(id: Card.ID) throws
 
     /// All installments, sorted by `plan.firstMonth`, then by title with
@@ -42,4 +43,13 @@ public protocol PaymentRepository {
     func save(_ item: SubscriptionItem) throws
     /// Deletes the subscription with `id`; an unknown `id` is a no-op.
     func deleteSubscription(id: SubscriptionItem.ID) throws
+
+    /// All one-time payments, sorted by due date (`dueMonth`, then `dueDay`), then by title
+    /// with `caseInsensitiveCompare(_:)`, then by `id.uuidString`.
+    func oneTimePayments() throws -> [OneTimePaymentItem]
+    /// Inserts `item`, or replaces the saved one-time payment with the same `id`.
+    /// - Throws: ``RepositoryError/unknownCard`` if `item.cardID` is set and not a saved card.
+    func save(_ item: OneTimePaymentItem) throws
+    /// Deletes the one-time payment with `id`; an unknown `id` is a no-op.
+    func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws
 }

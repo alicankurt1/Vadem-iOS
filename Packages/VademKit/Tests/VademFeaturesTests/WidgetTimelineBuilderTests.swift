@@ -21,6 +21,9 @@ struct WidgetTimelineBuilderTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws { throw Failure() }
         func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
     }
 
     // Yalnızca kartlar okunabilir; abonelik okuması hata verir (kısmi hata).
@@ -35,6 +38,9 @@ struct WidgetTimelineBuilderTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws { try base.save(item) }
         func deleteSubscription(id: SubscriptionItem.ID) throws { try base.deleteSubscription(id: id) }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws { try base.save(item) }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { try base.deleteOneTimePayment(id: id) }
     }
 
     private static func calendar(_ zone: String) -> Calendar {

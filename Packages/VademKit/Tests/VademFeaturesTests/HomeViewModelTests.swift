@@ -38,6 +38,9 @@ struct HomeViewModelTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws { throw Failure() }
         func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
     }
 
     // MARK: Ay ve gezinme
@@ -201,6 +204,9 @@ struct HomeViewModelTests {
         func subscriptions() throws -> [SubscriptionItem] { storedSubscriptions }
         func save(_ item: SubscriptionItem) throws {}
         func deleteSubscription(id: SubscriptionItem.ID) throws {}
+        func oneTimePayments() throws -> [OneTimePaymentItem] { [] }
+        func save(_ item: OneTimePaymentItem) throws {}
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws {}
     }
 
     @Test("Payments whose card is missing are skipped, not shown and not counted")
@@ -355,6 +361,9 @@ struct HomeViewModelUpcomingTests {
         func subscriptions() throws -> [SubscriptionItem] { throw Failure() }
         func save(_ item: SubscriptionItem) throws { throw Failure() }
         func deleteSubscription(id: SubscriptionItem.ID) throws { throw Failure() }
+        func oneTimePayments() throws -> [OneTimePaymentItem] { throw Failure() }
+        func save(_ item: OneTimePaymentItem) throws { throw Failure() }
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws { throw Failure() }
     }
 
     private static func ym(_ year: Int, _ month: Int) -> YearMonth {
