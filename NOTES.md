@@ -522,3 +522,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Daha ucuz ara çözüm:** Bir test, `docs/privacy.md` bölüm sayısını ve başlıklarını yerelleştirme anahtarlarıyla karşılaştırsın; metin kayarsa kapı kırmızı olsun (`AppStoreReadinessTests` ile aynı fikir: "aynı olmalı" olan şeyi test korur).
 - **SOLID:** Single Responsibility (politika içeriği bir yerde yaşar, ekran yalnızca gösterir) ve Dependency Inversion (ekran içeriğe somut dosyaya değil bir veri yapısına bağlanır).
 - **Ders:** Hukuki veya beyan niteliğindeki metni kopyalama; kopyalamak zorundaysan kopyaların eşitliğini bir testle koru.
+
+### Koşu #190 — Abonelik hızlı adımları (Faz 17)
+
+- **Ne yapıldı:** Add sheet'inde abonelik akışı adım adım çalışır hale geldi: tutar, periyot, kart, isteğe bağlı başlık, tek Save'li özet (PR #198). 60 dk, 3 verify, 1 başarısız, 0 düzeltme turu. Doğrulama ve kayıt mevcut `AddSubscriptionViewModel` / `SubscriptionDraft` üzerinden gider; düzenleme akışı değişmedi.
+- **Kapı neyi yakaladı:** Reviewer: 1 minor (kayıt "Kart yok" ile yapılınca `lastUsedCardID` nil oluyor; kabul edildi), 1 nit. UI capture bu PR'da kullanıcının isteğiyle çalıştırılmadı; 5 adım capture testi yazıldı ama koşulmadı. Fonksiyonel UI testleri (4 abonelik testi) geçti.
+- **Ders:** Önceki UI koşuları "signal kill" ile öldü; sebep kod değil, paralel oturumların aynı simülatörü aynı anda kullanmasıydı. UI betiklerini aynı simülatörde eşzamanlı çalıştırma; `pgrep -f` ile bekleyen döngüler birbirinin komut satırını eşleyebilir. Capture'ı atlamak kanıt borcudur: bu PR'ın görsel/erişilebilirlik denetimi hâlâ açık.
