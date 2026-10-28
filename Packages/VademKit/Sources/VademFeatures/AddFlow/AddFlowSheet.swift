@@ -4,7 +4,8 @@ import SwiftUI
 /// Installment, Subscription and Payment (``AddFlowKind``).
 ///
 /// Picking a kind that ``AddFlowKind/opensExistingForm`` calls `onSelect`; the presenter closes
-/// the sheet and opens that form. Payment runs inside the sheet: for now one "coming soon"
+/// the sheet and opens that form. Subscription runs inside the sheet as a ``SubscriptionFlowView``
+/// (back on its first step returns to the three buttons). Payment runs inside the sheet: for now one "coming soon"
 /// ``FlowStepContainer`` step whose back button returns to the three buttons.
 /// The content scrolls and the sheet always opens at full height: with `presentationDetents`
 /// (medium or even large only) the accessibility audit reported every multi-word text as clipped.
@@ -17,6 +18,10 @@ public struct AddFlowSheet: View {
     public nonisolated static let launchArgument = "-ui-add-sheet"
 
     private let onSelect: (AddFlowKind) -> Void
+    private let makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)?
+    private let makeAddCardModel: (() -> AddCardViewModel)?
+    // Sayfada süren abonelik akışının modeli; Abonelik seçilince kurulur.
+    @State private var subscriptionFlow: SubscriptionFlowViewModel?
     // Sayfanın içinde süren akış; nil iken üç düğme görünür.
     @State private var inlineKind: AddFlowKind?
 
@@ -25,14 +30,29 @@ public struct AddFlowSheet: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Creates the sheet; `onSelect` gets the kinds that open an existing form.
-    public init(onSelect: @escaping (AddFlowKind) -> Void) {
+    ///
+    /// `makeSubscriptionFlow` and `makeAddCardModel` back the subscription flow; without them
+    /// Subscription goes to `onSelect` like a kind that opens an existing form.
+    public init(
+        onSelect: @escaping (AddFlowKind) -> Void,
+        makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)? = nil,
+        makeAddCardModel: (() -> AddCardViewModel)? = nil
+    ) {
         self.onSelect = onSelect
+        self.makeSubscriptionFlow = makeSubscriptionFlow
+        self.makeAddCardModel = makeAddCardModel
     }
 
     public var body: some View {
         Group {
             if inlineKind == .payment {
                 paymentPlaceholder
+            } else if inlineKind == .subscription, let subscriptionFlow, let makeAddCardModel {
+                SubscriptionFlowView(model: subscriptionFlow, makeAddCardModel: makeAddCardModel) {
+                    withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+                        inlineKind = nil
+                    }
+                }
             } else {
                 chooser
             }
@@ -41,6 +61,15 @@ public struct AddFlowSheet: View {
     }
 
     private func select(_ kind: AddFlowKind) {
+        if kind == .subscription {
+            // Fabrika verilmediyse abonelik eski formu açar.
+            guard let makeSubscriptionFlow, makeAddCardModel != nil else {
+                onSelect(kind)
+                return
+            }
+            // Her seçimde yeni akış: önceki yarım kalan girişler taşınmaz.
+            subscriptionFlow = makeSubscriptionFlow()
+        }
         if kind.opensExistingForm {
             onSelect(kind)
         } else {

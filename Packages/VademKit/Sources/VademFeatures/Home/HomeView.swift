@@ -5,8 +5,8 @@ import VademCore
 ///
 /// The app's "Vadem" title and version label sit at the top, above the month. Below the month
 /// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
-/// (`home.add`) that opens the ``AddFlowSheet`` (picking Installment or Subscription opens its form
-/// once the sheet closes) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
+/// (`home.add`) that opens the ``AddFlowSheet`` (picking Installment opens its form once the sheet
+/// closes; Subscription runs its quick steps inside the sheet) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
@@ -35,6 +35,8 @@ public struct HomeView: View {
     #if DEBUG
     // UI kontrolü için açılan ortak adım galerisinin başlangıç adımı; nil iken kapalı.
     @State private var addFlowGalleryStep: AddFlowGalleryStep?
+    // UI kontrolü için doğrudan bir adımında açılan abonelik akışı; nil iken kapalı.
+    @State private var subscriptionFlowModel: SubscriptionFlowViewModel?
     #endif
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -62,6 +64,9 @@ public struct HomeView: View {
     /// (`-ui-add-sheet`) opens the Add sheet; ``AddFlowGalleryStep/launchArgument``
     /// (`-ui-add-flow-keypad`, `-ui-add-flow-chips`, `-ui-add-flow-card`, debug only) opens the
     /// ``AddFlowGalleryView`` at that shared step, with the first card as the last used one.
+    /// ``SubscriptionFlowStep/launchArgument`` (`-ui-add-subscription-flow-<step>`, debug only) opens the
+    /// ``SubscriptionFlowView`` at that step, with the first card as the last used one and, after the
+    /// amount step, a ₺149,90 amount.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
         var initialAddSheetPresented = false
@@ -73,6 +78,7 @@ public struct HomeView: View {
         var initialAssistantModel: AssistantViewModel?
         #if DEBUG
         var initialAddFlowGalleryStep: AddFlowGalleryStep?
+        var initialSubscriptionFlowModel: SubscriptionFlowViewModel?
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AnalyticsView.launchArgument) {
             initialAnalyticsModel = model.makeAnalyticsModel()
@@ -120,10 +126,18 @@ public struct HomeView: View {
             initialSettingsModel = model.makeSettingsModel()
         } else if arguments.contains(AddFlowSheet.launchArgument) {
             initialAddSheetPresented = true
+        } else if let step = SubscriptionFlowStep.step(in: arguments) {
+            // Kart adımında bir seçim görünsün diye ilk kart son kullanılan sayılır.
+            model.lastUsedCardID = model.pickerCards().first?.id
+            // Tutar adımından sonraki adımlar örnek bir tutarla açılır (Decimal, Double değil).
+            initialSubscriptionFlowModel = model.makeSubscriptionFlowModel(
+                start: step, amount: step == .amount ? nil : Decimal(14990) / 100
+            )
         } else {
             initialAddFlowGalleryStep = AddFlowGalleryStep.step(in: arguments)
         }
         _addFlowGalleryStep = State(initialValue: initialAddFlowGalleryStep)
+        _subscriptionFlowModel = State(initialValue: initialSubscriptionFlowModel)
         #endif
         _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
         _addModel = State(initialValue: initialAddModel)
@@ -183,11 +197,16 @@ public struct HomeView: View {
             SettingsView(model: settingsModel)
         }
         // Ekle sayfası: seçilen formu sayfa tamamen kapandıktan sonra açar (iki sayfa üst üste açılamaz).
-        .sheet(isPresented: $isAddSheetPresented, onDismiss: openPendingAddForm) {
-            AddFlowSheet { kind in
-                pendingAddKind = kind
-                isAddSheetPresented = false
-            }
+        // Sayfa içindeki akış kaydetmiş olabilir; sayfa kapanınca Home yeniden yüklenir.
+        .sheet(isPresented: $isAddSheetPresented, onDismiss: addSheetDismissed) {
+            AddFlowSheet(
+                onSelect: { kind in
+                    pendingAddKind = kind
+                    isAddSheetPresented = false
+                },
+                makeSubscriptionFlow: { model.makeSubscriptionFlowModel() },
+                makeAddCardModel: model.makeAddCardModel
+            )
         }
         #if DEBUG
         // Yeni kart eklenmiş olabilir; galeri kapanınca Home yeniden yüklenir.
@@ -197,7 +216,16 @@ public struct HomeView: View {
                 makeAddCardModel: model.makeAddCardModel
             )
         }
+        .sheet(item: $subscriptionFlowModel, onDismiss: reloadAfterForm) { flowModel in
+            SubscriptionFlowView(model: flowModel, makeAddCardModel: model.makeAddCardModel)
+        }
         #endif
+    }
+
+    // Ekle sayfası kapanınca Home yenilenir, sonra (seçildiyse) türün mevcut formu açılır.
+    private func addSheetDismissed() {
+        reloadAfterForm()
+        openPendingAddForm()
     }
 
     // Ekle sayfasında seçilen türün mevcut formu açılır; sayfa seçimsiz kapandıysa bir şey olmaz.

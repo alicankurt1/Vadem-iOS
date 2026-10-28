@@ -923,6 +923,40 @@
         }
       }
     },
+    "Change" : {
+      "comment" : "Summary link that shows the renewal day stepper",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Değiştir"
+          }
+        }
+      }
+    },
+    "Changes the renewal day" : {
+      "comment" : "Hint of the Change link on the summary",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes the renewal day"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yenileme gününü değiştirir"
+          }
+        }
+      }
+    },
     "Changes to this policy" : {
       "comment" : "Privacy policy (mirrors docs/privacy.md)",
       "localizations" : {
@@ -1018,6 +1052,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kapat"
+          }
+        }
+      }
+    },
+    "Cloud storage" : {
+      "comment" : "Quick title chip of the subscription flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud storage"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bulut depolama"
           }
         }
       }
@@ -1587,6 +1638,23 @@
         }
       }
     },
+    "Gym" : {
+      "comment" : "Quick title chip of the subscription flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gym"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spor salonu"
+          }
+        }
+      }
+    },
     "Hero" : {
       "comment" : "Design gallery section",
       "localizations" : {
@@ -1839,6 +1907,23 @@
         }
       }
     },
+    "Internet" : {
+      "comment" : "Quick title chip of the subscription flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Internet"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İnternet"
+          }
+        }
+      }
+    },
     "Kind" : {
       "localizations" : {
         "en" : {
@@ -1949,6 +2034,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aylık ödemeler"
+          }
+        }
+      }
+    },
+    "Music" : {
+      "comment" : "Quick title chip of the subscription flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Music"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Müzik"
           }
         }
       }
@@ -2558,6 +2660,23 @@
         }
       }
     },
+    "Phone line" : {
+      "comment" : "Quick title chip of the subscription flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone line"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telefon hattı"
+          }
+        }
+      }
+    },
     "Pills" : {
       "comment" : "Design gallery section",
       "localizations" : {
@@ -2620,6 +2739,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Soru"
+          }
+        }
+      }
+    },
+    "Ready to save?" : {
+      "comment" : "Add flow: summary step question",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready to save?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaydedelim mi?"
           }
         }
       }
@@ -2721,6 +2857,23 @@
         }
       }
     },
+    "Saves it as %@" : {
+      "comment" : "Hint of Skip on the title step; the argument is the default title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves it as %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ olarak kaydeder"
+          }
+        }
+      }
+    },
     "Send" : {
       "localizations" : {
         "en" : {
@@ -2781,6 +2934,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayın takvimini gösterir"
+          }
+        }
+      }
+    },
+    "Skip" : {
+      "comment" : "Add flow: skips the optional title step",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geç"
           }
         }
       }
@@ -2879,6 +3049,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adım %lld / %lld"
+          }
+        }
+      }
+    },
+    "Streaming" : {
+      "comment" : "Quick title chip of the subscription flow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streaming"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dizi ve film"
           }
         }
       }
@@ -3462,6 +3649,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ne eklemek istiyorsun?"
+          }
+        }
+      }
+    },
+    "What is it?" : {
+      "comment" : "Subscription flow: title step question",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What is it?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ne için?"
           }
         }
       }
