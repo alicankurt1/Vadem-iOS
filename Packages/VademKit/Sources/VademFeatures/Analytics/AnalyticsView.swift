@@ -243,7 +243,15 @@ public struct AnalyticsView: View {
         .font(.body)
     }
 
+    // Lejant grafiğin sabit yüksekliğinin dışında: büyük yazıda satırlara sarılırken dikeyde kırpılmaz.
     private var chart: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            barChart
+            chartLegend
+        }
+    }
+
+    private var barChart: some View {
         Chart {
             ForEach(model.months, id: \.month) { total in
                 let id = AnalyticsViewModel.id(of: total.month)
@@ -297,8 +305,8 @@ public struct AnalyticsView: View {
                 }
             }
         }
-        // Hazır lejant sistem ikincil grisiyle çiziliyordu (açık zeminde ~3.3:1); kendi lejantımız token rengiyle.
-        .chartLegend(position: .bottom, alignment: .leading) { chartLegend }
+        // Hazır lejant sistem ikincil grisiyle çiziliyordu (açık zeminde ~3.3:1); kendi lejantımız grafiğin altında.
+        .chartLegend(.hidden)
         .frame(height: 280)
         .onChange(of: chartSelection) { _, id in
             // Seçim kalkınca (dokunuş bitince) özet son seçili ayda kalır.
@@ -313,16 +321,14 @@ public struct AnalyticsView: View {
     }
 
     // Grafiğin lejantı: seri adları vademTextSecondary ile (vademBackground üzerinde kontrastı testle güvencede).
-    // Erişilebilirlik boyutlarında öğeler alt alta dizilir; metin kırpılmaz.
+    // Sığmayan öğeler alt satıra geçer, uzun ad birden çok satıra kırılır; metin kırpılmaz.
     private var chartLegend: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
-            : AnyLayout(HStackLayout(spacing: 12))
-        return layout {
+        FlowLayout(horizontalSpacing: 12, verticalSpacing: 4) {
             legendItem(Self.installmentsName, color: .vademBrand)
             legendItem(Self.subscriptionsName, color: .vademAccent)
             legendItem(Self.oneTimePaymentsName, color: Self.oneTimeColor)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // Tek seferlik ödemelerin seri rengi; taksit ve abonelik renklerinden ayrışan mevcut bir token.
@@ -334,6 +340,7 @@ public struct AnalyticsView: View {
             Text(name)
                 .font(.footnote)
                 .foregroundStyle(Color.vademTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
