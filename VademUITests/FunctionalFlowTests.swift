@@ -271,6 +271,22 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["flow.continue"].isEnabled, "the typed amount must be kept")
     }
 
+    /// #191: örnek veride "Dentist" tek seferlik ödemesi 20 Kasım 2026'dadır (Home Ekim'de açılır);
+    /// sonraki aya geçince Home listesinde kartsız satır olarak görünür.
+    @MainActor
+    func testOneTimePaymentShowsOnHomeInItsDueMonth() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+
+        let next = app.buttons["home.nextMonth"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "next month button not found on Home")
+        XCTAssertFalse(row(titled: "Dentist", in: app).exists, "one-time payment must not show in October")
+        next.tap()
+
+        XCTAssertTrue(scrollToRow(titled: "Dentist", in: app), "one-time payment 'Dentist' not shown on Home in November")
+        let saved = row(titled: "Dentist", in: app)
+        XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
+    }
+
     @MainActor
     func testAnalyticsOpensFromHomeAndGoesBack() throws {
         let app = launchHome()

@@ -25,7 +25,7 @@ public struct PaymentSummaryProvider {
         self.now = now
     }
 
-    /// Loads cards, installments and subscriptions and builds the summary for `now`.
+    /// Loads cards, installments, subscriptions and one-time payments and builds the summary for `now`.
     /// - Throws: Any error of the repository.
     public func summary() throws -> PaymentSummary {
         PaymentSummary(
@@ -33,7 +33,8 @@ public struct PaymentSummaryProvider {
             calendar: calendar,
             cards: try repository.cards(),
             installments: try repository.installments(),
-            subscriptions: try repository.subscriptions()
+            subscriptions: try repository.subscriptions(),
+            oneTimePayments: try repository.oneTimePayments()
         )
     }
 

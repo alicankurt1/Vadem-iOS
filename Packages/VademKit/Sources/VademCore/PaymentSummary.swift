@@ -7,7 +7,7 @@ import Foundation
 public struct PaymentSummary: Sendable, Hashable {
     /// One upcoming payment. Same-day payments are separate rows.
     public struct Upcoming: Sendable, Hashable {
-        /// The id of the ``InstallmentItem`` or ``SubscriptionItem``.
+        /// The id of the ``InstallmentItem``, ``SubscriptionItem`` or ``OneTimePaymentItem``.
         public let itemID: UUID
         /// The item's title.
         public let title: String
@@ -48,6 +48,7 @@ public struct PaymentSummary: Sendable, Hashable {
         cards: [Card],
         installments: [InstallmentItem],
         subscriptions: [SubscriptionItem],
+        oneTimePayments: [OneTimePaymentItem] = [],
         limit: Int = PaymentSummary.defaultLimit
     ) {
         // Bugün YearMonth gibi Gregoryen hesaplanır; cihaz takviminden yalnızca saat dilimi alınır.
@@ -61,7 +62,8 @@ public struct PaymentSummary: Sendable, Hashable {
             count: PaymentSummary.lookaheadMonths,
             cards: cards,
             installments: installments,
-            subscriptions: subscriptions
+            subscriptions: subscriptions,
+            oneTimePayments: oneTimePayments
         )
         // UpcomingMonths ilk ayı her zaman içerir (count > 0 ve başlangıç desteklenen aralıkta).
         let current = upcoming.schedules[0]

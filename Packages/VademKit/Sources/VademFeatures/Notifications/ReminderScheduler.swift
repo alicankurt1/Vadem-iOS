@@ -78,6 +78,7 @@ public final class ReminderScheduler {
                 cards: try repository.cards(),
                 installments: try repository.installments(),
                 subscriptions: try repository.subscriptions(),
+                oneTimePayments: try repository.oneTimePayments(),
                 kinds: settings.timing.kinds,
                 formatAmount: formatAmount
             )

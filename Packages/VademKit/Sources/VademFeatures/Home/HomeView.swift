@@ -540,6 +540,9 @@ public struct HomeView: View {
             addModel = model.makeEditInstallmentModel(id: row.entry.itemID)
         case .subscription:
             addSubscriptionModel = model.makeEditSubscriptionModel(id: row.entry.itemID)
+        case .oneTime:
+            // Tek seferlik ödemenin düzenleme formu henüz yok (#192); dokunma bir şey yapmaz.
+            break
         }
     }
 
@@ -855,9 +858,18 @@ struct HomeRowView: View {
         .accessibilityLabel(row.accessibilityLabel)
     }
 
-    // "Everyday card · 3/12" veya "No card".
+    // "Everyday card · 3/12", "No card · One-time payment" veya "No card".
     private var detailText: String {
-        [row.cardText, row.installmentText].compactMap { $0 }.joined(separator: " · ")
+        [row.cardText, row.installmentText, oneTimeText].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    // Tek seferlik ödeme alt satırda türüyle belirtilir; diğer türlerde nil.
+    private var oneTimeText: String? {
+        guard row.entry.kind == .oneTime else { return nil }
+        return String(
+            localized: "One-time payment", bundle: .module,
+            comment: "Kind of a payment that is due once; shown and spoken in a payment row"
+        )
     }
 }
 

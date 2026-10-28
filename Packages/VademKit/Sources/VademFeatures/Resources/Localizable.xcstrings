@@ -2422,6 +2422,39 @@
         }
       }
     },
+    "One-time payment" : {
+      "comment" : "Kind of a payment that is due once; shown and spoken in a payment row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One-time payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek seferlik ödeme"
+          }
+        }
+      }
+    },
+    "One-time payments" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One-time payments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek seferlik ödemeler"
+          }
+        }
+      }
+    },
     "Open Settings" : {
       "localizations" : {
         "en" : {

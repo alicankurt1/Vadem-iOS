@@ -3,7 +3,8 @@ import Charts
 import SwiftUI
 import VademCore
 
-/// The Analytics screen: a stacked bar chart of the next 12 months (installments vs subscriptions).
+/// The Analytics screen: a stacked bar chart of the next 12 months (installments, subscriptions
+/// and one-time payments).
 ///
 /// A summary card (`analytics.summary`) above the chart (`analytics.chart`) shows the selected
 /// month; selecting a bar changes it (with VoiceOver, swiping up or down on the summary does).
@@ -19,6 +20,9 @@ public struct AnalyticsView: View {
     // Seri adları lejantta görünür; katalogdan gelir.
     fileprivate nonisolated static var installmentsName: String { String(localized: "Installments", bundle: .module) }
     fileprivate nonisolated static var subscriptionsName: String { String(localized: "Subscriptions", bundle: .module) }
+    fileprivate nonisolated static var oneTimePaymentsName: String {
+        String(localized: "One-time payments", bundle: .module)
+    }
     // Grafik değerlerinin adları (Swift Charts erişilebilirliği için).
     private static var monthLabel: String { String(localized: "Month", bundle: .module) }
     private static var amountLabel: String { String(localized: "Amount", bundle: .module) }
@@ -211,6 +215,7 @@ public struct AnalyticsView: View {
             }
             partRow("Installments", amount: summary.installments, color: .vademBrand)
             partRow("Subscriptions", amount: summary.subscriptions, color: .vademAccent)
+            partRow("One-time payments", amount: summary.oneTimePayments, color: Self.oneTimeColor)
         }
         .accessibilityElement(children: .combine)
         // Grafikte dokunarak seçim VoiceOver'da yapılamaz: özet kartı ayarlanabilir öğe,
@@ -238,7 +243,15 @@ public struct AnalyticsView: View {
         .font(.body)
     }
 
+    // Lejant grafiğin sabit yüksekliğinin dışında: büyük yazıda satırlara sarılırken dikeyde kırpılmaz.
     private var chart: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            barChart
+            chartLegend
+        }
+    }
+
+    private var barChart: some View {
         Chart {
             ForEach(model.months, id: \.month) { total in
                 let id = AnalyticsViewModel.id(of: total.month)
@@ -255,11 +268,17 @@ public struct AnalyticsView: View {
                     .opacity(opacity)
                     .accessibilityLabel(label)
                     .accessibilityValue(Self.partValue(Self.subscriptionsName, total.subscriptions))
+                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.oneTimePayments)))
+                    .foregroundStyle(by: .value(Self.kindLabel, Self.oneTimePaymentsName))
+                    .opacity(opacity)
+                    .accessibilityLabel(label)
+                    .accessibilityValue(Self.partValue(Self.oneTimePaymentsName, total.oneTimePayments))
             }
         }
         .chartForegroundStyleScale([
             Self.installmentsName: Color.vademBrand,
             Self.subscriptionsName: Color.vademAccent,
+            Self.oneTimePaymentsName: Self.oneTimeColor,
         ])
         .chartXSelection(value: $chartSelection)
         .chartXAxis {
@@ -286,8 +305,8 @@ public struct AnalyticsView: View {
                 }
             }
         }
-        // Hazır lejant sistem ikincil grisiyle çiziliyordu (açık zeminde ~3.3:1); kendi lejantımız token rengiyle.
-        .chartLegend(position: .bottom, alignment: .leading) { chartLegend }
+        // Hazır lejant sistem ikincil grisiyle çiziliyordu (açık zeminde ~3.3:1); kendi lejantımız grafiğin altında.
+        .chartLegend(.hidden)
         .frame(height: 280)
         .onChange(of: chartSelection) { _, id in
             // Seçim kalkınca (dokunuş bitince) özet son seçili ayda kalır.
@@ -302,16 +321,18 @@ public struct AnalyticsView: View {
     }
 
     // Grafiğin lejantı: seri adları vademTextSecondary ile (vademBackground üzerinde kontrastı testle güvencede).
-    // Erişilebilirlik boyutlarında öğeler alt alta dizilir; metin kırpılmaz.
+    // Sığmayan öğeler alt satıra geçer, uzun ad birden çok satıra kırılır; metin kırpılmaz.
     private var chartLegend: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
-            : AnyLayout(HStackLayout(spacing: 12))
-        return layout {
+        FlowLayout(horizontalSpacing: 12, verticalSpacing: 4) {
             legendItem(Self.installmentsName, color: .vademBrand)
             legendItem(Self.subscriptionsName, color: .vademAccent)
+            legendItem(Self.oneTimePaymentsName, color: Self.oneTimeColor)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    // Tek seferlik ödemelerin seri rengi; taksit ve abonelik renklerinden ayrışan mevcut bir token.
+    private static var oneTimeColor: Color { .vademDueSoon }
 
     private func legendItem(_ name: String, color: Color) -> some View {
         HStack(spacing: 6) {
@@ -319,6 +340,7 @@ public struct AnalyticsView: View {
             Text(name)
                 .font(.footnote)
                 .foregroundStyle(Color.vademTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -398,6 +420,7 @@ private struct AnalyticsChartDescriptor: AXChartDescriptorRepresentable {
             series: [
                 series(AnalyticsView.installmentsName, \.installments),
                 series(AnalyticsView.subscriptionsName, \.subscriptions),
+                series(AnalyticsView.oneTimePaymentsName, \.oneTimePayments),
             ]
         )
     }

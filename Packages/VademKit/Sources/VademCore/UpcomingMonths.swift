@@ -22,7 +22,8 @@ public struct UpcomingMonths: Sendable, Hashable {
         count: Int = UpcomingMonths.defaultCount,
         cards: [Card],
         installments: [InstallmentItem],
-        subscriptions: [SubscriptionItem]
+        subscriptions: [SubscriptionItem],
+        oneTimePayments: [OneTimePaymentItem] = []
     ) {
         precondition(count >= 0, "UpcomingMonths count must not be negative: \(count)")
         // Desteklenen son aydan sonrası temsil edilemez; `adding(months:)` çökmesin diye kırpılır.
@@ -34,7 +35,8 @@ public struct UpcomingMonths: Sendable, Hashable {
                 month: start.adding(months: offset),
                 cards: cards,
                 installments: installments,
-                subscriptions: subscriptions
+                subscriptions: subscriptions,
+                oneTimePayments: oneTimePayments
             )
         }
     }
