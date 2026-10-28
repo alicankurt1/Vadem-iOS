@@ -362,6 +362,18 @@ struct SwiftDataPaymentRepositoryStoreTests {
         expectInvalidRecord(id: id) { _ = try repository.installments() }
     }
 
+    @Test("A stored one-time payment with invalid values throws", arguments: [
+        ("", 2026, 6, 15), ("0", 2026, 6, 15), ("-5", 2026, 6, 15), ("abc", 2026, 6, 15),
+        ("10", 2026, 13, 15), ("10", 2026, 6, 31), ("10", 2026, 6, 0), ("10", 2026, 2, 30),
+    ])
+    func invalidOneTimePaymentThrows(amount: String, year: Int, month: Int, day: Int) throws {
+        let id = Fixture.id(3)
+        let repository = try repository(withStored: VademSchemaV3.OneTimePaymentRecord(
+            id: id, title: "Vergi", cardID: nil, amount: amount, dueYear: year, dueMonth: month, dueDay: day
+        ))
+        expectInvalidRecord(id: id) { _ = try repository.oneTimePayments() }
+    }
+
     @Test("A stored installment with an invalid month throws")
     func invalidInstallmentMonthThrows() throws {
         let id = Fixture.id(2)

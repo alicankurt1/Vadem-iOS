@@ -105,3 +105,85 @@ struct SchemaMigrationTests {
         }
     }
 }
+
+// V2 ile gerçekten yazılmış bir dosya deposu, güncel şemayla (V3) açılınca hiçbir kaydı kaybetmez.
+@MainActor
+@Suite("Schema migration V2 to V3")
+struct SchemaMigrationV2ToV3Tests {
+    private static let card = UUID(uuidString: "00000000-0000-0000-0000-0000000000A1")!
+    private static let phoneID = UUID(uuidString: "00000000-0000-0000-0000-000000000011")!
+    private static let rentID = UUID(uuidString: "00000000-0000-0000-0000-000000000012")!
+    private static let musicID = UUID(uuidString: "00000000-0000-0000-0000-000000000013")!
+
+    private static func writeV2Store(at url: URL) throws {
+        let schema = Schema(versionedSchema: VademSchemaV2.self)
+        let configuration = ModelConfiguration(schema: schema, url: url, cloudKitDatabase: .none)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = ModelContext(container)
+        context.insert(VademSchemaV2.CardRecord(id: card, name: "Bonus", statementDay: 5, dueDay: 15))
+        context.insert(VademSchemaV2.InstallmentRecord(
+            id: phoneID, title: "Telefon", cardID: card, paymentDay: nil, total: "1200.5", count: 6,
+            firstYear: 2026, firstMonth: 11
+        ))
+        context.insert(VademSchemaV2.InstallmentRecord(
+            id: rentID, title: "Kira", cardID: nil, paymentDay: 29, total: "900", count: 3,
+            firstYear: 2026, firstMonth: 1
+        ))
+        context.insert(VademSchemaV2.SubscriptionRecord(
+            id: musicID, title: "Müzik", cardID: nil, amount: "49.99", period: "monthly", renewalDay: 31,
+            firstYear: 2026, firstMonth: 3, lastYear: nil, lastMonth: nil
+        ))
+        try context.save()
+    }
+
+    @Test("A V2 store keeps everything and starts with no one-time payments")
+    func keepsEverything() throws {
+        try TemporaryStore.with { url in
+            try Self.writeV2Store(at: url)
+            let repository = try SwiftDataPaymentRepository(
+                container: VademPersistence.makeContainer(storage: .file(url))
+            )
+            let cards = try repository.cards()
+            #expect(cards.map(\.id) == [Self.card])
+            #expect(cards.first?.name == "Bonus")
+            #expect(cards.first?.statementDay == 5)
+
+            let installments = try repository.installments()
+            #expect(installments.count == 2)
+            let phone = try #require(installments.first { $0.id == Self.phoneID })
+            #expect(phone.cardID == Self.card)
+            #expect(phone.plan.total == Money(Decimal(string: "1200.5")!))
+            let rent = try #require(installments.first { $0.id == Self.rentID })
+            #expect(rent.cardID == nil)
+            #expect(rent.paymentDay == 29)
+
+            let subscriptions = try repository.subscriptions()
+            #expect(subscriptions.map(\.id) == [Self.musicID])
+            #expect(subscriptions.first?.subscription.renewalDay == 31)
+
+            #expect(try repository.oneTimePayments().isEmpty)
+        }
+    }
+
+    @Test("A migrated store saves one-time payments that survive a reopen and protect their card")
+    func newPaymentsAfterMigration() throws {
+        try TemporaryStore.with { url in
+            try Self.writeV2Store(at: url)
+            let withCard = try Fixture.oneTimePayment("Vergi", id: Fixture.id(60), card: Self.card, due: Fixture.month(2026, 12), day: 31)
+            let cardless = try Fixture.oneTimePayment("Harç", id: Fixture.id(61), card: nil, amount: Decimal(string: "10.05")!)
+            do {
+                let repository = try SwiftDataPaymentRepository(
+                    container: VademPersistence.makeContainer(storage: .file(url))
+                )
+                try repository.save(withCard)
+                try repository.save(cardless)
+            }
+            let reopened = try SwiftDataPaymentRepository(
+                container: VademPersistence.makeContainer(storage: .file(url))
+            )
+            #expect(try reopened.oneTimePayments() == [cardless, withCard])
+            #expect(try reopened.installments().count == 2)
+            #expect(throws: RepositoryError.cardInUse) { try reopened.deleteCard(id: Self.card) }
+        }
+    }
+}

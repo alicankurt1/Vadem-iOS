@@ -46,6 +46,20 @@ public enum Fixture {
         return try #require(SubscriptionItem(id: id, title: title, cardID: card, subscription: value))
     }
 
+    public static func oneTimePayment(
+        _ title: String = "Vergi",
+        id: UUID = UUID(),
+        card: Card.ID?,
+        amount: Decimal = 250,
+        due: YearMonth? = nil,
+        day: Int = 15
+    ) throws -> OneTimePaymentItem {
+        let month = try due ?? Fixture.month(2026, 6)
+        return try #require(OneTimePaymentItem(
+            id: id, title: title, cardID: card, amount: Money(amount), dueMonth: month, dueDay: day
+        ))
+    }
+
     // Sabit, sıralaması belli UUID'ler: hem bayt hem metin karşılaştırmasında 1 < 2 < 3.
     public static func id(_ last: Int) -> UUID {
         UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", last))!
