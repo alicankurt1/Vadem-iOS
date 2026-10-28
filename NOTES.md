@@ -500,3 +500,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** `scripts/appstore-screenshots.sh` ve `AppStoreScreenshotTests` eklendi: cihaz ve dil başına 4 ekran, durum çubuğu 9:41, örnek veri, PNG piksel boyutu App Store boyutuna karşı kontrol edilir (PR #182). Harness PR'ı; 6 dk, 1 verify çalıştırması, 0 başarısız, 0 düzeltme turu.
 - **Kapı neyi yakaladı:** Reviewer: 3 minor, 2 nit. Asıl bulgu: temizlik adımı kullanıcının açtığı simülatörleri kapatıyordu ve erken hatada `status_bar clear` atlanıyordu; düzeltildi. `-ui-analytics` bulgusu yanlış alarmdı (bayrak `AnalyticsView.swift`'te var).
 - **Ders:** Test yalnızca `APPSTORE_LANGUAGE` verilince çalışır, yoksa atlanır; böylece diğer UI kapıları etkilenmez. Betiğin uçtan uca koşusu (107 sn, sonra 75 sn) asıl UI kanıtıdır; temizlik kodu da hata yollarında denenmelidir.
+
+### Koşu #172 — Uygulama içi gizlilik politikası
+
+- **Ne yapıldı:** Ayarlar'a "Privacy Policy" satırı ve `PrivacyPolicyView` eklendi (EN/TR, 22 yeni yerelleştirme anahtarı); metin `docs/privacy.md` ile aynı (PR #184). 37 dk, 3 verify çalıştırması, 0 başarısız, 1 düzeltme turu.
+- **Kapı neyi yakaladı:** Fonksiyonel UI testi ilk çalışmada başarısız oldu: konumsal `navigationBars.buttons.element(boundBy: 0)` Ayarlar sayfasının arkasındaki Home'un `home.assistant` düğmesine denk geldi. Bu bir ürün hatası değil test hatasıydı; sayfanın kendi gezinme çubuğu seçilerek düzeltildi. Reviewer: 1 minor (metin iki yerde duruyor, senkronu zorlayan test yok; kabul edildi, belgeye not eklendi), 2 nit.
+- **Ders:** Sheet/push ekranlarında arkadaki ekranın öğeleri erişilebilirlik ağacında durur; konumsal sorgular yerine kapsamı belli (kendi gezinme çubuğu veya identifier) sorgular kullanılmalı.
