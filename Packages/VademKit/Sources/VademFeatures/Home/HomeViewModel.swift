@@ -151,6 +151,10 @@ public final class HomeViewModel {
     // Seçili gün yokken de tüm satırlar burada tutulur; `rows` bunun süzülmüş halidir.
     @ObservationIgnored private var allRows: [Row] = []
 
+    /// The card chosen in the last saved add flow (`nil` = "No card" or none yet); the next flow
+    /// preselects it. Kept in memory for the session only.
+    @ObservationIgnored public internal(set) var lastUsedCardID: Card.ID?
+
     /// Creates the view model for the month that contains `today` in `calendar`'s time zone, and loads it.
     ///
     /// `onDataChanged` runs after ``reloadAfterChange()``, i.e. after a form closes
@@ -270,6 +274,24 @@ public final class HomeViewModel {
     /// Call ``reload()`` after it saves, so the new payment shows.
     public func makeAddSubscriptionModel(locale: Locale = .current) -> AddSubscriptionViewModel {
         AddSubscriptionViewModel(repository: repository, initialMonth: month, locale: locale)
+    }
+
+    /// A new subscription add flow on the same repository: first month is the selected ``month``,
+    /// renewal day is today, ``lastUsedCardID`` is preselected; a save updates ``lastUsedCardID``.
+    ///
+    /// `start` and `amount` open the flow at a later step with an amount (UI check).
+    /// Call ``reload()`` after it saves, so the new payment shows.
+    public func makeSubscriptionFlowModel(
+        start: SubscriptionFlowStep = .amount, amount: Decimal? = nil, locale: Locale = .current
+    ) -> SubscriptionFlowViewModel {
+        let form = AddSubscriptionViewModel(
+            repository: repository, initialMonth: month, initialRenewalDay: todayDay, locale: locale
+        )
+        return SubscriptionFlowViewModel(
+            form: form, start: start, lastUsedCardID: lastUsedCardID, amount: amount, locale: locale
+        ) { [weak self] cardID in
+            self?.lastUsedCardID = cardID
+        }
     }
 
     /// A new add-card form on the same repository.
