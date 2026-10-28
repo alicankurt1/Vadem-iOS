@@ -12,16 +12,26 @@ public struct AssistantQueries: Sendable {
     private let cards: [Card]
     private let installments: [InstallmentItem]
     private let subscriptions: [SubscriptionItem]
+    private let oneTimePayments: [OneTimePaymentItem]
 
     /// Builds queries over the given cards and their items.
-    public init(cards: [Card], installments: [InstallmentItem], subscriptions: [SubscriptionItem]) {
+    public init(
+        cards: [Card],
+        installments: [InstallmentItem],
+        subscriptions: [SubscriptionItem],
+        oneTimePayments: [OneTimePaymentItem] = []
+    ) {
         self.cards = cards
         self.installments = installments
         self.subscriptions = subscriptions
+        self.oneTimePayments = oneTimePayments
     }
 
     private func schedule(for month: YearMonth) -> MonthlySchedule {
-        MonthlySchedule(month: month, cards: cards, installments: installments, subscriptions: subscriptions)
+        MonthlySchedule(
+            month: month, cards: cards, installments: installments,
+            subscriptions: subscriptions, oneTimePayments: oneTimePayments
+        )
     }
 
     // Aynı id'li kartlarda ilki geçerli sayılır (MonthlySchedule ile aynı).
@@ -58,7 +68,8 @@ public struct AssistantQueries: Sendable {
     public func nextPayment(after date: Date, calendar: Calendar = .current) -> AssistantNextPayment? {
         let summary = PaymentSummary(
             now: date, calendar: calendar,
-            cards: cards, installments: installments, subscriptions: subscriptions, limit: 1
+            cards: cards, installments: installments, subscriptions: subscriptions,
+            oneTimePayments: oneTimePayments, limit: 1
         )
         guard let next = summary.next.first else { return nil }
         // Kart adı ve tür özetten gelmez; aynı ayın takviminden kalem ve gün ile bulunur.
@@ -100,6 +111,7 @@ public struct AssistantQueries: Sendable {
 
     /// The last month with an installment payment, or `month == nil` when there are no installments.
     public var debtFreeMonth: AssistantDebtFreeMonth {
+        // Tek seferlik ödemeler bilerek verilmiyor: borçsuz ay yalnızca taksitlerle ilgili.
         let analytics = SpendingAnalytics(cards: cards, installments: installments, subscriptions: subscriptions)
         return AssistantDebtFreeMonth(month: analytics.lastPaymentMonth.map(AssistantPayment.string(of:)))
     }

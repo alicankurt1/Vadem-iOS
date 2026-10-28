@@ -974,6 +974,154 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    // MARK: Taksit hızlı adımları (#189)
+
+    /// Hızlı taksit akışını `depth` adım ilerletir (0: tutar, 1: sayı, 2: kart, 3: ilk ay, 4: başlık, 5: özet).
+    /// Yalnızca dokunuşla ilerler; uygulamayı kapatıp açmaz. Bulunamayan öğe hata olarak raporlanır.
+    @MainActor
+    private func advanceInstallmentFlow(to depth: Int, screen: String, app: XCUIApplication, variant: Variant) {
+        func find(_ identifier: String, _ step: String) -> XCUIElement? {
+            let element = app.descendants(matching: .any)[identifier]
+            guard element.waitForExistence(timeout: 10) else {
+                XCTFail("[ui-check] \(screen)__\(variant.name): \(step) not found (\(identifier))")
+                return nil
+            }
+            return element
+        }
+        guard find("keypad.display", "amount step") != nil else { return }
+        guard depth > 0 else { return }
+        for digit in ["1", "2", "0", "0"] { app.buttons["keypad.digit.\(digit)"].tap() }
+        app.buttons["flow.continue"].tap()
+        guard depth > 1 else { return }
+        guard let count = find("addInstallmentFlow.count.chip.1", "count chip") else { return }
+        count.tap()
+        guard depth > 2 else { return }
+        guard let noCard = find("cardPicker.noCard", "'No card' row") else { return }
+        noCard.tap()
+        guard depth > 3 else { return }
+        guard let month = find("addInstallmentFlow.month.chip.0", "first month chip") else { return }
+        month.tap()
+        guard depth > 4 else { return }
+        guard let skip = find("addInstallmentFlow.skip", "title Skip") else { return }
+        skip.tap()
+    }
+
+    private static let installmentFlowArguments = ["-ui-sample-data", "-ui-add-installment-flow"]
+
+    @MainActor
+    func testInstallmentFlowAmountStep() throws {
+        // 1. adım: tutar tuş takımı, tutar yazılmış (Devam açık).
+        try capture(
+            screen: "installment-flow-amount",
+            launchArguments: Self.installmentFlowArguments,
+            sections: [.top]
+        ) { app, variant in
+            self.advanceInstallmentFlow(to: 0, screen: "installment-flow-amount", app: app, variant: variant)
+            for digit in ["1", "2", "0", "0"] { app.buttons["keypad.digit.\(digit)"].tap() }
+            XCTAssertTrue(app.buttons["flow.continue"].isEnabled, "[ui-check] installment-flow-amount__\(variant.name): continue must be enabled")
+        }
+    }
+
+    @MainActor
+    func testInstallmentFlowCountStep() throws {
+        // 2. adım: taksit sayısı çipleri.
+        try capture(
+            screen: "installment-flow-count",
+            launchArguments: Self.installmentFlowArguments,
+            sections: [.top]
+        ) { app, variant in
+            self.advanceInstallmentFlow(to: 1, screen: "installment-flow-count", app: app, variant: variant)
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallmentFlow.count.chip.0"].waitForExistence(timeout: 10),
+                "[ui-check] installment-flow-count__\(variant.name): count chips not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testInstallmentFlowCardStep() throws {
+        // 3. adım: kart seçimi; "Yeni kart" kendi parçasında.
+        try capture(
+            screen: "installment-flow-card",
+            launchArguments: Self.installmentFlowArguments,
+            sections: [.top, .scrolled(to: "cardPicker.newCard", named: "new-card")]
+        ) { app, variant in
+            self.advanceInstallmentFlow(to: 2, screen: "installment-flow-card", app: app, variant: variant)
+            XCTAssertTrue(
+                app.descendants(matching: .any)["cardPicker.noCard"].waitForExistence(timeout: 10),
+                "[ui-check] installment-flow-card__\(variant.name): card step not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testInstallmentFlowFirstMonthStep() throws {
+        // 4. adım: ilk vade ayı çipleri.
+        try capture(
+            screen: "installment-flow-month",
+            launchArguments: Self.installmentFlowArguments,
+            sections: [.top]
+        ) { app, variant in
+            self.advanceInstallmentFlow(to: 3, screen: "installment-flow-month", app: app, variant: variant)
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallmentFlow.month.chip.0"].waitForExistence(timeout: 10),
+                "[ui-check] installment-flow-month__\(variant.name): month chips not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testInstallmentFlowTitleStep() throws {
+        // 5. adım: isteğe bağlı başlık (alan, hızlı çipler, Atla).
+        try capture(
+            screen: "installment-flow-title",
+            launchArguments: Self.installmentFlowArguments,
+            sections: [.top, .scrolled(to: "addInstallmentFlow.skip", named: "skip")]
+        ) { app, variant in
+            self.advanceInstallmentFlow(to: 4, screen: "installment-flow-title", app: app, variant: variant)
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallmentFlow.titleField"].waitForExistence(timeout: 10),
+                "[ui-check] installment-flow-title__\(variant.name): title field not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testInstallmentFlowSummaryStep() throws {
+        // 6. adım: özet; ödeme günü ve Değiştir bağlantısı, Kaydet kendi parçasında.
+        try capture(
+            screen: "installment-flow-summary",
+            launchArguments: Self.installmentFlowArguments,
+            sections: [.top, .scrolled(to: "addInstallmentFlow.save", named: "save")]
+        ) { app, variant in
+            self.advanceInstallmentFlow(to: 5, screen: "installment-flow-summary", app: app, variant: variant)
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallmentFlow.save"].waitForExistence(timeout: 10),
+                "[ui-check] installment-flow-summary__\(variant.name): Save not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallmentFlow.changePaymentDay"].exists,
+                "[ui-check] installment-flow-summary__\(variant.name): Change link not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testInstallmentFlowSummaryTurkish() throws {
+        // Türkçe özet: uzun metinler sarılır, kırpılmaz.
+        try capture(
+            screen: "installment-flow-summary-tr",
+            launchArguments: Self.installmentFlowArguments + Self.turkish,
+            sections: [.top]
+        ) { app, variant in
+            self.advanceInstallmentFlow(to: 5, screen: "installment-flow-summary-tr", app: app, variant: variant)
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallmentFlow.save"].waitForExistence(timeout: 10),
+                "[ui-check] installment-flow-summary-tr__\(variant.name): Save not found"
+            )
+        }
+    }
+
     @MainActor
     func testGalleryDesign() throws {
         // Hero, satırlar ve hap düğmeler kendi parçalarında yakalanır (#82); ayrı test, 3 dk sınırı için.

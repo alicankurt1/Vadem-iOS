@@ -5,8 +5,8 @@ import VademCore
 ///
 /// The app's "Vadem" title and version label sit at the top, above the month. Below the month
 /// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
-/// (`home.add`) that opens the ``AddFlowSheet`` (picking Installment opens its form once the sheet
-/// closes; Subscription runs its quick steps inside the sheet) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
+/// (`home.add`) that opens the ``AddFlowSheet`` (Installment and Subscription run their quick steps in the
+/// sheet) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
@@ -61,7 +61,8 @@ public struct HomeView: View {
     /// opens it with the Cards screen pushed, ``PrivacyPolicyView/launchArgument`` with the privacy policy
     /// pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
     /// ``AssistantView/launchArgument`` the assistant chat. ``AddFlowSheet/launchArgument``
-    /// (`-ui-add-sheet`) opens the Add sheet; ``AddFlowGalleryStep/launchArgument``
+    /// (`-ui-add-sheet`) opens the Add sheet, ``InstallmentFlowView/launchArgument``
+    /// (`-ui-add-installment-flow`) opens it running the installment flow; ``AddFlowGalleryStep/launchArgument``
     /// (`-ui-add-flow-keypad`, `-ui-add-flow-chips`, `-ui-add-flow-card`, debug only) opens the
     /// ``AddFlowGalleryView`` at that shared step, with the first card as the last used one.
     /// ``SubscriptionFlowStep/launchArgument`` (`-ui-add-subscription-flow-<step>`, debug only) opens the
@@ -124,7 +125,8 @@ public struct HomeView: View {
                     || arguments.contains(CardListView.emptyLaunchArgument)
                     || arguments.contains(PrivacyPolicyView.launchArgument) {
             initialSettingsModel = model.makeSettingsModel()
-        } else if arguments.contains(AddFlowSheet.launchArgument) {
+        } else if arguments.contains(AddFlowSheet.launchArgument)
+                    || arguments.contains(InstallmentFlowView.launchArgument) {
             initialAddSheetPresented = true
         } else if let step = SubscriptionFlowStep.step(in: arguments) {
             // Kart adımında bir seçim görünsün diye ilk kart son kullanılan sayılır.
@@ -200,13 +202,13 @@ public struct HomeView: View {
         // Sayfa içindeki akış kaydetmiş olabilir; sayfa kapanınca Home yeniden yüklenir.
         .sheet(isPresented: $isAddSheetPresented, onDismiss: addSheetDismissed) {
             AddFlowSheet(
-                onSelect: { kind in
-                    pendingAddKind = kind
-                    isAddSheetPresented = false
-                },
+                makeInstallmentFlow: { model.makeInstallmentFlowModel() },
                 makeSubscriptionFlow: { model.makeSubscriptionFlowModel() },
                 makeAddCardModel: model.makeAddCardModel
-            )
+            ) { kind in
+                pendingAddKind = kind
+                isAddSheetPresented = false
+            }
         }
         #if DEBUG
         // Yeni kart eklenmiş olabilir; galeri kapanınca Home yeniden yüklenir.
@@ -232,12 +234,11 @@ public struct HomeView: View {
     private func openPendingAddForm() {
         defer { pendingAddKind = nil }
         switch pendingAddKind {
-        case .installment:
-            addModel = model.makeAddInstallmentModel()
         case .subscription:
             addSubscriptionModel = model.makeAddSubscriptionModel()
-        case .payment, nil:
-            break
+        case .installment, .payment, nil:
+            // Taksit akışı sayfanın içinde kaydeder; yeni ödeme hemen görünsün diye Home yeniden yüklenir.
+            reloadAfterForm()
         }
     }
 
@@ -567,6 +568,9 @@ public struct HomeView: View {
             addModel = model.makeEditInstallmentModel(id: row.entry.itemID)
         case .subscription:
             addSubscriptionModel = model.makeEditSubscriptionModel(id: row.entry.itemID)
+        case .oneTime:
+            // Tek seferlik ödemenin düzenleme formu henüz yok (#192); dokunma bir şey yapmaz.
+            break
         }
     }
 
@@ -882,9 +886,18 @@ struct HomeRowView: View {
         .accessibilityLabel(row.accessibilityLabel)
     }
 
-    // "Everyday card · 3/12" veya "No card".
+    // "Everyday card · 3/12", "No card · One-time payment" veya "No card".
     private var detailText: String {
-        [row.cardText, row.installmentText].compactMap { $0 }.joined(separator: " · ")
+        [row.cardText, row.installmentText, oneTimeText].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    // Tek seferlik ödeme alt satırda türüyle belirtilir; diğer türlerde nil.
+    private var oneTimeText: String? {
+        guard row.entry.kind == .oneTime else { return nil }
+        return String(
+            localized: "One-time payment", bundle: .module,
+            comment: "Kind of a payment that is due once; shown and spoken in a payment row"
+        )
     }
 }
 

@@ -5,7 +5,8 @@ import VademCore
 /// Fixed sample data for previews and the UI check (`-ui-sample-data`), with a fixed "today".
 ///
 /// On 12 October 2026 the month covers every chip kind: overdue, today, soon and later,
-/// a cardless subscription and an installment.
+/// a cardless subscription and an installment. A cardless one-time payment ("Dentist") is due
+/// on 20 November 2026, so October's figures stay unchanged.
 @MainActor
 public enum HomeSampleData {
     /// The launch argument that opens Home on the sample data.
@@ -23,7 +24,8 @@ public enum HomeSampleData {
         calendar.date(from: DateComponents(year: 2026, month: 10, day: 12, hour: 12))!
     }
 
-    /// A new in-memory repository filled with the sample cards, installments and subscriptions.
+    /// A new in-memory repository filled with the sample cards, installments, subscriptions
+    /// and one-time payment.
     public static func makeRepository() -> InMemoryPaymentRepository {
         let repository = InMemoryPaymentRepository()
         // Sabit id'ler: her açılışta aynı sıra ve aynı ekran görüntüsü.
@@ -35,6 +37,7 @@ public enum HomeSampleData {
         let shopping = Card(id: id(3), name: "Shopping card", statementDay: 5, dueDay: 15)!
         let september = YearMonth(year: 2026, month: 9)!
         let july = YearMonth(year: 2026, month: 7)!
+        let november = YearMonth(year: 2026, month: 11)!
 
         let items: [() throws -> Void] = [
             { try repository.save(everyday) },
@@ -60,12 +63,24 @@ public enum HomeSampleData {
                 id: id(23), title: "Rent", cardID: nil,
                 subscription: Subscription(amount: Money(25_000), period: .monthly, renewalDay: 25, firstMonth: september)!
             )!) },
+            // Kartsız tek seferlik ödeme: 20 Kasım'da (Ekim örnek verisi değişmesin diye sonraki ayda).
+            { try repository.save(OneTimePaymentItem(
+                id: id(31), title: "Dentist", cardID: nil, amount: Money(1_500), dueMonth: november, dueDay: 20
+            )!) },
         ]
         // Örnek veri geçerli; kayıt hatası programlama hatasıdır.
         for save in items {
             try! save()
         }
         return repository
+    }
+
+    // Örnek veride son kullanılan kart her açılışta sıfırlanır: UI testleri her seferinde aynı ekranı görür.
+    private static func makeLastUsedCardStore() -> LastUsedCardStore {
+        let suiteName = "vadem.sampleData"
+        let defaults = UserDefaults(suiteName: suiteName) ?? .standard
+        defaults.removePersistentDomain(forName: suiteName)
+        return LastUsedCardStore(defaults: defaults)
     }
 
     /// A view model on ``makeRepository()`` with the fixed ``today`` and ``calendar``.
@@ -86,7 +101,8 @@ public enum HomeSampleData {
             today: today,
             calendar: calendar,
             settings: settings,
-            assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments)
+            assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments),
+            lastUsedCard: makeLastUsedCardStore()
         )
     }
 

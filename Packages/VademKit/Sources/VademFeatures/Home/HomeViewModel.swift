@@ -39,7 +39,7 @@ public final class HomeViewModel {
         public let title: String
         /// The card's name, or ``HomeViewModel/noCardText`` for a payment without a card.
         public let cardText: String
-        /// `"3/12"` for installment payment 3 of 12; `nil` for a subscription.
+        /// `"3/12"` for installment payment 3 of 12; `nil` for a subscription or a one-time payment.
         public let installmentText: String?
         /// The amount due.
         public let amount: Money
@@ -136,6 +136,8 @@ public final class HomeViewModel {
     @ObservationIgnored private let onDataChanged: (@MainActor () -> Void)?
     // Ayarlar sayfasının bağımlılıkları; verilmezse bellek içi depo (zamanlayıcı yok), açılışlar arasında korunur.
     @ObservationIgnored private let settings: SettingsDependencies
+    // Ekleme akışının son kullanılan kartı.
+    @ObservationIgnored private let lastUsedCard: LastUsedCardStore
     // Asistan motoru; nil ise işletim sisteminin sunduğu motor bu deponun verisiyle kurulur.
     @ObservationIgnored private let assistantEngineOverride: (any AssistantEngine)?
     // İlk kullanımda kurulan sistem motoru; her gövde değerlendirmesinde yeniden kurulmaz.
@@ -160,16 +162,20 @@ public final class HomeViewModel {
     /// (``makeSettingsModel()``); `nil` uses an in-memory store without a scheduler.
     /// `assistant` answers in the assistant chat (``makeAssistantModel()``); `nil` uses the engine
     /// the OS offers (``AssistantEngineFactory/makeSystemEngine(snapshot:)``) on this repository.
+    /// `lastUsedCard` remembers the add flow's card (``makeInstallmentFlowModel(locale:)``);
+    /// `nil` uses `UserDefaults.standard`.
     public init(
         repository: any PaymentRepository,
         today: Date,
         calendar: Calendar,
         onDataChanged: (@MainActor () -> Void)? = nil,
         settings: SettingsDependencies? = nil,
-        assistant: (any AssistantEngine)? = nil
+        assistant: (any AssistantEngine)? = nil,
+        lastUsedCard: LastUsedCardStore? = nil
     ) {
         self.repository = repository
         self.onDataChanged = onDataChanged
+        self.lastUsedCard = lastUsedCard ?? LastUsedCardStore()
         self.settings = settings ?? .inMemory()
         self.assistantEngineOverride = assistant
         // YearMonth gibi: sadece saat dilimi alınır, gün Gregoryen takvimle hesaplanır.
@@ -241,7 +247,8 @@ public final class HomeViewModel {
         AssistantQueries(
             cards: try repository.cards(),
             installments: try repository.installments(),
-            subscriptions: try repository.subscriptions()
+            subscriptions: try repository.subscriptions(),
+            oneTimePayments: try repository.oneTimePayments()
         )
     }
 
@@ -250,6 +257,16 @@ public final class HomeViewModel {
     /// Call ``reload()`` after it saves, so the new payment shows.
     public func makeAddInstallmentModel(locale: Locale = .current) -> AddInstallmentViewModel {
         AddInstallmentViewModel(repository: repository, initialMonth: month, locale: locale)
+    }
+
+    /// A new quick-steps installment flow on the same repository, with today's month and day
+    /// and the last used card preselected.
+    ///
+    /// Call ``reload()`` after it saves, so the new payment shows.
+    public func makeInstallmentFlowModel(locale: Locale = .current) -> InstallmentFlowViewModel {
+        InstallmentFlowViewModel(
+            repository: repository, todayMonth: todayMonth, todayDay: todayDay, lastUsedCard: lastUsedCard, locale: locale
+        )
     }
 
     /// A new add-subscription form on the same repository, starting at the selected ``month``.
@@ -373,11 +390,14 @@ public final class HomeViewModel {
             let cards = try repository.cards()
             let installments = try repository.installments()
             let subscriptions = try repository.subscriptions()
+            let oneTimePayments = try repository.oneTimePayments()
             let schedule = MonthlySchedule(
-                month: month, cards: cards, installments: installments, subscriptions: subscriptions
+                month: month, cards: cards, installments: installments, subscriptions: subscriptions,
+                oneTimePayments: oneTimePayments
             )
             let upcomingMonths = UpcomingMonths(
-                start: upcomingStart, cards: cards, installments: installments, subscriptions: subscriptions
+                start: upcomingStart, cards: cards, installments: installments, subscriptions: subscriptions,
+                oneTimePayments: oneTimePayments
             )
             apply(schedule, cards: cards)
             upcoming = upcomingMonths.schedules.map(makeSummary)
@@ -523,6 +543,13 @@ public final class HomeViewModel {
         case .subscription:
             installmentText = nil
             spokenInstallment = nil
+        case .oneTime:
+            // Tek seferlik ödeme türünü VoiceOver'da söyler; görsel etiket satırın kendisindedir.
+            installmentText = nil
+            spokenInstallment = String(
+                localized: "One-time payment", bundle: .module,
+                comment: "Kind of a payment that is due once; shown and spoken in a payment row"
+            )
         }
         let kind = chipKind(for: entry.dueDate)
         let chipText = chipText(for: kind, dueDate: entry.dueDate)

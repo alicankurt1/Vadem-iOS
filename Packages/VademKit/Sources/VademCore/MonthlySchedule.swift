@@ -10,6 +10,8 @@ import Foundation
 /// - A subscription on a card charged on or before the card's statement day is on that
 ///   month's statement, otherwise on the next month's; it is due on that statement's due date.
 /// - A subscription without a card is due on its charge date.
+/// - A one-time payment is due exactly on its ``OneTimePaymentItem/dueDay`` of its
+///   ``OneTimePaymentItem/dueMonth``, with or without a card (no statement shift).
 ///
 /// Items whose card is not in the given cards are skipped.
 public struct MonthlySchedule: Sendable, Hashable {
@@ -21,13 +23,15 @@ public struct MonthlySchedule: Sendable, Hashable {
             case installment(number: Int, count: Int)
             /// A subscription charge.
             case subscription
+            /// A one-time payment.
+            case oneTime
         }
 
-        /// The id of the ``InstallmentItem`` or ``SubscriptionItem``.
+        /// The id of the ``InstallmentItem``, ``SubscriptionItem`` or ``OneTimePaymentItem``.
         public let itemID: UUID
         /// The item's title.
         public let title: String
-        /// Installment number/count, or subscription.
+        /// Installment number/count, subscription or one-time payment.
         public let kind: Kind
         /// The card the payment is charged to, or `nil` for an item paid another way.
         public let cardID: Card.ID?
@@ -46,7 +50,13 @@ public struct MonthlySchedule: Sendable, Hashable {
     public let total: Money
 
     /// Builds the schedule of payments due in `month`.
-    public init(month: YearMonth, cards: [Card], installments: [InstallmentItem], subscriptions: [SubscriptionItem]) {
+    public init(
+        month: YearMonth,
+        cards: [Card],
+        installments: [InstallmentItem],
+        subscriptions: [SubscriptionItem],
+        oneTimePayments: [OneTimePaymentItem] = []
+    ) {
         // Aynı id'li kartlar varsa ilki geçerli sayılır (çökme yerine).
         let cardsByID = Dictionary(cards.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         var entries: [Entry] = []
@@ -117,6 +127,16 @@ public struct MonthlySchedule: Sendable, Hashable {
                     amount: subscription.amount(in: chargeMonth), dueDate: due
                 ))
             }
+        }
+
+        for item in oneTimePayments where item.dueMonth == month {
+            // Tek seferlik ödeme tam vade gününde ödenir; kartlı olsa da ekstre kayması yoktur.
+            // Kartı bilinmeyen ödeme atlanır (taksit ve abonelikteki gibi).
+            if let cardID = item.cardID, cardsByID[cardID] == nil { continue }
+            entries.append(Entry(
+                itemID: item.id, title: item.title, kind: .oneTime, cardID: item.cardID,
+                amount: item.amount, dueDate: Card.DueDate(month: month, day: item.dueDay)
+            ))
         }
 
         // Sıralama: vade günü, başlık (büyük/küçük harf duyarsız), id; aynı kalemin
@@ -195,11 +215,11 @@ public struct MonthlySchedule: Sendable, Hashable {
 }
 
 private extension MonthlySchedule.Entry.Kind {
-    // Son eşitlik kırıcı: taksit numarası (abonelikler 0).
+    // Son eşitlik kırıcı: taksit numarası (abonelik ve tek seferlik ödemeler 0).
     var sortNumber: Int {
         switch self {
         case .installment(let number, _): return number
-        case .subscription: return 0
+        case .subscription, .oneTime: return 0
         }
     }
 }

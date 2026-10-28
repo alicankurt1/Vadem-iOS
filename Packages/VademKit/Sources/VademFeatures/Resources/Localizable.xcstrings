@@ -681,6 +681,22 @@
         }
       }
     },
+    "Appliance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appliance"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beyaz eşya"
+          }
+        }
+      }
+    },
     "Ask a question" : {
       "localizations" : {
         "en" : {
@@ -924,7 +940,6 @@
       }
     },
     "Change" : {
-      "comment" : "Summary link that shows the renewal day stepper",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -970,6 +985,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Politikadaki değişiklikler"
+          }
+        }
+      }
+    },
+    "Check and save" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check and save"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrol et ve kaydet"
           }
         }
       }
@@ -1102,6 +1133,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yakında"
+          }
+        }
+      }
+    },
+    "Computer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Computer"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilgisayar"
           }
         }
       }
@@ -1638,6 +1685,22 @@
         }
       }
     },
+    "Furniture" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Furniture"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mobilya"
+          }
+        }
+      }
+    },
     "Gym" : {
       "comment" : "Quick title chip of the subscription flow",
       "localizations" : {
@@ -1668,6 +1731,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Özet paneli"
+          }
+        }
+      }
+    },
+    "How many installments?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many installments?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaç taksit?"
           }
         }
       }
@@ -2428,6 +2507,39 @@
         }
       }
     },
+    "One-time payment" : {
+      "comment" : "Kind of a payment that is due once; shown and spoken in a payment row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One-time payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek seferlik ödeme"
+          }
+        }
+      }
+    },
+    "One-time payments" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One-time payments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek seferlik ödemeler"
+          }
+        }
+      }
+    },
     "Open Settings" : {
       "localizations" : {
         "en" : {
@@ -2473,6 +2585,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gizlilik politikasını açar"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diğer"
           }
         }
       }
@@ -2556,6 +2684,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödeme"
+          }
+        }
+      }
+    },
+    "Payment day" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payment day"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme günü"
           }
         }
       }
@@ -2656,6 +2800,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ ödemeleri"
+          }
+        }
+      }
+    },
+    "Phone" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telefon"
           }
         }
       }
@@ -2939,7 +3099,6 @@
       }
     },
     "Skip" : {
-      "comment" : "Add flow: skips the optional title step",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3653,6 +3812,22 @@
         }
       }
     },
+    "What is it for?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What is it for?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne için?"
+          }
+        }
+      }
+    },
     "What is it?" : {
       "comment" : "Subscription flow: title step question",
       "localizations" : {
@@ -3732,6 +3907,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borcum ne zaman biter?"
+          }
+        }
+      }
+    },
+    "When is the first payment?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When is the first payment?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlk taksit ne zaman?"
           }
         }
       }

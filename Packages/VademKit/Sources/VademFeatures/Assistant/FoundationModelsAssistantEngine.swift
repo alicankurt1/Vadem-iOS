@@ -139,7 +139,7 @@ struct PaymentsInMonthTool: Tool {
 
     let toolbox: AssistantToolbox
     let name = "paymentsInMonth"
-    let description = "Lists the payments (installments and subscriptions) due in one month."
+    let description = "Lists the payments (installments, subscriptions and one-time payments) due in one month."
 
     func call(arguments: Arguments) async throws -> String {
         toolbox.payments(month: arguments.month)
