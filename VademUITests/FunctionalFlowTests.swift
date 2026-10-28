@@ -543,7 +543,14 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(element("privacy.policy.intro", in: app).exists, "policy intro text not shown")
 
         // Gezinme çubuğundaki geri düğmesiyle Ayarlar'a dönülür.
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        // Ayarlar sayfa (sheet) olarak açık; arkadaki Home'un çubuğu da var. Sheet'teki çubuk daha aşağıdadır
+        // (en büyük minY), geri düğmesi onun ilk düğmesidir. Başlık metni dile bağlı olduğundan kullanılmaz.
+        let policyBar = app.navigationBars.allElementsBoundByIndex
+            .filter { $0.exists }
+            .max { $0.frame.minY < $1.frame.minY }
+        let back = try XCTUnwrap(policyBar, "navigation bar of the policy not found").buttons.firstMatch
+        XCTAssertTrue(back.waitForExistence(timeout: 5), "back button not found in the policy navigation bar")
+        back.tap()
         XCTAssertTrue(element("settings.privacy", in: app).waitForExistence(timeout: 5), "must return to Settings")
         XCTAssertFalse(element("privacy.policy", in: app).exists, "policy must close after going back")
     }
