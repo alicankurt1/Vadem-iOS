@@ -6,7 +6,9 @@ import SwiftUI
 /// Picking a kind that ``AddFlowKind/opensExistingForm`` calls `onSelect`; the presenter closes
 /// the sheet and opens that form. Payment runs inside the sheet: for now one "coming soon"
 /// ``FlowStepContainer`` step whose back button returns to the three buttons.
-/// The content scrolls; at accessibility text sizes the sheet opens at full height.
+/// The content scrolls and the sheet always opens at full height: with `presentationDetents`
+/// (medium or even large only) the accessibility audit reported every multi-word text as clipped.
+/// Each kind button reads its visible title and subtitle together (no custom label).
 /// Identifiers: `add.sheet.title`, `add.sheet.close`, `add.sheet.<kind>` (``AddFlowKind/accessibilityIdentifier``),
 /// `add.sheet.comingSoon`. No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
@@ -36,9 +38,6 @@ public struct AddFlowSheet: View {
             }
         }
         .background(Color.vademBackground.ignoresSafeArea())
-        // Büyük yazıda yarım yükseklik dar kalır; sayfa doğrudan tam boy açılır.
-        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
-        .presentationDragIndicator(.visible)
     }
 
     private func select(_ kind: AddFlowKind) {
@@ -91,7 +90,7 @@ public struct AddFlowSheet: View {
         }
     }
 
-    // Büyük düğme: simge, başlık ve altında kısa açıklama; VoiceOver başlığı etiket, açıklamayı ipucu olarak okur.
+    // Büyük düğme: simge, başlık ve altında kısa açıklama; VoiceOver ikisini birlikte okur.
     private func kindButton(_ kind: AddFlowKind) -> some View {
         Button {
             select(kind)
@@ -134,10 +133,9 @@ public struct AddFlowSheet: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(kind.title)
-        .accessibilityHint(kind.subtitle)
-        .accessibilityAddTraits(.isButton)
+        // Etiket görünen başlık + açıklamanın kendisi: özel etiket görünen metinden farklı olunca
+        // denetim metni "kırpılmış" sayıyor.
+        .accessibilityElement(children: .combine)
         .accessibilityIdentifier(kind.accessibilityIdentifier)
     }
 
