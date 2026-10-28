@@ -494,3 +494,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Denetim yalnızca gerçek bir kontrast sorunu buldu: yerleşik Charts açıklaması açık temada 3,31:1 idi; `vademTextSecondary` ile 5,98:1 oldu. Reviewer: 3 minor, 1 nit, hepsi doğrulandı veya kabul edildi.
 - **Kabul edilen notlar:** Devre dışı `Kaydet` düğmesi, çubuğun altına kayan öğeler ve gradyan okuması gibi notlar gerçek oranlarla gerekçelendirilip kabul edildi; sistem çubuk düğmeleri Dynamic Type ile ölçeklenmez (tasarım gereği).
 - **Ders:** Audit notu sayısı (yüzlerce) gerçek sorun sayısını (1) göstermez; her notu gerçek renk oranıyla kontrol etmek gürültüyü eler. VoiceOver cihazda denenmedi, değişiklikler yalnızca kaynakta gözden geçirildi.
+
+### Koşu #176 — App Store ekran görüntüsü betiği
+
+- **Ne yapıldı:** `scripts/appstore-screenshots.sh` ve `AppStoreScreenshotTests` eklendi: cihaz ve dil başına 4 ekran, durum çubuğu 9:41, örnek veri, PNG piksel boyutu App Store boyutuna karşı kontrol edilir (PR #182). Harness PR'ı; 6 dk, 1 verify çalıştırması, 0 başarısız, 0 düzeltme turu.
+- **Kapı neyi yakaladı:** Reviewer: 3 minor, 2 nit. Asıl bulgu: temizlik adımı kullanıcının açtığı simülatörleri kapatıyordu ve erken hatada `status_bar clear` atlanıyordu; düzeltildi. `-ui-analytics` bulgusu yanlış alarmdı (bayrak `AnalyticsView.swift`'te var).
+- **Ders:** Test yalnızca `APPSTORE_LANGUAGE` verilince çalışır, yoksa atlanır; böylece diğer UI kapıları etkilenmez. Betiğin uçtan uca koşusu (107 sn, sonra 75 sn) asıl UI kanıtıdır; temizlik kodu da hata yollarında denenmelidir.
