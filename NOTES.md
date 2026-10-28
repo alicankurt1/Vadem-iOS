@@ -487,3 +487,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapsam daraldı:** `StringCatalogCompletenessTests` geri kalanı zaten kapsıyordu, issue yalnızca yer tutucu eşitliğine indirildi; #171 ve #173 de #138 ve #139 zaten teslim ettiği için kapatıldı.
 - **Kapı neyi yakaladı:** Reviewer: 1 major (çoğul biçimler yalnızca `other` üzerinden karşılaştırılıyordu; her biçim kendi karşılığıyla karşılaştırılacak şekilde düzeltildi), 3 minor, 3 nit (2'si kabul edildi). Negatif testler eklendi. `VERIFY: PASS`.
 - **Ders:** Issue yazmadan önce mevcut testlere bakmak iki gereksiz issue'yu önler; "hiçbir şey bulmadı" sonucunu kanıtlamak için testin eksik/fazla/yanlış tür durumlarını yakaladığı negatif testlerle gösterilmeli.
+
+### Koşu #175 — Erişilebilirlik geçişi
+
+- **Ne yapıldı:** Önce `main` üzerinde tam `ui-check.sh` galerisi çalıştırıldı (0 `[a11y]` hatası, 74 contrast, 102 flaky, 114 hidden notu); sonra her not gerçek token oranlarıyla kontrol edildi. Düzeltmeler: form seçim satırlarında etiket/değer ayrımı, Takvim hapı ipucu, kendi Analytics açıklaması, tek satırlık form başlığı (PR #179).
+- **Kapı neyi yakaladı:** Denetim yalnızca gerçek bir kontrast sorunu buldu: yerleşik Charts açıklaması açık temada 3,31:1 idi; `vademTextSecondary` ile 5,98:1 oldu. Reviewer: 3 minor, 1 nit, hepsi doğrulandı veya kabul edildi.
+- **Kabul edilen notlar:** Devre dışı `Kaydet` düğmesi, çubuğun altına kayan öğeler ve gradyan okuması gibi notlar gerçek oranlarla gerekçelendirilip kabul edildi; sistem çubuk düğmeleri Dynamic Type ile ölçeklenmez (tasarım gereği).
+- **Ders:** Audit notu sayısı (yüzlerce) gerçek sorun sayısını (1) göstermez; her notu gerçek renk oranıyla kontrol etmek gürültüyü eler. VoiceOver cihazda denenmedi, değişiklikler yalnızca kaynakta gözden geçirildi.
