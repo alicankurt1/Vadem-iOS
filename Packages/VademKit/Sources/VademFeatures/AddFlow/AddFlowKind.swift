@@ -39,11 +39,12 @@ public enum AddFlowKind: String, CaseIterable, Sendable, Identifiable {
     public var accessibilityIdentifier: String { "add.sheet.\(rawValue)" }
 
     /// `true` when picking this kind closes the sheet and opens an existing form;
-    /// `false` when its flow runs inside the sheet (Payment, for now a placeholder step).
+    /// `false` when its flow runs inside the sheet (Installment: ``InstallmentFlowView``;
+    /// Payment, for now a placeholder step).
     public var opensExistingForm: Bool {
         switch self {
-        case .installment, .subscription: true
-        case .payment: false
+        case .subscription: true
+        case .installment, .payment: false
         }
     }
 }
