@@ -103,6 +103,7 @@ open Vadem.xcodeproj
 | `/after-merge #P` | After you merge PR P, the writer updates the docs in a small docs PR. |
 | `/verify` or `scripts/verify.sh` | Package unit tests + app build, no simulator (seconds). |
 | `scripts/ui-check.sh` | Simulator screenshots (light / dark / largest text) + accessibility audit (the full gallery takes about 18 min with the three variants run in parallel). `UI_CHECK_ONLY=gallery,root` captures only those screens. |
+| `scripts/appstore-screenshots.sh` | App Store screenshots (Home, Add installment, Analytics, Cards) per device and language into `AppStoreScreenshots/` (git-ignored). `APPSTORE_DEVICES` and `APPSTORE_LANGUAGES` select devices and languages (default iPhone 17 Pro Max, `en` and `tr`); about 75-107 s for the default. |
 
 Write issues with the [task template](.github/ISSUE_TEMPLATE/task.md). Its acceptance criteria are the contract for every agent.
 
