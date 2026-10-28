@@ -262,6 +262,11 @@ public final class HomeViewModel {
         AddCardViewModel(repository: repository)
     }
 
+    /// The saved cards in the repository's order, for the add flow's card picker; empty when they cannot be loaded.
+    func pickerCards() -> [Card] {
+        (try? repository.cards()) ?? []
+    }
+
     /// An edit form for the installment with `id`, or `nil` when it is not saved or cannot be loaded.
     ///
     /// Call ``reload()`` after it saves or deletes.

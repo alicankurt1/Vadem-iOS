@@ -4,8 +4,9 @@ import VademCore
 /// The Home screen: how much is due in the selected month, per card, and when.
 ///
 /// The app's "Vadem" title and version label sit at the top, above the month. Below the month
-/// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" menu
-/// (`home.add`) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
+/// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
+/// (`home.add`) that opens the ``AddFlowSheet`` (picking Installment or Subscription opens its form
+/// once the sheet closes) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
@@ -27,6 +28,12 @@ public struct HomeView: View {
     @State private var analyticsModel: AnalyticsViewModel?
     // Açık asistan ekranının modeli; nil iken ekran itilmemiştir. Kapanınca sohbet atılır.
     @State private var assistantModel: AssistantViewModel?
+    // "Ekle" sayfası açık mı.
+    @State private var isAddSheetPresented: Bool
+    // Ekle sayfasında seçilen tür; sayfa kapanınca o türün formu açılır.
+    @State private var pendingAddKind: AddFlowKind?
+    // UI kontrolü için açılan ortak adım galerisinin başlangıç adımı; nil iken kapalı.
+    @State private var addFlowGalleryStep: AddFlowGalleryStep?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -49,9 +56,14 @@ public struct HomeView: View {
     /// opens the settings sheet; ``CardListView/launchArgument`` (or ``CardListView/emptyLaunchArgument``)
     /// opens it with the Cards screen pushed, ``PrivacyPolicyView/launchArgument`` with the privacy policy
     /// pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
-    /// ``AssistantView/launchArgument`` the assistant chat.
+    /// ``AssistantView/launchArgument`` the assistant chat. ``AddFlowSheet/launchArgument``
+    /// (`-ui-add-sheet`) opens the Add sheet; ``AddFlowGalleryStep/launchArgument``
+    /// (`-ui-add-flow-keypad`, `-ui-add-flow-chips`, `-ui-add-flow-card`) opens the
+    /// ``AddFlowGalleryView`` at that shared step, with the first card as the last used one.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
+        var initialAddSheetPresented = false
+        var initialAddFlowGalleryStep: AddFlowGalleryStep?
         var initialAddModel: AddInstallmentViewModel?
         var initialAddCardModel: AddCardViewModel?
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
@@ -104,8 +116,14 @@ public struct HomeView: View {
                     || arguments.contains(CardListView.emptyLaunchArgument)
                     || arguments.contains(PrivacyPolicyView.launchArgument) {
             initialSettingsModel = model.makeSettingsModel()
+        } else if arguments.contains(AddFlowSheet.launchArgument) {
+            initialAddSheetPresented = true
+        } else {
+            initialAddFlowGalleryStep = AddFlowGalleryStep.step(in: arguments)
         }
         #endif
+        _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
+        _addFlowGalleryStep = State(initialValue: initialAddFlowGalleryStep)
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
@@ -161,6 +179,33 @@ public struct HomeView: View {
         // Ayarlar'daki Kartlar ekranı kartları değiştirebilir; sayfa kapanınca Home yeniden yüklenir.
         .sheet(item: $settingsModel, onDismiss: reloadAfterForm) { settingsModel in
             SettingsView(model: settingsModel)
+        }
+        // Ekle sayfası: seçilen formu sayfa tamamen kapandıktan sonra açar (iki sayfa üst üste açılamaz).
+        .sheet(isPresented: $isAddSheetPresented, onDismiss: openPendingAddForm) {
+            AddFlowSheet { kind in
+                pendingAddKind = kind
+                isAddSheetPresented = false
+            }
+        }
+        // Yeni kart eklenmiş olabilir; galeri kapanınca Home yeniden yüklenir.
+        .sheet(item: $addFlowGalleryStep, onDismiss: reloadAfterForm) { step in
+            AddFlowGalleryView(
+                start: step, cards: model.pickerCards(), lastUsedCardID: model.pickerCards().first?.id,
+                makeAddCardModel: model.makeAddCardModel
+            )
+        }
+    }
+
+    // Ekle sayfasında seçilen türün mevcut formu açılır; sayfa seçimsiz kapandıysa bir şey olmaz.
+    private func openPendingAddForm() {
+        defer { pendingAddKind = nil }
+        switch pendingAddKind {
+        case .installment:
+            addModel = model.makeAddInstallmentModel()
+        case .subscription:
+            addSubscriptionModel = model.makeAddSubscriptionModel()
+        case .payment, nil:
+            break
         }
     }
 
@@ -234,7 +279,7 @@ public struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     monthBar
-                    // Hata durumunda da görünür (toplam sıfır): ekleme menüsü her zaman erişilebilir.
+                    // Hata durumunda da görünür (toplam sıfır): ekleme düğmesi her zaman erişilebilir.
                     hero(proxy)
                     sections
                 }
@@ -265,14 +310,14 @@ public struct HomeView: View {
         content
     }
 
-    // Ayın toplamı ve vadesi gelen kısmı; altında ekleme menüsü ve takvim düğmesi.
+    // Ayın toplamı ve vadesi gelen kısmı; altında ekleme ve takvim düğmeleri.
     private func hero(_ proxy: ScrollViewProxy) -> some View {
         HeroPanel(
             title: String(localized: "Due this month", bundle: .module),
             total: model.total, paid: model.dueSoFar,
             captionPrefix: String(localized: "Due so far", bundle: .module), summaryIdentifier: "home.total"
         ) {
-            addMenu
+            addButton
             // Takvim gizliyken (hata durumu) kaydırılacak yer yok; düğme de gösterilmez.
             if !model.calendarDays.isEmpty {
                 Button {
@@ -291,28 +336,14 @@ public struct HomeView: View {
         }
     }
 
-    // "Add" bir menü: taksit mi abonelik mi eklenecek, kullanıcı seçer.
-    // Menu düğme stili almadığından etiket hap görünümüyle elle biçimlenir.
-    private var addMenu: some View {
-        Menu {
-            Button {
-                addModel = model.makeAddInstallmentModel()
-            } label: {
-                Label { Text("Installment", bundle: .module) } icon: { Image(systemName: "creditcard") }
-            }
-            .accessibilityLabel(Text("Add installment", bundle: .module))
-            .accessibilityIdentifier("home.add.installment")
-            Button {
-                addSubscriptionModel = model.makeAddSubscriptionModel()
-            } label: {
-                Label { Text("Subscription", bundle: .module) } icon: { Image(systemName: "arrow.triangle.2.circlepath") }
-            }
-            .accessibilityLabel(Text("Add subscription", bundle: .module))
-            .accessibilityIdentifier("home.add.subscription")
+    // "Add" ekleme sayfasını açar: taksit, abonelik ya da ödeme orada seçilir.
+    private var addButton: some View {
+        Button {
+            isAddSheetPresented = true
         } label: {
             Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") }
-                .heroPillLabel()
         }
+        .buttonStyle(.heroPill)
         .accessibilityLabel(Text("Add payment", bundle: .module))
         .accessibilityIdentifier("home.add")
     }

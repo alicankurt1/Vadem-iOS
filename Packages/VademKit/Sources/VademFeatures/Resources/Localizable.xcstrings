@@ -359,6 +359,22 @@
         }
       }
     },
+    "A one-off payment" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A one-off payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek seferlik ödeme"
+          }
+        }
+      }
+    },
     "Add" : {
       "localizations" : {
         "en" : {
@@ -456,22 +472,6 @@
         }
       }
     },
-    "Add installment" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add installment"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Taksit ekle"
-          }
-        }
-      }
-    },
     "Add payment" : {
       "localizations" : {
         "en" : {
@@ -488,22 +488,6 @@
         }
       }
     },
-    "Add subscription" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add subscription"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abonelik ekle"
-          }
-        }
-      }
-    },
     "Add ₺100" : {
       "localizations" : {
         "en" : {
@@ -516,6 +500,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "₺100 ekle"
+          }
+        }
+      }
+    },
+    "Adding a one-off payment is coming soon." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adding a one-off payment is coming soon."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek seferlik ödeme ekleme yakında geliyor."
           }
         }
       }
@@ -778,6 +778,22 @@
         }
       }
     },
+    "Back" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geri"
+          }
+        }
+      }
+    },
     "By card" : {
       "localizations" : {
         "en" : {
@@ -990,6 +1006,22 @@
         }
       }
     },
+    "Close" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapat"
+          }
+        }
+      }
+    },
     "Colors" : {
       "comment" : "Design gallery section",
       "localizations" : {
@@ -1003,6 +1035,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Renkler"
+          }
+        }
+      }
+    },
+    "Coming soon" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming soon"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yakında"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devam"
           }
         }
       }
@@ -1052,6 +1116,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bir gün önce ve o gün"
+          }
+        }
+      }
+    },
+    "Decimal separator" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decimal separator"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ondalık ayracı"
           }
         }
       }
@@ -1536,6 +1616,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu ay ne kadar ödüyorum?"
+          }
+        }
+      }
+    },
+    "How much?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne kadar?"
+          }
+        }
+      }
+    },
+    "How often?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How often?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne sıklıkla?"
           }
         }
       }
@@ -2330,6 +2442,22 @@
         }
       }
     },
+    "Payment" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme"
+          }
+        }
+      }
+    },
     "Payment due today" : {
       "comment" : "Notification title",
       "localizations" : {
@@ -2512,6 +2640,22 @@
         }
       }
     },
+    "Renews every month or year" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renews every month or year"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her ay ya da yıl yenilenir"
+          }
+        }
+      }
+    },
     "Renews on day %lld" : {
       "localizations" : {
         "en" : {
@@ -2690,6 +2834,22 @@
         }
       }
     },
+    "Split into monthly installments" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split into monthly installments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aylık taksitlere bölünür"
+          }
+        }
+      }
+    },
     "Statement day" : {
       "localizations" : {
         "en" : {
@@ -2702,6 +2862,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hesap kesim günü"
+          }
+        }
+      }
+    },
+    "Step %lld of %lld" : {
+      "comment" : "Add flow progress: current step number, step count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %lld of %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adım %lld / %lld"
           }
         }
       }
@@ -3273,6 +3450,22 @@
         }
       }
     },
+    "What do you want to add?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What do you want to add?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne eklemek istiyorsun?"
+          }
+        }
+      }
+    },
     "What is my next payment?" : {
       "localizations" : {
         "en" : {
@@ -3335,6 +3528,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borcum ne zaman biter?"
+          }
+        }
+      }
+    },
+    "Which card?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which card?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hangi kart?"
           }
         }
       }
