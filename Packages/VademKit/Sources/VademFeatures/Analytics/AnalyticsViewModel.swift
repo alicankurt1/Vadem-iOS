@@ -2,7 +2,8 @@ import Foundation
 import Observation
 import VademCore
 
-/// Drives the Analytics screen: the next 12 months' totals, split into installments and subscriptions.
+/// Drives the Analytics screen: the next 12 months' totals, split into installments, subscriptions
+/// and one-time payments.
 ///
 /// "Today" is injected (`today` + `calendar`), never read from the clock. The model starts in
 /// ``State/loading``; call ``reload()`` (the screen does it when it appears) to load the data.
@@ -27,12 +28,14 @@ public final class AnalyticsViewModel {
         public let month: YearMonth
         /// The month as `"May 2026"`.
         public let title: String
-        /// Installments + subscriptions of the month.
+        /// Installments + subscriptions + one-time payments of the month.
         public let total: Money
         /// The installment part of ``total``.
         public let installments: Money
         /// The subscription part of ``total``.
         public let subscriptions: Money
+        /// The one-time payment part of ``total``.
+        public let oneTimePayments: Money
     }
 
     /// One slice of the selected month's card breakdown, ready to display.
@@ -108,7 +111,8 @@ public final class AnalyticsViewModel {
         guard let total = months.first(where: { $0.month == selectedMonth }) else { return nil }
         return Summary(
             month: total.month, title: Self.title(of: total.month), total: total.total,
-            installments: total.installments, subscriptions: total.subscriptions
+            installments: total.installments, subscriptions: total.subscriptions,
+            oneTimePayments: total.oneTimePayments
         )
     }
 
@@ -173,7 +177,8 @@ public final class AnalyticsViewModel {
             let analytics = SpendingAnalytics(
                 cards: try repository.cards(),
                 installments: try repository.installments(),
-                subscriptions: try repository.subscriptions()
+                subscriptions: try repository.subscriptions(),
+                oneTimePayments: try repository.oneTimePayments()
             )
             self.analytics = analytics
             insight = analytics.lastPaymentMonth.map { last in

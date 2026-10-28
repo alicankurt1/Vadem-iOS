@@ -64,10 +64,12 @@ public struct WidgetTimelineBuilder {
         let cards: [Card]
         let installments: [InstallmentItem]
         let subscriptions: [SubscriptionItem]
+        let oneTimePayments: [OneTimePaymentItem]
         do {
             cards = try repository.cards()
             installments = try repository.installments()
             subscriptions = try repository.subscriptions()
+            oneTimePayments = try repository.oneTimePayments()
         } catch {
             // Depo okunamazsa çökmek yerine tek bir "açılamadı" girdisi; bir saat sonra yeniden denenir.
             return unavailable(now: now)
@@ -92,7 +94,8 @@ public struct WidgetTimelineBuilder {
                 calendar: calendar,
                 cards: cards,
                 installments: installments,
-                subscriptions: subscriptions
+                subscriptions: subscriptions,
+                oneTimePayments: oneTimePayments
             )
             let isEmpty = summary.monthTotal.isZero && summary.next.isEmpty
             return Entry(date: date, content: isEmpty ? .empty : .summary(summary))

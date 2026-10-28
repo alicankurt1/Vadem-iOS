@@ -391,7 +391,8 @@ struct HomeViewModelUpcomingTests {
         for summary in model.upcoming {
             let schedule = MonthlySchedule(
                 month: summary.month, cards: try repository.cards(),
-                installments: try repository.installments(), subscriptions: try repository.subscriptions()
+                installments: try repository.installments(), subscriptions: try repository.subscriptions(),
+                oneTimePayments: try repository.oneTimePayments()
             )
             #expect(summary.total == schedule.total)
         }

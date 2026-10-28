@@ -3,7 +3,8 @@ import Charts
 import SwiftUI
 import VademCore
 
-/// The Analytics screen: a stacked bar chart of the next 12 months (installments vs subscriptions).
+/// The Analytics screen: a stacked bar chart of the next 12 months (installments, subscriptions
+/// and one-time payments).
 ///
 /// A summary card (`analytics.summary`) above the chart (`analytics.chart`) shows the selected
 /// month; selecting a bar changes it (with VoiceOver, swiping up or down on the summary does).
@@ -19,6 +20,9 @@ public struct AnalyticsView: View {
     // Seri adları lejantta görünür; katalogdan gelir.
     fileprivate nonisolated static var installmentsName: String { String(localized: "Installments", bundle: .module) }
     fileprivate nonisolated static var subscriptionsName: String { String(localized: "Subscriptions", bundle: .module) }
+    fileprivate nonisolated static var oneTimePaymentsName: String {
+        String(localized: "One-time payments", bundle: .module)
+    }
     // Grafik değerlerinin adları (Swift Charts erişilebilirliği için).
     private static var monthLabel: String { String(localized: "Month", bundle: .module) }
     private static var amountLabel: String { String(localized: "Amount", bundle: .module) }
@@ -211,6 +215,7 @@ public struct AnalyticsView: View {
             }
             partRow("Installments", amount: summary.installments, color: .vademBrand)
             partRow("Subscriptions", amount: summary.subscriptions, color: .vademAccent)
+            partRow("One-time payments", amount: summary.oneTimePayments, color: Self.oneTimeColor)
         }
         .accessibilityElement(children: .combine)
         // Grafikte dokunarak seçim VoiceOver'da yapılamaz: özet kartı ayarlanabilir öğe,
@@ -255,11 +260,17 @@ public struct AnalyticsView: View {
                     .opacity(opacity)
                     .accessibilityLabel(label)
                     .accessibilityValue(Self.partValue(Self.subscriptionsName, total.subscriptions))
+                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.oneTimePayments)))
+                    .foregroundStyle(by: .value(Self.kindLabel, Self.oneTimePaymentsName))
+                    .opacity(opacity)
+                    .accessibilityLabel(label)
+                    .accessibilityValue(Self.partValue(Self.oneTimePaymentsName, total.oneTimePayments))
             }
         }
         .chartForegroundStyleScale([
             Self.installmentsName: Color.vademBrand,
             Self.subscriptionsName: Color.vademAccent,
+            Self.oneTimePaymentsName: Self.oneTimeColor,
         ])
         .chartXSelection(value: $chartSelection)
         .chartXAxis {
@@ -310,8 +321,12 @@ public struct AnalyticsView: View {
         return layout {
             legendItem(Self.installmentsName, color: .vademBrand)
             legendItem(Self.subscriptionsName, color: .vademAccent)
+            legendItem(Self.oneTimePaymentsName, color: Self.oneTimeColor)
         }
     }
+
+    // Tek seferlik ödemelerin seri rengi; taksit ve abonelik renklerinden ayrışan mevcut bir token.
+    private static var oneTimeColor: Color { .vademDueSoon }
 
     private func legendItem(_ name: String, color: Color) -> some View {
         HStack(spacing: 6) {
@@ -398,6 +413,7 @@ private struct AnalyticsChartDescriptor: AXChartDescriptorRepresentable {
             series: [
                 series(AnalyticsView.installmentsName, \.installments),
                 series(AnalyticsView.subscriptionsName, \.subscriptions),
+                series(AnalyticsView.oneTimePaymentsName, \.oneTimePayments),
             ]
         )
     }
