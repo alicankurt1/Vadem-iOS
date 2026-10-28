@@ -1362,4 +1362,92 @@ final class UICheckTests: XCTestCase {
         guard drawn else { return nil }
         return (Double(rgba[0]) + Double(rgba[1]) + Double(rgba[2])) / (3 * 255)
     }
+
+    // MARK: - Abonelik hızlı adımları (#190)
+
+    @MainActor
+    func testAddSubscriptionFlowAmount() throws {
+        try capture(
+            screen: "add-subscription-flow-amount",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription-flow-amount"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.buttons["keypad.digit.1"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-flow-amount__\(variant.name): keypad not found"
+            )
+            XCTAssertFalse(
+                app.buttons["flow.continue"].isEnabled,
+                "[ui-check] add-subscription-flow-amount__\(variant.name): continue must be disabled without an amount"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionFlowPeriod() throws {
+        try capture(
+            screen: "add-subscription-flow-period",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription-flow-period"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["subscriptionFlow.period.chip.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-flow-period__\(variant.name): first period chip not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionFlowCard() throws {
+        try capture(
+            screen: "add-subscription-flow-card",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription-flow-card"],
+            sections: [.top, .scrolled(to: "cardPicker.newCard", named: "new-card")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["cardPicker.noCard"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-flow-card__\(variant.name): 'No card' row not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["cardPicker.newCard"].exists,
+                "[ui-check] add-subscription-flow-card__\(variant.name): 'New card' row not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionFlowTitle() throws {
+        try capture(
+            screen: "add-subscription-flow-title",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription-flow-title"],
+            sections: [.top, .scrolled(to: "subscriptionFlow.skip", named: "skip")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["subscriptionFlow.title.chip.0"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-flow-title__\(variant.name): first title chip not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["subscriptionFlow.skip"].exists,
+                "[ui-check] add-subscription-flow-title__\(variant.name): Skip button not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testAddSubscriptionFlowSummary() throws {
+        try capture(
+            screen: "add-subscription-flow-summary",
+            launchArguments: ["-ui-sample-data", "-ui-add-subscription-flow-summary"],
+            sections: [.top, .scrolled(to: "subscriptionFlow.save", named: "save")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["subscriptionFlow.summary"].waitForExistence(timeout: 5),
+                "[ui-check] add-subscription-flow-summary__\(variant.name): summary not found"
+            )
+            XCTAssertTrue(
+                app.buttons["subscriptionFlow.save"].isEnabled,
+                "[ui-check] add-subscription-flow-summary__\(variant.name): save must be enabled with the sample amount"
+            )
+        }
+    }
 }

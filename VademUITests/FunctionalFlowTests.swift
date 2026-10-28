@@ -70,12 +70,14 @@ final class FunctionalFlowTests: XCTestCase {
         app.buttons["addInstallment.cancel"].tap()
         XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after cancelling the form")
 
-        // Abonelik aynı şekilde.
+        // Abonelik (#190): akış sayfanın içinde tutar adımıyla başlar; ilk adımda geri seçime döner.
         add.tap()
         chooseInSheet("subscription", in: app)
-        XCTAssertTrue(app.textFields["addSubscription.title"].waitForExistence(timeout: 5), "subscription flow did not start")
-        app.buttons["addSubscription.cancel"].tap()
-        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after cancelling the form")
+        XCTAssertTrue(app.buttons["keypad.digit.1"].waitForExistence(timeout: 5), "subscription flow did not start on the amount step")
+        app.buttons["flow.back"].tap()
+        XCTAssertTrue(element("add.sheet.installment", in: app).waitForExistence(timeout: 5), "back on the first step must return to the options")
+        element("add.sheet.close", in: app).tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after closing the sheet")
 
         // Ödeme: akış sayfanın içinde başlar; geri düğmesi seçime döner, kapat Home'a döner.
         add.tap()
@@ -469,46 +471,53 @@ final class FunctionalFlowTests: XCTestCase {
 
     // MARK: - Abonelik akışı (#166)
 
-    /// Kart seçmeden abonelik eklenir: kart "No card" kalır, yenileme günü stepper ile 3 yapılır;
-    /// kayıttan sonra Home satırı "No card" ve doğru vade gününü ("due 3 October") gösterir.
+    /// Kart seçmeden abonelik eklenir (#190 akışı): tutar, Aylık, "No card", hızlı başlık; özet "Change"
+    /// bağlantısıyla yenileme gününü açar; kayıttan sonra Home satırı başlığı ve "No card"ı gösterir.
     @MainActor
     func testAddSubscriptionWithoutCardShowsPaymentOnHomeWithDueDay() throws {
-        // Satır etiketi denetimi için arayüz İngilizceye sabitlenir (#155 testiyle aynı).
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
-        let title = "Cardless Streaming"
 
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
         chooseInSheet("subscription", in: app)
 
-        let titleField = app.textFields["addSubscription.title"]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
-        titleField.tap()
-        titleField.typeText(title)
+        let nine = app.buttons["keypad.digit.9"]
+        XCTAssertTrue(nine.waitForExistence(timeout: 5), "keypad not found")
+        nine.tap()
+        nine.tap()
+        app.buttons["flow.continue"].tap()
 
-        let amount = app.textFields["addSubscription.amount"]
-        XCTAssertTrue(amount.waitForExistence(timeout: 5), "amount field not found")
-        amount.tap()
-        amount.typeText("99")
+        // Dönem: ilk çip (Aylık) kendiliğinden ilerler.
+        let period = element("subscriptionFlow.period.chip.0", in: app)
+        XCTAssertTrue(period.waitForExistence(timeout: 5), "period chip not found")
+        period.tap()
 
-        // Kart seçilmez. Stepper kimliği kapsayıcıdadır; düğmeler "<kimlik>-Increment" alır.
-        let increment = element("addSubscription.renewalDay-Increment", in: app)
-        XCTAssertTrue(increment.waitForExistence(timeout: 5), "renewal day stepper has no increment button")
-        // Varsayılan gün 1; iki artışla 3. gün.
-        increment.tap()
-        increment.tap()
+        let noCard = element("cardPicker.noCard", in: app)
+        XCTAssertTrue(noCard.waitForExistence(timeout: 5), "'No card' row not found")
+        noCard.tap()
 
-        let save = app.buttons["addSubscription.save"]
-        XCTAssertTrue(save.isEnabled, "save must be enabled without a card once title and amount are filled")
+        // Başlık: ilk hızlı çip "Streaming".
+        let chip = element("subscriptionFlow.title.chip.0", in: app)
+        XCTAssertTrue(chip.waitForExistence(timeout: 5), "title chip not found")
+        chip.tap()
+
+        // Özet: "Change" yenileme günü stepper'ını açar.
+        let change = app.buttons["subscriptionFlow.changeRenewalDay"]
+        XCTAssertTrue(change.waitForExistence(timeout: 5), "summary 'Change' link not found")
+        change.tap()
+        XCTAssertTrue(
+            element("subscriptionFlow.renewalDay-Increment", in: app).waitForExistence(timeout: 5),
+            "renewal day stepper not shown after 'Change'"
+        )
+
+        let save = app.buttons["subscriptionFlow.save"]
+        XCTAssertTrue(save.isEnabled, "save must be enabled with only an amount")
         save.tap()
 
-        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
-        // Form Home'un seçili ayıyla (Ekim 2026) açılır; çekim Ekim'in 3'ündedir.
-        XCTAssertTrue(scrollToRow(titled: title, in: app), "saved card-less subscription '\(title)' not shown on Home")
-        let saved = row(titled: title, in: app)
-        XCTAssertTrue(saved.label.contains("due 3 October"), "row must show the chosen due day, got: \(saved.label)")
-        XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "sheet must be dismissed after saving")
+        XCTAssertTrue(scrollToRow(titled: "Streaming", in: app), "saved subscription 'Streaming' not shown on Home")
+        XCTAssertTrue(row(titled: "Streaming", in: app).label.contains("No card"), "row must show no card, got: \(row(titled: "Streaming", in: app).label)")
     }
 
     @MainActor
@@ -561,22 +570,21 @@ final class FunctionalFlowTests: XCTestCase {
 
     @MainActor
     func testCancelAddSubscriptionLeavesHomeUnchanged() throws {
-        let app = launchHome()
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
 
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
         chooseInSheet("subscription", in: app)
 
-        let titleField = app.textFields["addSubscription.title"]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
-        titleField.tap()
-        titleField.typeText("Cancelled sub")
+        // Akışta tutar yazılır, kapatılır (#190): hiçbir şey kaydedilmez.
+        let five = app.buttons["keypad.digit.5"]
+        XCTAssertTrue(five.waitForExistence(timeout: 5), "keypad not found")
+        five.tap()
+        app.buttons["flow.close"].tap()
 
-        app.buttons["addSubscription.cancel"].tap()
-
-        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after cancel")
-        XCTAssertFalse(scrollToRow(titled: "Cancelled sub", in: app), "cancelled subscription must not appear on Home")
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after close")
+        XCTAssertFalse(scrollToRow(titled: "Subscription, ", in: app), "closed subscription flow must not add a payment to Home")
     }
 
     @MainActor
@@ -714,5 +722,55 @@ final class FunctionalFlowTests: XCTestCase {
         try deleteCardInOpenForm(in: app)
         XCTAssertTrue(element("cards.empty", in: app).waitForExistence(timeout: 5), "list must be empty again")
         XCTAssertFalse(element("cards.row.0", in: app).exists, "no rows may remain")
+    }
+
+    // MARK: - Abonelik hızlı adımları (#190)
+
+    /// Sadece tutar yazılır; dönem, kart ve başlık varsayılan/Geç ile geçilir; kayıt Home'da görünür.
+    @MainActor
+    func testSubscriptionQuickStepsWithOnlyAmountSavesAndShowsOnHome() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
+        add.tap()
+        chooseInSheet("subscription", in: app)
+
+        // Tutar: 1 4 9; tutar yokken devam kapalıdır.
+        let continueButton = app.buttons["flow.continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 5), "continue button not found")
+        XCTAssertFalse(continueButton.isEnabled, "continue must be disabled without an amount")
+        for digit in ["1", "4", "9"] {
+            app.buttons["keypad.digit.\(digit)"].tap()
+        }
+        XCTAssertTrue(continueButton.isEnabled, "continue must be enabled with an amount")
+        continueButton.tap()
+
+        // Dönem: ilk çip (Aylık).
+        let period = element("subscriptionFlow.period.chip.0", in: app)
+        XCTAssertTrue(period.waitForExistence(timeout: 5), "period chip not found")
+        period.tap()
+
+        // Kart: "No card".
+        let noCard = element("cardPicker.noCard", in: app)
+        XCTAssertTrue(noCard.waitForExistence(timeout: 5), "'No card' row not found")
+        noCard.tap()
+
+        // Başlık: Skip.
+        let skip = app.buttons["subscriptionFlow.skip"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 5), "Skip button not found")
+        skip.tap()
+
+        // Özet: varsayılan başlık görünür; tek Kaydet düğmesi.
+        let save = app.buttons["subscriptionFlow.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "save button not found on the summary")
+        XCTAssertTrue(element("subscriptionFlow.summary", in: app).exists, "summary not shown")
+        XCTAssertTrue(save.isEnabled, "save must be enabled")
+        save.tap()
+
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "sheet must be dismissed after saving")
+        XCTAssertFalse(element("add.sheet.installment", in: app).exists, "sheet must be gone")
+        XCTAssertTrue(scrollToRow(titled: "Subscription, ", in: app), "saved subscription with the default title not shown on Home")
+        XCTAssertTrue(row(titled: "Subscription, ", in: app).label.contains("No card"), "row must show no card")
     }
 }

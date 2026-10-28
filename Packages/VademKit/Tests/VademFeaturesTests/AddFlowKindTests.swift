@@ -20,9 +20,9 @@ struct AddFlowKindTests {
         #expect(kind.id == kind.rawValue)
     }
 
-    @Test("Installment and subscription open the existing forms, payment stays in the sheet", arguments: [
+    @Test("Only installment opens an existing form; subscription and payment run inside the sheet", arguments: [
         (AddFlowKind.installment, true),
-        (AddFlowKind.subscription, true),
+        (AddFlowKind.subscription, false),
         (AddFlowKind.payment, false),
     ])
     func opensExistingForm(kind: AddFlowKind, expected: Bool) {
