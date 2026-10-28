@@ -47,7 +47,8 @@ public struct HomeView: View {
     /// ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
     /// month in its edit form. ``SettingsView/launchArgument`` (or ``SettingsView/deniedLaunchArgument``)
     /// opens the settings sheet; ``CardListView/launchArgument`` (or ``CardListView/emptyLaunchArgument``)
-    /// opens it with the Cards screen pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
+    /// opens it with the Cards screen pushed, ``PrivacyPolicyView/launchArgument`` with the privacy policy
+    /// pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
     /// ``AssistantView/launchArgument`` the assistant chat.
     public init(model: HomeViewModel) {
         _model = State(initialValue: model)
@@ -100,7 +101,8 @@ public struct HomeView: View {
         } else if arguments.contains(SettingsView.launchArgument)
                     || arguments.contains(SettingsView.deniedLaunchArgument)
                     || arguments.contains(CardListView.launchArgument)
-                    || arguments.contains(CardListView.emptyLaunchArgument) {
+                    || arguments.contains(CardListView.emptyLaunchArgument)
+                    || arguments.contains(PrivacyPolicyView.launchArgument) {
             initialSettingsModel = model.makeSettingsModel()
         }
         #endif

@@ -3,6 +3,8 @@
 - [English](#english)
 - [Türkçe](#türkçe)
 
+> This file is the source of the policy. The app shows the same text under Settings → Privacy Policy (`PrivacyPolicyView`, strings in `Packages/VademKit/Sources/VademFeatures/Resources/Localizable.xcstrings`); keep both in sync. The contact line is left out in the app.
+
 ---
 
 ## English

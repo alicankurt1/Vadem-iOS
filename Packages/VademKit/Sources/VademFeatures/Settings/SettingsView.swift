@@ -10,6 +10,7 @@ import VademCore
 /// `settings.timing.options` with `settings.timing.option.<index>`, `settings.permissionDenied`
 /// (explanation), `settings.openSystemSettings`, `settings.version` (app version) and `settings.done`.
 /// When ``SettingsViewModel/showsCards`` is `true`, a Cards row (`settings.cards`) pushes the ``CardListView``.
+/// A Privacy Policy row (`settings.privacy`) pushes the ``PrivacyPolicyView``.
 @MainActor
 public struct SettingsView: View {
     /// The launch argument that opens Home with this sheet already presented (UI check).
@@ -27,6 +28,7 @@ public struct SettingsView: View {
     @State private var isChoosingTiming = false
     // İtilmiş Kartlar ekranının modeli; nil iken ekran itilmemiştir.
     @State private var cardListModel: CardListViewModel?
+    @State private var isShowingPrivacyPolicy: Bool
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -36,17 +38,23 @@ public struct SettingsView: View {
     /// Creates the sheet for `model`.
     ///
     /// In debug builds, ``CardListView/launchArgument`` (or ``CardListView/emptyLaunchArgument``)
-    /// pushes the Cards screen right away, for the UI check.
+    /// pushes the Cards screen right away, for the UI check; ``PrivacyPolicyView/launchArgument``
+    /// pushes the privacy policy.
     public init(model: SettingsViewModel) {
         _model = State(initialValue: model)
         var initialCardListModel: CardListViewModel?
+        var initialShowsPrivacyPolicy = false
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(CardListView.launchArgument) || arguments.contains(CardListView.emptyLaunchArgument) {
             initialCardListModel = model.makeCardListModel()
+        } else if arguments.contains(PrivacyPolicyView.launchArgument) {
+            // İki ekran aynı anda itilemez; Kartlar önceliklidir.
+            initialShowsPrivacyPolicy = true
         }
         #endif
         _cardListModel = State(initialValue: initialCardListModel)
+        _isShowingPrivacyPolicy = State(initialValue: initialShowsPrivacyPolicy)
     }
 
     public var body: some View {
@@ -79,6 +87,7 @@ public struct SettingsView: View {
                 if model.showsCards {
                     cardsCard
                 }
+                privacyCard
                 versionCard
             }
             .foregroundStyle(Color.vademTextPrimary)
@@ -94,6 +103,9 @@ public struct SettingsView: View {
                 if let cardListModel {
                     CardListView(model: cardListModel)
                 }
+            }
+            .navigationDestination(isPresented: $isShowingPrivacyPolicy) {
+                PrivacyPolicyView()
             }
             .navigationTitle(Text("Settings", bundle: .module))
             #if os(iOS)
@@ -182,6 +194,32 @@ public struct SettingsView: View {
             .buttonStyle(.plain)
             .accessibilityHint(Text("Opens a list", bundle: .module))
             .accessibilityIdentifier("settings.cards")
+        }
+    }
+
+    // Gizlilik politikası satırı: Kartlar satırı gibi düz düğme, politikayı uygulama içinde iter.
+    private var privacyCard: some View {
+        FormCard {
+            Button {
+                isShowingPrivacyPolicy = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text("Privacy Policy", bundle: .module)
+                        .font(.body)
+                        .foregroundStyle(Color.vademTextPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color.vademBrand)
+                        .accessibilityHidden(true)
+                }
+                .multilineTextAlignment(.leading)
+                .frame(minHeight: FormLayout.minRowHeight)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("Opens the privacy policy", bundle: .module))
+            .accessibilityIdentifier("settings.privacy")
         }
     }
 

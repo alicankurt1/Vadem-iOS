@@ -275,6 +275,74 @@
         }
       }
     },
+    "**No account.** There is no sign-up and no login." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**No account.** There is no sign-up and no login."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Hesap yok.** Kayıt veya giriş yoktur."
+          }
+        }
+      }
+    },
+    "**No analytics, no tracking, no ads.** The app contains no analytics, crash reporting, advertising or tracking code and does not use any third-party services." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**No analytics, no tracking, no ads.** The app contains no analytics, crash reporting, advertising or tracking code and does not use any third-party services."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Analiz, takip ve reklam yok.** Uygulamada analiz, çökme raporlama, reklam veya takip kodu yoktur ve üçüncü taraf hizmet kullanılmaz."
+          }
+        }
+      }
+    },
+    "**No bank connection.** The app never connects to your bank or card issuer; every value is entered by you." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**No bank connection.** The app never connects to your bank or card issuer; every value is entered by you."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Banka bağlantısı yok.** Uygulama bankanıza veya kart veren kuruluşa hiçbir zaman bağlanmaz; tüm değerleri siz girersiniz."
+          }
+        }
+      }
+    },
+    "**No network requests.** The app does not send your data to any server, including ours." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**No network requests.** The app does not send your data to any server, including ours."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Ağ isteği yok.** Uygulama verilerinizi bizimki dahil hiçbir sunucuya göndermez."
+          }
+        }
+      }
+    },
     "1–31" : {
       "localizations" : {
         "en" : {
@@ -839,6 +907,23 @@
         }
       }
     },
+    "Changes to this policy" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes to this policy"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Politikadaki değişiklikler"
+          }
+        }
+      }
+    },
     "Chips" : {
       "comment" : "Design gallery section",
       "localizations" : {
@@ -1079,6 +1164,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu abonelik silinsin mi?"
+          }
+        }
+      }
+    },
+    "Deleting a card or payment in the app removes it. Deleting the app removes all of its data from the device." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting a card or payment in the app removes it. Deleting the app removes all of its data from the device."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulamada bir kartı veya ödemeyi silmek onu kaldırır. Uygulamayı silmek, tüm verilerini cihazdan kaldırır."
+          }
+        }
+      }
+    },
+    "Deleting your data" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting your data"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verilerinizi silme"
           }
         }
       }
@@ -1449,6 +1568,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödemelerinizi açamadım."
+          }
+        }
+      }
+    },
+    "If this policy changes, the updated text will appear here with an app update." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If this policy changes, the updated text will appear here with an app update."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu politika değişirse güncel metin bir uygulama güncellemesiyle burada görünür."
           }
         }
       }
@@ -2028,6 +2164,40 @@
         }
       }
     },
+    "Notifications, widget and Siri" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications, widget and Siri"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildirimler, widget ve Siri"
+          }
+        }
+      }
+    },
+    "On devices that support Apple Intelligence, the app offers an assistant that answers questions about your payments. It uses Apple's on-device language model (the Foundation Models framework). Your question and your payment data are processed on the device; the app sends nothing off the device. If the on-device model is not available, the assistant is simply unavailable." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On devices that support Apple Intelligence, the app offers an assistant that answers questions about your payments. It uses Apple's on-device language model (the Foundation Models framework). Your question and your payment data are processed on the device; the app sends nothing off the device. If the on-device model is not available, the assistant is simply unavailable."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence'ı destekleyen cihazlarda uygulama, ödemelerinizle ilgili soruları yanıtlayan bir asistan sunar. Asistan, Apple'ın cihaz üzerinde çalışan dil modelini (Foundation Models çerçevesi) kullanır. Sorunuz ve ödeme verileriniz cihazda işlenir; uygulama cihazın dışına hiçbir şey göndermez. Cihaz üzerindeki model kullanılamıyorsa asistan da kullanılamaz."
+          }
+        }
+      }
+    },
     "On the day" : {
       "localizations" : {
         "en" : {
@@ -2072,6 +2242,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bir liste açar"
+          }
+        }
+      }
+    },
+    "Opens the privacy policy" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the privacy policy"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gizlilik politikasını açar"
           }
         }
       }
@@ -2193,6 +2380,23 @@
         }
       }
     },
+    "Payment reminders are local notifications scheduled on the device; they are only sent if you allow notifications." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payment reminders are local notifications scheduled on the device; they are only sent if you allow notifications."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödeme hatırlatmaları cihazda planlanan yerel bildirimlerdir; yalnızca bildirimlere izin verirseniz gönderilir."
+          }
+        }
+      }
+    },
     "Payments" : {
       "localizations" : {
         "en" : {
@@ -2255,6 +2459,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Önceki ay"
+          }
+        }
+      }
+    },
+    "Privacy Policy" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gizlilik Politikası"
           }
         }
       }
@@ -2565,6 +2786,23 @@
         }
       }
     },
+    "The assistant" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The assistant"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asistan"
+          }
+        }
+      }
+    },
     "The assistant is not available on this device right now." : {
       "localizations" : {
         "en" : {
@@ -2641,6 +2879,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kart kaydedilemedi. Lütfen tekrar deneyin."
+          }
+        }
+      }
+    },
+    "The cards, installments and subscriptions you enter yourself." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The cards, installments and subscriptions you enter yourself."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sizin girdiğiniz kartlar, taksitler ve abonelikler."
           }
         }
       }
@@ -2773,6 +3028,23 @@
         }
       }
     },
+    "The widget and the Siri / Shortcuts actions read the same on-device data to show your upcoming payments and monthly total. When you use Siri, Apple's own privacy policy applies to Siri." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The widget and the Siri / Shortcuts actions read the same on-device data to show your upcoming payments and monthly total. When you use Siri, Apple's own privacy policy applies to Siri."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widget ve Siri / Kestirmeler eylemleri, yaklaşan ödemelerinizi ve aylık toplamınızı göstermek için aynı cihaz içi verileri okur. Siri'yi kullandığınızda Siri için Apple'ın kendi gizlilik politikası geçerlidir."
+          }
+        }
+      }
+    },
     "Thinking…" : {
       "localizations" : {
         "en" : {
@@ -2801,6 +3073,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu kart taksit veya aboneliklerde kullanılıyor. Önce onları silin veya başka karta taşıyın."
+          }
+        }
+      }
+    },
+    "This data is stored only on your device. Your cards and payments live in a storage area that the app shares only with its own Home Screen widget and Siri / Shortcuts actions; your reminder settings live in the app's own settings. iCloud sync (CloudKit) is off: nothing is copied to iCloud by the app." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This data is stored only on your device. Your cards and payments live in a storage area that the app shares only with its own Home Screen widget and Siri / Shortcuts actions; your reminder settings live in the app's own settings. iCloud sync (CloudKit) is off: nothing is copied to iCloud by the app."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu veriler yalnızca cihazınızda saklanır. Kartlarınız ve ödemeleriniz, uygulamanın yalnızca kendi Ana Ekran widget'ı ve Siri / Kestirmeler eylemleriyle paylaştığı bir depolama alanındadır; hatırlatma ayarlarınız uygulamanın kendi ayarlarında durur. iCloud eşitlemesi (CloudKit) kapalıdır: uygulama hiçbir veriyi iCloud'a kopyalamaz."
           }
         }
       }
@@ -2951,6 +3240,23 @@
         }
       }
     },
+    "Vadem tracks your credit card installments and subscriptions and shows how much you pay each month. It is built so that your data never leaves your device." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem tracks your credit card installments and subscriptions and shows how much you pay each month. It is built so that your data never leaves your device."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem, kredi kartı taksitlerinizi ve aboneliklerinizi takip eder ve her ay ne kadar ödeyeceğinizi gösterir. Verileriniz cihazınızdan hiç çıkmayacak şekilde tasarlanmıştır."
+          }
+        }
+      }
+    },
     "Version %@" : {
       "localizations" : {
         "en" : {
@@ -2979,6 +3285,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sıradaki ödemem ne?"
+          }
+        }
+      }
+    },
+    "What the app does not do" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What the app does not do"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulamanın yapmadıkları"
+          }
+        }
+      }
+    },
+    "What the app stores" : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What the app stores"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulamanın sakladıkları"
           }
         }
       }
@@ -3110,6 +3450,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödemeleriniz yüklenemedi."
+          }
+        }
+      }
+    },
+    "Your reminder settings (whether payment reminders are on and when they fire)." : {
+      "comment" : "Privacy policy (mirrors docs/privacy.md)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your reminder settings (whether payment reminders are on and when they fire)."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hatırlatma ayarlarınız (ödeme hatırlatmalarının açık olup olmadığı ve ne zaman geleceği)."
           }
         }
       }
