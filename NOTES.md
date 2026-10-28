@@ -480,3 +480,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** `FunctionalFlowTests`'e dört test eklendi: kartsız abonelik ekleme, başlık düzenleme, silme (önce iptal, sonra onay), formda iptal (PR #169). Yalnızca test; üretim kodu değişmedi, coder atlandı. 18 dk, 2 verify çalıştırması, 0 başarısız, 0 düzeltme turu.
 - **Kapı neyi yakaladı:** Reviewer: 2 minor, 1 nit, hepsi kabul edildi (test sabit örnek tarihe "October" dayanıyor, `row(titled:)` alt dize eşleşmesi kullanıyor). `UI-FUNCTIONAL: PASS`; ekran değişmediği için capture atlandı.
 - **Ders:** Kabul kriterleri net ve yalnızca test kapsamındaki issue ilk seferde geçiyor; mevcut test desenini (#155) yeniden kullanmak hem hızlı hem tutarlı.
+
+### Koşu #174 — EN/TR biçim yer tutucusu eşitliği testi
+
+- **Ne yapıldı:** `StringCatalogPlaceholderParityTests` eklendi: dört String Catalog'da İngilizce değerdeki her yer tutucu (`%@`, `%lld`, `%1$@`, `%#@x@` vb.) Türkçe değerde aynı sayı ve türde olmalı (PR #178). Yalnızca test; katalog düzeltmesi gerekmedi.
+- **Kapsam daraldı:** `StringCatalogCompletenessTests` geri kalanı zaten kapsıyordu, issue yalnızca yer tutucu eşitliğine indirildi; #171 ve #173 de #138 ve #139 zaten teslim ettiği için kapatıldı.
+- **Kapı neyi yakaladı:** Reviewer: 1 major (çoğul biçimler yalnızca `other` üzerinden karşılaştırılıyordu; her biçim kendi karşılığıyla karşılaştırılacak şekilde düzeltildi), 3 minor, 3 nit (2'si kabul edildi). Negatif testler eklendi. `VERIFY: PASS`.
+- **Ders:** Issue yazmadan önce mevcut testlere bakmak iki gereksiz issue'yu önler; "hiçbir şey bulmadı" sonucunu kanıtlamak için testin eksik/fazla/yanlış tür durumlarını yakaladığı negatif testlerle gösterilmeli.
