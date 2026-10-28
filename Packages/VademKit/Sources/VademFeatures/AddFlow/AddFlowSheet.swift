@@ -4,7 +4,9 @@ import SwiftUI
 /// Installment, Subscription and Payment (``AddFlowKind``).
 ///
 /// Picking a kind that ``AddFlowKind/opensExistingForm`` calls `onSelect`; the presenter closes
-/// the sheet and opens that form. Payment runs inside the sheet: for now one "coming soon"
+/// the sheet and opens that form. Installment runs the ``InstallmentFlowView`` inside the sheet
+/// (a new ``InstallmentFlowViewModel`` from `makeInstallmentFlow` each time; Save closes the sheet).
+/// Payment runs inside the sheet too: for now one "coming soon"
 /// ``FlowStepContainer`` step whose back button returns to the three buttons.
 /// The content scrolls and the sheet always opens at full height: with `presentationDetents`
 /// (medium or even large only) the accessibility audit reported every multi-word text as clipped.
@@ -17,21 +19,44 @@ public struct AddFlowSheet: View {
     public nonisolated static let launchArgument = "-ui-add-sheet"
 
     private let onSelect: (AddFlowKind) -> Void
+    private let makeInstallmentFlow: (() -> InstallmentFlowViewModel)?
     // Sayfanın içinde süren akış; nil iken üç düğme görünür.
     @State private var inlineKind: AddFlowKind?
+    // Süren taksit akışının modeli; her seçimde yenisi kurulur.
+    @State private var installmentFlow: InstallmentFlowViewModel?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Creates the sheet; `onSelect` gets the kinds that open an existing form.
-    public init(onSelect: @escaping (AddFlowKind) -> Void) {
+    /// Creates the sheet; `onSelect` gets the kinds that open an existing form and
+    /// `makeInstallmentFlow` creates the model of the in-sheet installment flow.
+    ///
+    /// In debug builds, ``InstallmentFlowView/launchArgument`` starts with the installment flow running.
+    public init(
+        makeInstallmentFlow: (() -> InstallmentFlowViewModel)? = nil,
+        onSelect: @escaping (AddFlowKind) -> Void
+    ) {
+        self.makeInstallmentFlow = makeInstallmentFlow
         self.onSelect = onSelect
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(InstallmentFlowView.launchArgument), let makeInstallmentFlow {
+            _installmentFlow = State(initialValue: makeInstallmentFlow())
+            _inlineKind = State(initialValue: .installment)
+        }
+        #endif
     }
 
     public var body: some View {
         Group {
-            if inlineKind == .payment {
+            if inlineKind == .installment, let installmentFlow {
+                InstallmentFlowView(
+                    model: installmentFlow,
+                    onExit: { showChooser() },
+                    onClose: { dismiss() },
+                    onSaved: { dismiss() }
+                )
+            } else if inlineKind == .payment {
                 paymentPlaceholder
             } else {
                 chooser
@@ -45,8 +70,18 @@ public struct AddFlowSheet: View {
             onSelect(kind)
         } else {
             withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+                // Taksit akışı her açılışta baştan başlar.
+                if kind == .installment { installmentFlow = makeInstallmentFlow?() }
                 inlineKind = kind
             }
+        }
+    }
+
+    // Akıştan üç düğmeye dönüş.
+    private func showChooser() {
+        withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+            inlineKind = nil
+            installmentFlow = nil
         }
     }
 

@@ -136,6 +136,8 @@ public final class HomeViewModel {
     @ObservationIgnored private let onDataChanged: (@MainActor () -> Void)?
     // Ayarlar sayfasının bağımlılıkları; verilmezse bellek içi depo (zamanlayıcı yok), açılışlar arasında korunur.
     @ObservationIgnored private let settings: SettingsDependencies
+    // Ekleme akışının son kullanılan kartı.
+    @ObservationIgnored private let lastUsedCard: LastUsedCardStore
     // Asistan motoru; nil ise işletim sisteminin sunduğu motor bu deponun verisiyle kurulur.
     @ObservationIgnored private let assistantEngineOverride: (any AssistantEngine)?
     // İlk kullanımda kurulan sistem motoru; her gövde değerlendirmesinde yeniden kurulmaz.
@@ -156,16 +158,20 @@ public final class HomeViewModel {
     /// (``makeSettingsModel()``); `nil` uses an in-memory store without a scheduler.
     /// `assistant` answers in the assistant chat (``makeAssistantModel()``); `nil` uses the engine
     /// the OS offers (``AssistantEngineFactory/makeSystemEngine(snapshot:)``) on this repository.
+    /// `lastUsedCard` remembers the add flow's card (``makeInstallmentFlowModel(locale:)``);
+    /// `nil` uses `UserDefaults.standard`.
     public init(
         repository: any PaymentRepository,
         today: Date,
         calendar: Calendar,
         onDataChanged: (@MainActor () -> Void)? = nil,
         settings: SettingsDependencies? = nil,
-        assistant: (any AssistantEngine)? = nil
+        assistant: (any AssistantEngine)? = nil,
+        lastUsedCard: LastUsedCardStore? = nil
     ) {
         self.repository = repository
         self.onDataChanged = onDataChanged
+        self.lastUsedCard = lastUsedCard ?? LastUsedCardStore()
         self.settings = settings ?? .inMemory()
         self.assistantEngineOverride = assistant
         // YearMonth gibi: sadece saat dilimi alınır, gün Gregoryen takvimle hesaplanır.
@@ -247,6 +253,16 @@ public final class HomeViewModel {
     /// Call ``reload()`` after it saves, so the new payment shows.
     public func makeAddInstallmentModel(locale: Locale = .current) -> AddInstallmentViewModel {
         AddInstallmentViewModel(repository: repository, initialMonth: month, locale: locale)
+    }
+
+    /// A new quick-steps installment flow on the same repository, with today's month and day
+    /// and the last used card preselected.
+    ///
+    /// Call ``reload()`` after it saves, so the new payment shows.
+    public func makeInstallmentFlowModel(locale: Locale = .current) -> InstallmentFlowViewModel {
+        InstallmentFlowViewModel(
+            repository: repository, todayMonth: todayMonth, todayDay: todayDay, lastUsedCard: lastUsedCard, locale: locale
+        )
     }
 
     /// A new add-subscription form on the same repository, starting at the selected ``month``.

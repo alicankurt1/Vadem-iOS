@@ -75,6 +75,14 @@ public enum HomeSampleData {
         return repository
     }
 
+    // Örnek veride son kullanılan kart her açılışta sıfırlanır: UI testleri her seferinde aynı ekranı görür.
+    private static func makeLastUsedCardStore() -> LastUsedCardStore {
+        let suiteName = "vadem.sampleData"
+        let defaults = UserDefaults(suiteName: suiteName) ?? .standard
+        defaults.removePersistentDomain(forName: suiteName)
+        return LastUsedCardStore(defaults: defaults)
+    }
+
     /// A view model on ``makeRepository()`` with the fixed ``today`` and ``calendar``.
     ///
     /// Settings use an in-memory store and no scheduler; under ``SettingsView/deniedLaunchArgument``
@@ -93,7 +101,8 @@ public enum HomeSampleData {
             today: today,
             calendar: calendar,
             settings: settings,
-            assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments)
+            assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments),
+            lastUsedCard: makeLastUsedCardStore()
         )
     }
 

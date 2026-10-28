@@ -20,8 +20,8 @@ struct AddFlowKindTests {
         #expect(kind.id == kind.rawValue)
     }
 
-    @Test("Installment and subscription open the existing forms, payment stays in the sheet", arguments: [
-        (AddFlowKind.installment, true),
+    @Test("Only subscription opens an existing form; installment and payment run inside the sheet", arguments: [
+        (AddFlowKind.installment, false),
         (AddFlowKind.subscription, true),
         (AddFlowKind.payment, false),
     ])
@@ -46,6 +46,11 @@ struct AddFlowKindTests {
     func galleryArguments(step: AddFlowGalleryStep, expected: String) {
         #expect(step.launchArgument == expected)
         #expect(AddFlowGalleryStep.step(in: ["-ui-static-motion", expected]) == step)
+    }
+
+    @Test("Installment flow launch argument")
+    func installmentFlowArgument() {
+        #expect(InstallmentFlowView.launchArgument == "-ui-add-installment-flow")
     }
 
     @Test("Sheet launch argument")

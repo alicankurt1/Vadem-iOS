@@ -64,11 +64,12 @@ final class FunctionalFlowTests: XCTestCase {
             XCTAssertTrue(element("add.sheet.\(kind)", in: app).waitForExistence(timeout: 5), "option \(kind) not shown")
         }
 
-        // Taksit: mevcut form açılır, iptal Home'a döner.
+        // Taksit (#189): akış sayfanın içinde başlar (tutar tuş takımı); kapat Home'a döner.
         chooseInSheet("installment", in: app)
-        XCTAssertTrue(app.textFields["addInstallment.title"].waitForExistence(timeout: 5), "installment flow did not start")
-        app.buttons["addInstallment.cancel"].tap()
-        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after cancelling the form")
+        XCTAssertTrue(element("keypad.display", in: app).waitForExistence(timeout: 5), "installment flow did not start")
+        XCTAssertFalse(app.textFields["addInstallment.title"].exists, "installment must not open the old form")
+        app.buttons["flow.close"].tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after closing the flow")
 
         // Abonelik aynı şekilde.
         add.tap()
@@ -139,101 +140,135 @@ final class FunctionalFlowTests: XCTestCase {
         try addInstallmentAndFindItOnHome(extraArguments: ["-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"])
     }
 
+    /// Home'dan Add sayfası → Taksit → hızlı akış: yalnızca tutar yazılır; ödeme Home'da görünür (#189).
     @MainActor
     private func addInstallmentAndFindItOnHome(extraArguments: [String]) throws {
         let app = launchHome(extraArguments: extraArguments)
-        let title = "Test Phone"
-
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
-        // `home.add` Add sayfasını açar: önce taksit seçilir.
         chooseInSheet("installment", in: app)
-
-        // Boş formda kaydet kapalı.
-        let titleField = app.textFields["addInstallment.title"]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
-        XCTAssertFalse(app.buttons["addInstallment.save"].isEnabled, "save must be disabled while the form is empty")
-
-        titleField.tap()
-        titleField.typeText(title)
-
-        // Kart: seçim listesini aç; 0. satır "kart yok", 1. satır ilk gerçek kart.
-        element("addInstallment.card", in: app).tap()
-        let firstCard = element("addInstallment.option.1", in: app)
-        XCTAssertTrue(firstCard.waitForExistence(timeout: 5), "card option not found")
-        firstCard.tap()
-
-        // Tutar: ondalık klavye, boş alana yazılır.
-        let amount = app.textFields["addInstallment.amount"]
-        XCTAssertTrue(amount.waitForExistence(timeout: 5), "amount field not found")
-        amount.tap()
-        amount.typeText("1200")
-
-        let save = app.buttons["addInstallment.save"]
-        XCTAssertTrue(save.isEnabled, "save must be enabled once title, card and amount are filled")
-        save.tap()
-
-        // Form kapanır, Home yeniden yüklenir; yeni ödeme listede (liste takvimin altında, kaydırılır).
-        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
-        // Varsayılan ilk ay kartın bir sonraki vadesi; örnek veride 12 Ekim'de Travel kartının Ekim ekstresi
-        // kapandı, bu yüzden ödeme Kasım'da. Ekim'de yoksa sonraki aya geçilir.
-        if !scrollToRow(titled: title, in: app, attempts: 0) {
-            app.swipeDown()
-            app.swipeDown()
-            app.buttons["home.nextMonth"].tap()
-        }
-        XCTAssertTrue(
-            scrollToRow(titled: title, in: app),
-            "saved installment '\(title)' not shown on Home"
-        )
+        try completeInstallmentFlow(in: app, amount: "1200")
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "sheet must be dismissed after saving")
+        XCTAssertTrue(scrollToInstallmentRow(in: app), "saved installment with the default title not shown on Home")
     }
 
-    /// #155: kart eklemeden taksit eklenir. Kart seçilmez ("No card" kalır), ödeme günü alanı görünür,
-    /// gün 3 yapılır; kayıttan sonra Home satırı "No card" ve doğru vade gününü ("due 3 October") gösterir.
-    /// Not: örnek veride kartlar vardır (boş depo açma bayrağı yok); önemli olan formun kart istememesidir.
+    /// Varsayılan başlıklı ("Installment" / "Taksit") ve kartsız ("No card" / "Kart yok") satır.
+    @MainActor
+    private func installmentRow(in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any)
+            .matching(NSPredicate(
+                format: "(label CONTAINS 'Installment' AND label CONTAINS 'No card') OR (label CONTAINS 'Taksit' AND label CONTAINS 'Kart yok')"
+            ))
+            .firstMatch
+    }
+
+    @MainActor
+    private func scrollToInstallmentRow(in app: XCUIApplication, attempts: Int = 6) -> Bool {
+        let target = installmentRow(in: app)
+        for _ in 0..<attempts {
+            if target.exists { return true }
+            app.swipeUp()
+        }
+        return target.exists
+    }
+
+    /// Akışın tüm adımlarını geçer: yalnızca tutar yazılır; sayı 6, kart "kart yok" (son kullanılan yok),
+    /// ilk ay "bu ay", başlık atlanır. `paymentDayIncrements` > 0 ise özetteki "Değiştir" ile gün artırılır.
+    /// Kaydet'e basar; sayfa kapanmadan önceki özet kimliklerini doğrular.
+    @MainActor
+    private func completeInstallmentFlow(in app: XCUIApplication, amount: String, paymentDayIncrements: Int = 0) throws {
+        XCTAssertTrue(element("keypad.display", in: app).waitForExistence(timeout: 10), "amount step not shown")
+        let continueButton = app.buttons["flow.continue"]
+        XCTAssertFalse(continueButton.isEnabled, "continue must be disabled with no amount")
+        for character in amount {
+            app.buttons["keypad.digit.\(character)"].tap()
+        }
+        XCTAssertTrue(continueButton.isEnabled, "continue must be enabled once an amount is typed")
+        continueButton.tap()
+
+        // Sayı: 6. çip (3, 6, 9, 12, 18, Diğer); seçim kendiliğinden ilerler.
+        let sixMonths = element("addInstallmentFlow.count.chip.1", in: app)
+        XCTAssertTrue(sixMonths.waitForExistence(timeout: 5), "count step not shown")
+        sixMonths.tap()
+
+        // Kart: örnek veride son kullanılan yok, "Kart yok" seçili gelir.
+        let noCard = element("cardPicker.noCard", in: app)
+        XCTAssertTrue(noCard.waitForExistence(timeout: 5), "card step not shown")
+        noCard.tap()
+
+        // İlk ay: "Bu ay".
+        let thisMonth = element("addInstallmentFlow.month.chip.0", in: app)
+        XCTAssertTrue(thisMonth.waitForExistence(timeout: 5), "first month step not shown")
+        thisMonth.tap()
+
+        // Başlık isteğe bağlı: atlanır.
+        let skip = element("addInstallmentFlow.skip", in: app)
+        XCTAssertTrue(skip.waitForExistence(timeout: 5), "title step not shown")
+        skip.tap()
+
+        // Özet: ödeme günü adım değil; varsayılan bugünün günü (12), isteğe bağlı değiştirilir.
+        let save = app.buttons["addInstallmentFlow.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "summary not shown")
+        XCTAssertTrue(save.isEnabled, "save must be enabled with only the amount typed")
+        XCTAssertTrue(element("addInstallmentFlow.summary.paymentDay", in: app).label.contains("12"), "default payment day must be today's day (12)")
+        if paymentDayIncrements > 0 {
+            element("addInstallmentFlow.changePaymentDay", in: app).tap()
+            let increment = element("addInstallmentFlow.paymentDayStepper-Increment", in: app)
+            XCTAssertTrue(increment.waitForExistence(timeout: 5), "payment day stepper has no increment button")
+            for _ in 0..<paymentDayIncrements { increment.tap() }
+        }
+        save.tap()
+    }
+
+    /// #155 / #189: kartsız taksit, ödeme günü özetteki "Değiştir" ile 12'den 15'e alınır;
+    /// Home satırı "No card" ve "due 15 October" gösterir.
     @MainActor
     func testAddInstallmentWithoutCardShowsPaymentOnHomeWithDueDay() throws {
-        // Simülatör dili Türkçe olabilir; satır etiketi denetimi için arayüz İngilizceye sabitlenir.
+        // Satır etiketi denetimi için arayüz İngilizceye sabitlenir.
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
-        let title = "Cardless Phone"
-
         let add = app.buttons["home.add"]
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
         chooseInSheet("installment", in: app)
-
-        let titleField = app.textFields["addInstallment.title"]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
-        titleField.tap()
-        titleField.typeText(title)
-
-        let amount = app.textFields["addInstallment.amount"]
-        XCTAssertTrue(amount.waitForExistence(timeout: 5), "amount field not found")
-        amount.tap()
-        amount.typeText("1200")
-
-        // Kart seçilmedi: ödeme günü alanı var ve kaydet açık.
-        let paymentDay = element("addInstallment.paymentDay", in: app)
-        XCTAssertTrue(paymentDay.waitForExistence(timeout: 5), "payment day field not found without a card")
-        // Stepper kimliği kapsayıcıdadır; artır/azalt düğmeleri "<kimlik>-Increment" kimliğini alır
-        // (etiketleri dile bağlıdır, kimlik değildir).
-        let increment = element("addInstallment.paymentDay-Increment", in: app)
-        XCTAssertTrue(increment.waitForExistence(timeout: 5), "payment day stepper has no increment button")
-        // Varsayılan gün 1; iki artışla 3. gün.
-        increment.tap()
-        increment.tap()
-
-        let save = app.buttons["addInstallment.save"]
-        XCTAssertTrue(save.isEnabled, "save must be enabled without a card once title and amount are filled")
-        save.tap()
-
-        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after saving")
-        // Form Home'un seçili ayıyla (Ekim 2026) açılır; ödeme Ekim'in 3'ündedir.
-        XCTAssertTrue(scrollToRow(titled: title, in: app), "saved card-less installment '\(title)' not shown on Home")
-        let saved = row(titled: title, in: app)
-        XCTAssertTrue(saved.label.contains("due 3 October"), "row must show the chosen due day, got: \(saved.label)")
+        try completeInstallmentFlow(in: app, amount: "1200", paymentDayIncrements: 3)
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "sheet must be dismissed after saving")
+        XCTAssertTrue(scrollToInstallmentRow(in: app), "saved card-less installment not shown on Home")
+        let saved = installmentRow(in: app)
+        XCTAssertTrue(saved.label.contains("due 15 October"), "row must show the chosen due day, got: \(saved.label)")
         XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
+    }
+
+    /// #189: `-ui-add-installment-flow` açılışı doğrudan akışı başlatır; yalnızca tutar yazılır (İngilizce).
+    @MainActor
+    func testInstallmentQuickFlowWithOnlyAmountEnglish() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-add-installment-flow"])
+        try completeInstallmentFlow(in: app, amount: "1200")
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "sheet must close after saving")
+        XCTAssertTrue(scrollToInstallmentRow(in: app), "saved installment 'Installment' not shown on Home")
+        XCTAssertTrue(installmentRow(in: app).label.contains("due 12 October"), "default payment day must be today's day")
+    }
+
+    /// #189: aynı akış Türkçe arayüzle; kimlikler dilden bağımsız, varsayılan başlık "Taksit".
+    @MainActor
+    func testInstallmentQuickFlowWithOnlyAmountTurkish() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR", "-ui-add-installment-flow"])
+        try completeInstallmentFlow(in: app, amount: "1200")
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "sheet must close after saving")
+        XCTAssertTrue(scrollToInstallmentRow(in: app), "saved installment 'Taksit' not shown on Home")
+    }
+
+    /// #189: akışta geri adımı önceki adıma döner; tutar korunur.
+    @MainActor
+    func testInstallmentQuickFlowBackKeepsAmount() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-add-installment-flow"])
+        XCTAssertTrue(element("keypad.display", in: app).waitForExistence(timeout: 10), "amount step not shown")
+        app.buttons["keypad.digit.7"].tap()
+        app.buttons["flow.continue"].tap()
+        XCTAssertTrue(element("addInstallmentFlow.count.chip.0", in: app).waitForExistence(timeout: 5), "count step not shown")
+        app.buttons["flow.back"].tap()
+        XCTAssertTrue(element("keypad.display", in: app).waitForExistence(timeout: 5), "back must return to the amount step")
+        XCTAssertTrue(app.buttons["flow.continue"].isEnabled, "the typed amount must be kept")
     }
 
     /// #191: örnek veride "Dentist" tek seferlik ödemesi 20 Kasım 2026'dadır (Home Ekim'de açılır);
@@ -412,15 +447,15 @@ final class FunctionalFlowTests: XCTestCase {
         add.tap()
         chooseInSheet("installment", in: app)
 
-        let titleField = app.textFields["addInstallment.title"]
-        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "title field not found")
-        titleField.tap()
-        titleField.typeText("Cancelled item")
+        XCTAssertTrue(element("keypad.display", in: app).waitForExistence(timeout: 5), "amount step not shown")
+        app.buttons["keypad.digit.5"].tap()
+        app.buttons["flow.continue"].tap()
+        XCTAssertTrue(element("addInstallmentFlow.count.chip.0", in: app).waitForExistence(timeout: 5), "count step not shown")
 
-        app.buttons["addInstallment.cancel"].tap()
+        app.buttons["flow.close"].tap()
 
-        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after cancel")
-        XCTAssertFalse(scrollToRow(titled: "Cancelled item", in: app), "cancelled item must not appear on Home")
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after closing")
+        XCTAssertFalse(scrollToInstallmentRow(in: app, attempts: 3), "closed flow must not add a payment to Home")
     }
 
     /// Silme düğmesi görünene dek formu yukarı kaydırır (en çok 6 kez).

@@ -5,8 +5,8 @@ import VademCore
 ///
 /// The app's "Vadem" title and version label sit at the top, above the month. Below the month
 /// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
-/// (`home.add`) that opens the ``AddFlowSheet`` (picking Installment or Subscription opens its form
-/// once the sheet closes) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
+/// (`home.add`) that opens the ``AddFlowSheet`` (Installment runs its quick steps in the sheet;
+/// Subscription opens its form once the sheet closes) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode; tapping a card
 /// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
 /// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
@@ -59,7 +59,8 @@ public struct HomeView: View {
     /// opens it with the Cards screen pushed, ``PrivacyPolicyView/launchArgument`` with the privacy policy
     /// pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
     /// ``AssistantView/launchArgument`` the assistant chat. ``AddFlowSheet/launchArgument``
-    /// (`-ui-add-sheet`) opens the Add sheet; ``AddFlowGalleryStep/launchArgument``
+    /// (`-ui-add-sheet`) opens the Add sheet, ``InstallmentFlowView/launchArgument``
+    /// (`-ui-add-installment-flow`) opens it running the installment flow; ``AddFlowGalleryStep/launchArgument``
     /// (`-ui-add-flow-keypad`, `-ui-add-flow-chips`, `-ui-add-flow-card`, debug only) opens the
     /// ``AddFlowGalleryView`` at that shared step, with the first card as the last used one.
     public init(model: HomeViewModel) {
@@ -118,7 +119,8 @@ public struct HomeView: View {
                     || arguments.contains(CardListView.emptyLaunchArgument)
                     || arguments.contains(PrivacyPolicyView.launchArgument) {
             initialSettingsModel = model.makeSettingsModel()
-        } else if arguments.contains(AddFlowSheet.launchArgument) {
+        } else if arguments.contains(AddFlowSheet.launchArgument)
+                    || arguments.contains(InstallmentFlowView.launchArgument) {
             initialAddSheetPresented = true
         } else {
             initialAddFlowGalleryStep = AddFlowGalleryStep.step(in: arguments)
@@ -184,7 +186,7 @@ public struct HomeView: View {
         }
         // Ekle sayfası: seçilen formu sayfa tamamen kapandıktan sonra açar (iki sayfa üst üste açılamaz).
         .sheet(isPresented: $isAddSheetPresented, onDismiss: openPendingAddForm) {
-            AddFlowSheet { kind in
+            AddFlowSheet(makeInstallmentFlow: { model.makeInstallmentFlowModel() }) { kind in
                 pendingAddKind = kind
                 isAddSheetPresented = false
             }
@@ -204,12 +206,11 @@ public struct HomeView: View {
     private func openPendingAddForm() {
         defer { pendingAddKind = nil }
         switch pendingAddKind {
-        case .installment:
-            addModel = model.makeAddInstallmentModel()
         case .subscription:
             addSubscriptionModel = model.makeAddSubscriptionModel()
-        case .payment, nil:
-            break
+        case .installment, .payment, nil:
+            // Taksit akışı sayfanın içinde kaydeder; yeni ödeme hemen görünsün diye Home yeniden yüklenir.
+            reloadAfterForm()
         }
     }
 
