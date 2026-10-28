@@ -506,3 +506,13 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** Ayarlar'a "Privacy Policy" satırı ve `PrivacyPolicyView` eklendi (EN/TR, 22 yeni yerelleştirme anahtarı); metin `docs/privacy.md` ile aynı (PR #184). 37 dk, 3 verify çalıştırması, 0 başarısız, 1 düzeltme turu.
 - **Kapı neyi yakaladı:** Fonksiyonel UI testi ilk çalışmada başarısız oldu: konumsal `navigationBars.buttons.element(boundBy: 0)` Ayarlar sayfasının arkasındaki Home'un `home.assistant` düğmesine denk geldi. Bu bir ürün hatası değil test hatasıydı; sayfanın kendi gezinme çubuğu seçilerek düzeltildi. Reviewer: 1 minor (metin iki yerde duruyor, senkronu zorlayan test yok; kabul edildi, belgeye not eklendi), 2 nit.
 - **Ders:** Sheet/push ekranlarında arkadaki ekranın öğeleri erişilebilirlik ağacında durur; konumsal sorgular yerine kapsamı belli (kendi gezinme çubuğu veya identifier) sorgular kullanılmalı.
+
+### Mülakat sorusu: Gizlilik politikası metni hem `docs/privacy.md`'de hem uygulamada duruyor; bu kopyalar ayrışırsa ne olur, tek kaynağa nasıl indirirsin?
+
+**Cevap:**
+- **Risk:** Hukuken bağlayıcı olan, mağazada ve uygulamada gösterilen metindir. İki kopya ayrışırsa kullanıcıya yanlış söz vermiş oluruz (örneğin bir gün analiz eklenir, biri güncellenir, öbürü "takip yok" demeye devam eder). App Store gizlilik beyanıyla da çelişebilir.
+- **Mevcut durum:** Kopyalar elle senkron tutuluyor; `docs/privacy.md` başında not var, ama bunu zorlayan test yok (reviewer'ın kabul edilen minor bulgusu).
+- **Tek kaynağa indirme:** Metni bölüm başlığı + paragraf anahtarlarından oluşan tek yapıya (veri) koymak; hem uygulama ekranı hem `docs/privacy.md` bu yapıdan üretilsin (script ile derleme zamanında veya test ile). Ya da uygulama yalnızca barındırılan URL'yi açsın; o zaman çevrimdışı çalışmaz ve ağ isteği "ağ yok" sözünü bozar.
+- **Daha ucuz ara çözüm:** Bir test, `docs/privacy.md` bölüm sayısını ve başlıklarını yerelleştirme anahtarlarıyla karşılaştırsın; metin kayarsa kapı kırmızı olsun (`AppStoreReadinessTests` ile aynı fikir: "aynı olmalı" olan şeyi test korur).
+- **SOLID:** Single Responsibility (politika içeriği bir yerde yaşar, ekran yalnızca gösterir) ve Dependency Inversion (ekran içeriğe somut dosyaya değil bir veri yapısına bağlanır).
+- **Ders:** Hukuki veya beyan niteliğindeki metni kopyalama; kopyalamak zorundaysan kopyaların eşitliğini bir testle koru.
