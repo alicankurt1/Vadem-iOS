@@ -7,7 +7,8 @@ import VademCore
 /// Each invalid field shows its error below it (once touched); Save stays disabled while
 /// the form is invalid. No continuous animations, so it is idle under `-ui-static-motion`.
 /// Identifiers: `addSubscription.<field>` for fields (`title`, `amount`, `card`, `period`,
-/// `renewalDay`, `firstMonth`), `addSubscription.<field>.error` for errors,
+/// `renewalDay`, `firstMonth`), `addSubscription.<field>.error` for errors (the renewal day is a
+/// ``DayPickerRow``: sheet `addSubscription.renewalDay.sheet`, `.picker`, `.done`),
 /// `addSubscription.save`, `addSubscription.cancel`, `addSubscription.failure`; pushed lists
 /// use `addSubscription.options` and `addSubscription.option.<index>`.
 /// In edit mode (``AddSubscriptionViewModel/isEditing``) the title is "Edit subscription" and a
@@ -94,11 +95,10 @@ public struct AddSubscriptionView: View {
                         .accessibilityIdentifier("addSubscription.period")
                     }
                     field(.renewalDay) {
-                        Stepper(value: $model.renewalDay, in: Subscription.supportedRenewalDays) {
-                            Text("Renews on day \(model.renewalDay)", bundle: .module)
-                                .foregroundStyle(Color.vademTextPrimary)
-                        }
-                        .accessibilityIdentifier("addSubscription.renewalDay")
+                        DayPickerRow(
+                            title: String(localized: "Renewal day", bundle: .module), day: $model.renewalDay,
+                            range: Subscription.supportedRenewalDays, identifier: "addSubscription.renewalDay"
+                        )
                     }
                     field(.firstMonth) {
                         ChoiceRow(title: String(localized: "First charge month", bundle: .module), value: model.title(of: model.firstMonth)) {

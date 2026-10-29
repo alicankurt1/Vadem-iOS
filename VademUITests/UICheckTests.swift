@@ -183,6 +183,31 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testDayPickerSheet() throws {
+        // #203: gün seçici sayfası (tekerlek + Bitti); AX5'te kırpılmamalı. Sayfa açık kalır, tek bölüm yakalanır.
+        try capture(
+            screen: "day-picker",
+            launchArguments: ["-ui-sample-data", "-ui-add-form"],
+            sections: [.top]
+        ) { app, variant in
+            let row = app.descendants(matching: .any)["addInstallment.paymentDay"]
+            XCTAssertTrue(
+                row.waitForExistence(timeout: 5),
+                "[ui-check] day-picker__\(variant.name): payment day row not found"
+            )
+            row.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["addInstallment.paymentDay.sheet"].waitForExistence(timeout: 5),
+                "[ui-check] day-picker__\(variant.name): day picker sheet not shown"
+            )
+            XCTAssertTrue(
+                app.pickerWheels.firstMatch.waitForExistence(timeout: 5),
+                "[ui-check] day-picker__\(variant.name): wheel not found"
+            )
+        }
+    }
+
     // MARK: Türkçe yakalamalar (#136)
     // Aynı ekranlar Türkçe arayüz ve yerel ayarla açılır; açık modda varsayılan ve AX5 metin boyutu
     // yakalanır. Kesilen/taşan metin erişilebilirlik denetimi ve ekran görüntülerinde görünür.

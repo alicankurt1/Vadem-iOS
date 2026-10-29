@@ -175,11 +175,33 @@ final class FunctionalFlowTests: XCTestCase {
         return target.exists
     }
 
+    /// #203: gün satırına dokunur, sayfadaki tekerlekte `day`'i seçer, Bitti'ye basar ve satırın günü gösterdiğini doğrular.
+    @MainActor
+    private func pickDay(_ day: Int, identifier: String, in app: XCUIApplication) throws {
+        let row = element(identifier, in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "day row \(identifier) not shown")
+        row.tap()
+        XCTAssertTrue(element("\(identifier).sheet", in: app).waitForExistence(timeout: 5), "day picker sheet not shown")
+        let wheel = app.pickerWheels.firstMatch
+        XCTAssertTrue(wheel.waitForExistence(timeout: 5), "day wheel not shown")
+        wheel.adjust(toPickerWheelValue: String(day))
+        let done = element("\(identifier).done", in: app)
+        XCTAssertTrue(done.waitForExistence(timeout: 5), "Done button not shown")
+        done.tap()
+        XCTAssertTrue(
+            element("\(identifier).sheet", in: app).waitForNonExistence(timeout: 5),
+            "day picker sheet must close after Done"
+        )
+        // Satır ChoiceRow: etiket başlık, değer "Day N" / "N. gün".
+        let shown = element(identifier, in: app).value as? String ?? ""
+        XCTAssertTrue(shown.contains(String(day)), "row must show the chosen day \(day), got: \(shown)")
+    }
+
     /// Akışın tüm adımlarını geçer: yalnızca tutar yazılır; sayı 6, kart "kart yok" (son kullanılan yok),
-    /// ilk ay "bu ay", başlık atlanır. `paymentDayIncrements` > 0 ise özetteki "Değiştir" ile gün artırılır.
+    /// ilk ay "bu ay", başlık atlanır. `paymentDay` verilirse özetteki "Değiştir" ile gün seçici sayfasından o gün seçilir.
     /// Kaydet'e basar; sayfa kapanmadan önceki özet kimliklerini doğrular.
     @MainActor
-    private func completeInstallmentFlow(in app: XCUIApplication, amount: String, paymentDayIncrements: Int = 0) throws {
+    private func completeInstallmentFlow(in app: XCUIApplication, amount: String, paymentDay: Int? = nil) throws {
         XCTAssertTrue(element("keypad.display", in: app).waitForExistence(timeout: 10), "amount step not shown")
         let continueButton = app.buttons["flow.continue"]
         XCTAssertFalse(continueButton.isEnabled, "continue must be disabled with no amount")
@@ -214,11 +236,9 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(save.waitForExistence(timeout: 5), "summary not shown")
         XCTAssertTrue(save.isEnabled, "save must be enabled with only the amount typed")
         XCTAssertTrue(element("addInstallmentFlow.summary.paymentDay", in: app).label.contains("12"), "default payment day must be today's day (12)")
-        if paymentDayIncrements > 0 {
+        if let paymentDay {
             element("addInstallmentFlow.changePaymentDay", in: app).tap()
-            let increment = element("addInstallmentFlow.paymentDayStepper-Increment", in: app)
-            XCTAssertTrue(increment.waitForExistence(timeout: 5), "payment day stepper has no increment button")
-            for _ in 0..<paymentDayIncrements { increment.tap() }
+            try pickDay(paymentDay, identifier: "addInstallmentFlow.paymentDayStepper", in: app)
         }
         save.tap()
     }
@@ -233,7 +253,7 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
         add.tap()
         chooseInSheet("installment", in: app)
-        try completeInstallmentFlow(in: app, amount: "1200", paymentDayIncrements: 3)
+        try completeInstallmentFlow(in: app, amount: "1200", paymentDay: 15)
         XCTAssertTrue(add.waitForExistence(timeout: 5), "sheet must be dismissed after saving")
         XCTAssertTrue(scrollToInstallmentRow(in: app), "saved card-less installment not shown on Home")
         let saved = installmentRow(in: app)
@@ -553,14 +573,11 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(chip.waitForExistence(timeout: 5), "title chip not found")
         chip.tap()
 
-        // Özet: "Change" yenileme günü stepper'ını açar.
+        // Özet: "Change" yenileme günü satırını açar; gün sayfadan 20 seçilir.
         let change = app.buttons["subscriptionFlow.changeRenewalDay"]
         XCTAssertTrue(change.waitForExistence(timeout: 5), "summary 'Change' link not found")
         change.tap()
-        XCTAssertTrue(
-            element("subscriptionFlow.renewalDay-Increment", in: app).waitForExistence(timeout: 5),
-            "renewal day stepper not shown after 'Change'"
-        )
+        try pickDay(20, identifier: "subscriptionFlow.renewalDay", in: app)
 
         let save = app.buttons["subscriptionFlow.save"]
         XCTAssertTrue(save.isEnabled, "save must be enabled with only an amount")

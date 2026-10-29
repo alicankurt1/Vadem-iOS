@@ -8,7 +8,9 @@ import VademCore
 ///
 /// Each invalid field shows its error below it (once touched); Save stays disabled while
 /// the form is invalid. No continuous animations, so it is idle under `-ui-static-motion`.
-/// Identifiers: `addInstallment.<field>` for fields and `addInstallment.<field>.error` for errors.
+/// Identifiers: `addInstallment.<field>` for fields and `addInstallment.<field>.error` for errors;
+/// the payment day is a ``DayPickerRow`` (`addInstallment.paymentDay`, sheet `addInstallment.paymentDay.sheet`,
+/// `.picker`, `.done`).
 /// In edit mode (``AddInstallmentViewModel/isEditing``) the title is "Edit installment" and a
 /// Delete button (`addInstallment.delete`) asks for confirmation (`addInstallment.delete.confirm`,
 /// `addInstallment.delete.cancel`) before deleting.
@@ -77,11 +79,10 @@ public struct AddInstallmentView: View {
                     if model.cardID == nil {
                         // Kartsız taksitte vade günü kullanıcıdan gelir; kartlıda karttan.
                         field(.paymentDay) {
-                            Stepper(value: $model.paymentDay, in: InstallmentItem.supportedPaymentDays) {
-                                Text("Paid on day \(model.paymentDay)", bundle: .module)
-                                    .foregroundStyle(Color.vademTextPrimary)
-                            }
-                            .accessibilityIdentifier("addInstallment.paymentDay")
+                            DayPickerRow(
+                                title: String(localized: "Payment day", bundle: .module), day: $model.paymentDay,
+                                range: InstallmentItem.supportedPaymentDays, identifier: "addInstallment.paymentDay"
+                            )
                         }
                     }
                     field(.amount) {
