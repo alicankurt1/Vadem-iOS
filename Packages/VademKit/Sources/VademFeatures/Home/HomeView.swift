@@ -472,19 +472,29 @@ public struct HomeView: View {
                 .accessibilityIdentifier("home.empty")
         case .loaded:
             if !model.hasCards { addCardPrompt }
-            if !model.cardSubtotals.isEmpty {
-                subtotalsSection
-            }
-            if model.rows.isEmpty, let dayText = model.selectedDayText {
-                // Seçili günde ödeme yok; ayın geri kalanı dolu olduğundan "bu ay boş" denmez.
-                messageView(
-                    title: String(localized: "Nothing due on \(dayText)", bundle: .module, comment: "The argument is a day, e.g. 12 October"),
-                    detail: nil, systemImage: "calendar")
-                    .accessibilityIdentifier("home.dayEmpty")
-                showAllButton
+            // Gün seçiliyken o günün ödemeleri takvimin hemen altında, kart toplamlarından önce gelir.
+            if model.selectedDay != nil {
+                paymentsSection
+                if !model.cardSubtotals.isEmpty { subtotalsSection }
             } else {
-                listSection
+                if !model.cardSubtotals.isEmpty { subtotalsSection }
+                paymentsSection
             }
+        }
+    }
+
+    // Ödeme listesi ya da seçili günde ödeme yoksa boş gün mesajı.
+    @ViewBuilder
+    private var paymentsSection: some View {
+        if model.rows.isEmpty, let dayText = model.selectedDayText {
+            // Seçili günde ödeme yok; ayın geri kalanı dolu olduğundan "bu ay boş" denmez.
+            messageView(
+                title: String(localized: "Nothing due on \(dayText)", bundle: .module, comment: "The argument is a day, e.g. 12 October"),
+                detail: nil, systemImage: "calendar")
+                .accessibilityIdentifier("home.dayEmpty")
+            showAllButton
+        } else {
+            listSection
         }
     }
 
