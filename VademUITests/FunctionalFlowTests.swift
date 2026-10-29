@@ -192,7 +192,9 @@ final class FunctionalFlowTests: XCTestCase {
             element("\(identifier).sheet", in: app).waitForNonExistence(timeout: 5),
             "day picker sheet must close after Done"
         )
-        XCTAssertTrue(element(identifier, in: app).label.contains(String(day)), "row must show the chosen day \(day)")
+        // Satır ChoiceRow: etiket başlık, değer "Day N" / "N. gün".
+        let shown = element(identifier, in: app).value as? String ?? ""
+        XCTAssertTrue(shown.contains(String(day)), "row must show the chosen day \(day), got: \(shown)")
     }
 
     /// Akışın tüm adımlarını geçer: yalnızca tutar yazılır; sayı 6, kart "kart yok" (son kullanılan yok),
