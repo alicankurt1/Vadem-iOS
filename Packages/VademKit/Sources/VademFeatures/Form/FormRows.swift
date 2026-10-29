@@ -142,6 +142,8 @@ struct FieldErrorLabel: View {
 struct ChoiceRow: View {
     let title: String
     let value: String
+    // VoiceOver ipucu; varsayılan seçim listesini anlatır, gün seçici kendi ipucunu verir.
+    var hint = Text("Opens a list", bundle: .module)
     let action: () -> Void
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -162,7 +164,7 @@ struct ChoiceRow: View {
         // VoiceOver alan adını etiket, seçili değeri değer olarak okur ("Kart, Everyday card" tek metin değil).
         .accessibilityLabel(title)
         .accessibilityValue(value)
-        .accessibilityHint(Text("Opens a list", bundle: .module))
+        .accessibilityHint(hint)
     }
 
     // Başlık ve değer normal boyutlarda yan yana, erişilebilirlik boyutlarında alt alta durur.

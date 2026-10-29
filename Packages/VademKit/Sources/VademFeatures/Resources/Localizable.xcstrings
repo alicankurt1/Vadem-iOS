@@ -2654,6 +2654,23 @@
         }
       }
     },
+    "Opens a day picker" : {
+      "comment" : "Hint of the day picker row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens a day picker"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gün seçiciyi açar"
+          }
+        }
+      }
+    },
     "Opens a list" : {
       "localizations" : {
         "en" : {
@@ -2749,23 +2766,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödendi"
-          }
-        }
-      }
-    },
-    "Paid on day %lld" : {
-      "comment" : "Installment form stepper without a card: payment day of the month",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paid on day %lld"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Her ayın %lld. günü ödenir"
           }
         }
       }
@@ -3046,6 +3046,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hatırlat"
+          }
+        }
+      }
+    },
+    "Renewal day" : {
+      "comment" : "Day picker row title in subscription forms",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renewal day"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yenilenme günü"
           }
         }
       }

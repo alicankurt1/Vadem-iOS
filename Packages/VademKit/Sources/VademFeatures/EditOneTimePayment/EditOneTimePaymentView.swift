@@ -6,7 +6,8 @@ import VademCore
 ///
 /// Each invalid field shows its error below it (once touched); Save stays disabled while the form is
 /// invalid. Delete asks for confirmation first. No continuous animations, so it is idle under `-ui-static-motion`.
-/// Identifiers: `editOneTime.<field>` for fields (`title`, `amount`, `card`, `dueMonth`, `dueDay`),
+/// Identifiers: `editOneTime.<field>` for fields (`title`, `amount`, `card`, `dueMonth`, `dueDay`;
+/// `dueDay` is a ``DayPickerRow`` with sheet `editOneTime.dueDay.sheet`, `.picker`, `.done`),
 /// `editOneTime.<title|amount|card|dueDate>.error` for errors, `editOneTime.save`, `editOneTime.cancel`,
 /// `editOneTime.failure`, `editOneTime.delete`, `editOneTime.delete.confirm`, `editOneTime.delete.cancel`;
 /// pushed lists use `editOneTime.options` and `editOneTime.option.<index>`.
@@ -85,12 +86,10 @@ public struct EditOneTimePaymentView: View {
                                 choice = .dueMonth
                             }
                             .accessibilityIdentifier("\(Self.identifierPrefix).dueMonth")
-                            Stepper(value: $model.dueDay, in: 1...model.dueMonth.numberOfDays) {
-                                Text("Day \(model.dueDay)", bundle: .module)
-                                    .foregroundStyle(Color.vademTextPrimary)
-                            }
-                            .frame(minHeight: FormLayout.minRowHeight)
-                            .accessibilityIdentifier("\(Self.identifierPrefix).dueDay")
+                            DayPickerRow(
+                                title: String(localized: "Due day", bundle: .module), day: $model.dueDay,
+                                range: 1...model.dueMonth.numberOfDays, identifier: "\(Self.identifierPrefix).dueDay"
+                            )
                         }
                     }
                 }
