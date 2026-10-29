@@ -273,6 +273,57 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["flow.continue"].isEnabled, "the typed amount must be kept")
     }
 
+    /// #204: örnek veride 15 Ekim'de ödeme vardır (Shopping kartı vadesi). Gün seçilince o günün satırı
+    /// "By card" başlığının üstünde olur; seçim kalkınca özgün sıra (kartlar listeden önce) döner.
+    @MainActor
+    func testSelectedDayPaymentsShowAboveByCardAndDeselectRestoresOrder() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+
+        let day = element("home.calendar.day.15", in: app)
+        var attempts = 0
+        while !(day.exists && day.isHittable) && attempts < 8 {
+            app.swipeUp()
+            attempts += 1
+        }
+        XCTAssertTrue(day.exists && day.isHittable, "calendar day 15 not reachable on Home")
+
+        let cards = element("home.cards", in: app)
+        let firstRow = element("home.row.0", in: app)
+
+        // Seçim yokken: kartlar listeden önce.
+        XCTAssertTrue(cards.waitForExistence(timeout: 5), "'By card' header not found")
+        XCTAssertTrue(element("home.list", in: app).exists, "payments header not found")
+        XCTAssertLessThan(
+            cards.frame.minY, element("home.list", in: app).frame.minY,
+            "without a selected day 'By card' must stay above the payments list"
+        )
+
+        day.tap()
+        XCTAssertTrue(firstRow.waitForExistence(timeout: 5), "selected day's payment row not found")
+        XCTAssertTrue(cards.exists, "'By card' header must stay with a selected day")
+        XCTAssertLessThan(
+            firstRow.frame.minY, cards.frame.minY,
+            "selected day's payment row must be above the 'By card' header"
+        )
+        XCTAssertLessThan(
+            element("home.list", in: app).frame.minY, cards.frame.minY,
+            "selected day's list header must be above the 'By card' header"
+        )
+
+        // Aynı güne tekrar dokunmak seçimi kaldırır.
+        var tapAttempts = 0
+        while !(day.exists && day.isHittable) && tapAttempts < 8 {
+            app.swipeDown()
+            tapAttempts += 1
+        }
+        day.tap()
+        XCTAssertTrue(element("home.list", in: app).waitForExistence(timeout: 5), "payments header not found after deselect")
+        XCTAssertLessThan(
+            cards.frame.minY, element("home.list", in: app).frame.minY,
+            "after deselecting the day 'By card' must be above the payments list again"
+        )
+    }
+
     /// #191: örnek veride "Dentist" tek seferlik ödemesi 20 Kasım 2026'dadır (Home Ekim'de açılır);
     /// sonraki aya geçince Home listesinde kartsız satır olarak görünür.
     @MainActor
