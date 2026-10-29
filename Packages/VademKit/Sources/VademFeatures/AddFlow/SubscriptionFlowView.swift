@@ -11,7 +11,7 @@ import VademCore
 /// Identifiers: shared step ones (`flow.*`, `keypad.*`, `cardPicker.*`), `subscriptionFlow.period.chip.<index>`,
 /// `subscriptionFlow.title.chip.<index>`, `subscriptionFlow.skip`, `subscriptionFlow.summary`,
 /// `subscriptionFlow.summary.<amount|period|card|title|renewalDay>`, `subscriptionFlow.changeRenewalDay`,
-/// `subscriptionFlow.renewalDay` (stepper), `subscriptionFlow.failure`, `subscriptionFlow.save`.
+/// `subscriptionFlow.renewalDay` (a ``DayPickerRow``, sheet `subscriptionFlow.renewalDay.sheet`, `.picker`, `.done`), `subscriptionFlow.failure`, `subscriptionFlow.save`.
 @MainActor
 public struct SubscriptionFlowView: View {
     @State private var model: SubscriptionFlowViewModel
@@ -177,13 +177,10 @@ public struct SubscriptionFlowView: View {
     @ViewBuilder
     private var renewalDayRow: some View {
         if model.isChangingRenewalDay {
-            Stepper(value: Bindable(model.form).renewalDay, in: Subscription.supportedRenewalDays) {
-                Text("Renews on day \(model.form.renewalDay)", bundle: .module)
-                    .font(.body)
-                    .foregroundStyle(Color.vademTextPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .accessibilityIdentifier("subscriptionFlow.renewalDay")
+            DayPickerRow(
+                title: String(localized: "Renewal day", bundle: .module), day: Bindable(model.form).renewalDay,
+                range: Subscription.supportedRenewalDays, identifier: "subscriptionFlow.renewalDay"
+            )
         } else {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Renews on day \(model.form.renewalDay)", bundle: .module)

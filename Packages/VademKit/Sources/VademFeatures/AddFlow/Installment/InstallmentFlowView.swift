@@ -12,7 +12,8 @@ import VademCore
 /// `addInstallmentFlow.month.chip.<i>` (This month, Next month, Other), `addInstallmentFlow.monthStepper`,
 /// `addInstallmentFlow.titleField`, `addInstallmentFlow.title.chip.<i>`, `addInstallmentFlow.titleTooLong`,
 /// `addInstallmentFlow.skip`, `addInstallmentFlow.summary.<amount|count|card|firstMonth|paymentDay|title>`,
-/// `addInstallmentFlow.changePaymentDay`, `addInstallmentFlow.paymentDayStepper`, `addInstallmentFlow.save`,
+/// `addInstallmentFlow.changePaymentDay`, `addInstallmentFlow.paymentDayStepper` (a ``DayPickerRow``, sheet
+/// `addInstallmentFlow.paymentDayStepper.sheet`, `.picker`, `.done`), `addInstallmentFlow.save`,
 /// `addInstallmentFlow.failure`; the card step reuses `cardPicker.*`, the keypad `keypad.*`.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
@@ -245,15 +246,12 @@ public struct InstallmentFlowView: View {
             )
             if model.canChangePaymentDay {
                 if model.isChangingPaymentDay {
-                    Stepper(
-                        value: Binding(get: { model.paymentDay }, set: { model.changePaymentDay(to: $0) }),
-                        in: InstallmentItem.supportedPaymentDays
-                    ) {
-                        Text("Paid on day \(model.paymentDay)", bundle: .module)
-                            .foregroundStyle(Color.vademTextPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .accessibilityIdentifier("addInstallmentFlow.paymentDayStepper")
+                    // Kimlik eski adıyla kalır: testler için sabit bir çapa.
+                    DayPickerRow(
+                        title: String(localized: "Payment day", bundle: .module),
+                        day: Binding(get: { model.paymentDay }, set: { model.changePaymentDay(to: $0) }),
+                        range: InstallmentItem.supportedPaymentDays, identifier: "addInstallmentFlow.paymentDayStepper"
+                    )
                 } else {
                     Button {
                         move { model.beginChangingPaymentDay() }

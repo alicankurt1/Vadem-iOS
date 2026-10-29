@@ -12,7 +12,8 @@ import VademCore
 /// No continuous animations; step changes are not animated under Reduce Motion or `-ui-static-motion`.
 /// Identifiers: shared step ones (`flow.*`, `keypad.*`, `cardPicker.*`),
 /// `oneTimeFlow.date.chip.<index>` (Today, Tomorrow, Pick a date), `oneTimeFlow.monthStepper`,
-/// `oneTimeFlow.dayStepper`, `oneTimeFlow.titleField`, `oneTimeFlow.title.chip.<index>`,
+/// `oneTimeFlow.dayStepper` (a ``DayPickerRow``, sheet `oneTimeFlow.dayStepper.sheet`, `.picker`, `.done`),
+/// `oneTimeFlow.titleField`, `oneTimeFlow.title.chip.<index>`,
 /// `oneTimeFlow.titleTooLong`, `oneTimeFlow.skip`, `oneTimeFlow.summary`,
 /// `oneTimeFlow.summary.<amount|date|card|title>`, `oneTimeFlow.failure`, `oneTimeFlow.save`.
 @MainActor
@@ -97,7 +98,7 @@ public struct OneTimeFlowView: View {
                 move { model.chooseDate(choice) }
             }
             if model.dateChoice == .pick {
-                // "Tarih seç": bugünün çevresindeki aylar ve ayın günleri arasında iki sayaç.
+                // "Tarih seç": bugünün çevresindeki aylar ve ayın günleri: ay için sayaç, gün için gün seçici satırı.
                 VStack(alignment: .leading, spacing: 12) {
                     Stepper(
                         value: Binding(get: { model.dueMonthIndex }, set: { model.setDueMonthIndex($0) }),
@@ -108,15 +109,12 @@ public struct OneTimeFlowView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .accessibilityIdentifier("oneTimeFlow.monthStepper")
-                    Stepper(
-                        value: Binding(get: { model.dueDay }, set: { model.setDueDay($0) }),
-                        in: 1...model.dueMonth.numberOfDays
-                    ) {
-                        Text("Day \(model.dueDay)", bundle: .module)
-                            .foregroundStyle(Color.vademTextPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .accessibilityIdentifier("oneTimeFlow.dayStepper")
+                    // Kimlik eski adıyla kalır: testler için sabit bir çapa.
+                    DayPickerRow(
+                        title: String(localized: "Due day", bundle: .module),
+                        day: Binding(get: { model.dueDay }, set: { model.setDueDay($0) }),
+                        range: 1...model.dueMonth.numberOfDays, identifier: "oneTimeFlow.dayStepper"
+                    )
                 }
                 .padding(16)
                 .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
