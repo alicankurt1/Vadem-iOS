@@ -40,7 +40,7 @@ public enum AddFlowKind: String, CaseIterable, Sendable, Identifiable {
 
     /// `true` when picking this kind closes the sheet and opens an existing form;
     /// `false` when its flow runs inside the sheet (Installment: ``InstallmentFlowView``; Subscription's quick steps;
-    /// Payment, for now a placeholder step).
+    /// Payment: ``OneTimeFlowView``).
     public var opensExistingForm: Bool {
         switch self {
         case .installment, .subscription, .payment: false

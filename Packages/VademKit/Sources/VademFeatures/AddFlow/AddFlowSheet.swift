@@ -7,13 +7,13 @@ import SwiftUI
 /// the sheet and opens that form. Installment runs the ``InstallmentFlowView`` inside the sheet
 /// (a new ``InstallmentFlowViewModel`` from `makeInstallmentFlow` each time; Save closes the sheet).
 /// Subscription runs inside the sheet as a ``SubscriptionFlowView`` (back on its first step returns to the
-/// three buttons). Payment runs inside the sheet too: for now one "coming soon"
-/// ``FlowStepContainer`` step whose back button returns to the three buttons.
+/// three buttons). Payment runs inside the sheet as a ``OneTimeFlowView`` (a new ``OneTimeFlowViewModel``
+/// from `makeOneTimeFlow` each time; back on its first step returns to the three buttons, Save closes the sheet).
 /// The content scrolls and the sheet always opens at full height: with `presentationDetents`
 /// (medium or even large only) the accessibility audit reported every multi-word text as clipped.
 /// Each kind button reads its visible title and subtitle together (no custom label).
-/// Identifiers: `add.sheet.title`, `add.sheet.close`, `add.sheet.<kind>` (``AddFlowKind/accessibilityIdentifier``),
-/// `add.sheet.comingSoon`. No continuous animations, so it is idle under `-ui-static-motion`.
+/// Identifiers: `add.sheet.title`, `add.sheet.close`, `add.sheet.<kind>` (``AddFlowKind/accessibilityIdentifier``).
+/// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
 public struct AddFlowSheet: View {
     /// The launch argument that opens Home with this sheet already presented (UI check).
@@ -22,6 +22,7 @@ public struct AddFlowSheet: View {
     private let onSelect: (AddFlowKind) -> Void
     private let makeInstallmentFlow: (() -> InstallmentFlowViewModel)?
     private let makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)?
+    private let makeOneTimeFlow: (() -> OneTimeFlowViewModel)?
     private let makeAddCardModel: (() -> AddCardViewModel)?
     // Sayfada süren abonelik akışının modeli; Abonelik seçilince kurulur.
     @State private var subscriptionFlow: SubscriptionFlowViewModel?
@@ -29,6 +30,8 @@ public struct AddFlowSheet: View {
     @State private var inlineKind: AddFlowKind?
     // Süren taksit akışının modeli; her seçimde yenisi kurulur.
     @State private var installmentFlow: InstallmentFlowViewModel?
+    // Süren tek seferlik ödeme akışının modeli; her seçimde yenisi kurulur.
+    @State private var oneTimeFlow: OneTimeFlowViewModel?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -39,16 +42,20 @@ public struct AddFlowSheet: View {
     ///
     /// `makeSubscriptionFlow` and `makeAddCardModel` back the subscription flow; without them
     /// Subscription goes to `onSelect` like a kind that opens an existing form.
+    /// `makeOneTimeFlow` creates the model of the in-sheet one-time payment flow (Payment); without it
+    /// Payment goes to `onSelect`.
     /// In debug builds, ``InstallmentFlowView/launchArgument`` starts with the installment flow running.
     public init(
         makeInstallmentFlow: (() -> InstallmentFlowViewModel)? = nil,
         makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)? = nil,
         makeAddCardModel: (() -> AddCardViewModel)? = nil,
+        makeOneTimeFlow: (() -> OneTimeFlowViewModel)? = nil,
         onSelect: @escaping (AddFlowKind) -> Void
     ) {
         self.makeInstallmentFlow = makeInstallmentFlow
         self.makeSubscriptionFlow = makeSubscriptionFlow
         self.makeAddCardModel = makeAddCardModel
+        self.makeOneTimeFlow = makeOneTimeFlow
         self.onSelect = onSelect
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains(InstallmentFlowView.launchArgument), let makeInstallmentFlow {
@@ -67,8 +74,13 @@ public struct AddFlowSheet: View {
                     onClose: { dismiss() },
                     onSaved: { dismiss() }
                 )
-            } else if inlineKind == .payment {
-                paymentPlaceholder
+            } else if inlineKind == .payment, let oneTimeFlow {
+                OneTimeFlowView(
+                    model: oneTimeFlow,
+                    onExit: { showChooser() },
+                    onClose: { dismiss() },
+                    onSaved: { dismiss() }
+                )
             } else if inlineKind == .subscription, let subscriptionFlow, let makeAddCardModel {
                 SubscriptionFlowView(model: subscriptionFlow, makeAddCardModel: makeAddCardModel) {
                     withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
@@ -92,6 +104,15 @@ public struct AddFlowSheet: View {
             // Her seçimde yeni akış: önceki yarım kalan girişler taşınmaz.
             subscriptionFlow = makeSubscriptionFlow()
         }
+        if kind == .payment {
+            // Fabrika verilmediyse seçim sunucuya bırakılır.
+            guard let makeOneTimeFlow else {
+                onSelect(kind)
+                return
+            }
+            // Her seçimde yeni akış: önceki yarım kalan girişler taşınmaz.
+            oneTimeFlow = makeOneTimeFlow()
+        }
         if kind.opensExistingForm {
             onSelect(kind)
         } else {
@@ -108,6 +129,7 @@ public struct AddFlowSheet: View {
         withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
             inlineKind = nil
             installmentFlow = nil
+            oneTimeFlow = nil
         }
     }
 
@@ -198,36 +220,6 @@ public struct AddFlowSheet: View {
         // denetim metni "kırpılmış" sayıyor.
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(kind.accessibilityIdentifier)
-    }
-
-    // Ödeme akışı henüz yok: akış kabuğunda tek adımlık "yakında" ekranı.
-    private var paymentPlaceholder: some View {
-        FlowStepContainer(
-            title: AddFlowKind.payment.title, stepNumber: 1, stepCount: 1,
-            onBack: {
-                withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
-                    inlineKind = nil
-                }
-            },
-            onClose: { dismiss() }
-        ) {
-            // İki metin ayrı öğe: birleşik etiket ikinci metnin çerçevesiyle ölçülüp "kırpılmış" sayılıyordu.
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Coming soon", bundle: .module)
-                    .font(.headline)
-                    .foregroundStyle(Color.vademTextPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text("Adding a one-off payment is coming soon.", bundle: .module)
-                    .font(.body)
-                    .foregroundStyle(Color.vademTextSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .multilineTextAlignment(.leading)
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("add.sheet.comingSoon")
-        }
     }
 }
 

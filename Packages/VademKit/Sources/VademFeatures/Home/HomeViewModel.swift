@@ -294,6 +294,28 @@ public final class HomeViewModel {
         }
     }
 
+    /// A new one-time payment add flow on the same repository, with today's month and day and the
+    /// last used card (``LastUsedCardStore``) preselected; a save remembers the chosen card there.
+    ///
+    /// `start` and `amount` open the flow at a later step with an amount (UI check).
+    /// Call ``reload()`` after it saves, so the new payment shows.
+    public func makeOneTimeFlowModel(
+        start: OneTimeFlowStep = .amount, amount: Decimal? = nil, locale: Locale = .current
+    ) -> OneTimeFlowViewModel {
+        makeOneTimeFlowModel(start: start, amount: amount, lastUsedCardID: lastUsedCard.cardID, locale: locale)
+    }
+
+    /// Like ``makeOneTimeFlowModel(start:amount:locale:)`` but preselects `lastUsedCardID` (UI check).
+    func makeOneTimeFlowModel(
+        start: OneTimeFlowStep, amount: Decimal?, lastUsedCardID: Card.ID?, locale: Locale = .current
+    ) -> OneTimeFlowViewModel {
+        OneTimeFlowViewModel(
+            repository: repository, todayMonth: todayMonth, todayDay: todayDay,
+            lastUsedCardID: lastUsedCardID, lastUsedCard: lastUsedCard,
+            start: start, amount: amount, locale: locale
+        )
+    }
+
     /// A new add-card form on the same repository.
     ///
     /// Call ``reload()`` after it saves, so ``hasCards`` and the card names update.
@@ -320,6 +342,19 @@ public final class HomeViewModel {
     public func makeEditSubscriptionModel(id: SubscriptionItem.ID, locale: Locale = .current) -> AddSubscriptionViewModel? {
         guard let item = (try? repository.subscriptions())?.first(where: { $0.id == id }) else { return nil }
         return AddSubscriptionViewModel(repository: repository, editing: item, locale: locale)
+    }
+
+    /// An edit form for the one-time payment with `id`, or `nil` when it is not saved or cannot be loaded.
+    ///
+    /// Call ``reload()`` after it saves or deletes.
+    public func makeEditOneTimeModel(id: OneTimePaymentItem.ID, locale: Locale = .current) -> EditOneTimePaymentViewModel? {
+        guard let item = (try? repository.oneTimePayments())?.first(where: { $0.id == id }) else { return nil }
+        return EditOneTimePaymentViewModel(repository: repository, editing: item, locale: locale)
+    }
+
+    /// The ids of every saved one-time payment, in the repository's order; empty when they cannot be loaded.
+    func oneTimePaymentIDs() -> [OneTimePaymentItem.ID] {
+        ((try? repository.oneTimePayments()) ?? []).map(\.id)
     }
 
     /// An edit form for the card with `id`, or `nil` when it is not saved or cannot be loaded.
