@@ -36,6 +36,23 @@ struct TokenContrastTests {
         Pair(foreground: "heroText", background: "hero"),
         Pair(foreground: "heroSecondary", background: "hero"),
         Pair(foreground: "onAccent", background: "accent"),
+        // Ortam arka planı (#209): metin renkleri her sekmenin tonu üzerinde AA'yı korur.
+        Pair(foreground: "textPrimary", background: "ambientHome"),
+        Pair(foreground: "textSecondary", background: "ambientHome"),
+        Pair(foreground: "brand", background: "ambientHome"),
+        Pair(foreground: "paid", background: "ambientHome"),
+        Pair(foreground: "textPrimary", background: "ambientAnalytics"),
+        Pair(foreground: "textSecondary", background: "ambientAnalytics"),
+        Pair(foreground: "brand", background: "ambientAnalytics"),
+        Pair(foreground: "paid", background: "ambientAnalytics"),
+        Pair(foreground: "textPrimary", background: "ambientCards"),
+        Pair(foreground: "textSecondary", background: "ambientCards"),
+        Pair(foreground: "brand", background: "ambientCards"),
+        Pair(foreground: "paid", background: "ambientCards"),
+        Pair(foreground: "textPrimary", background: "ambientSettings"),
+        Pair(foreground: "textSecondary", background: "ambientSettings"),
+        Pair(foreground: "brand", background: "ambientSettings"),
+        Pair(foreground: "paid", background: "ambientSettings"),
     ]
 
     @Test("Pair meets WCAG AA (4.5:1) in light and dark", arguments: pairs)
