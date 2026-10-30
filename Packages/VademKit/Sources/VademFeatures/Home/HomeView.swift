@@ -1,48 +1,34 @@
 import SwiftUI
 import VademCore
 
-/// The Home screen: how much is due in the selected month, per card, and when.
+/// The Home screen ("This month" tab of the ``AppTabShell``): how much is due in the selected month,
+/// per card, and when.
 ///
-/// The app's "Vadem" title and version label sit at the top, above the month. Below the month
+/// Shown inside the shell's `NavigationStack` (the "Vadem" title is in its bar). Below the month
 /// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
-/// (`home.add`) that opens the ``AddFlowSheet`` (Installment, Subscription and Payment run their quick steps
-/// in the sheet) and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
+/// (`home.add`, shown when `onAdd` is given) that calls `onAdd` (the shell opens the ``AddFlowSheet``)
+/// and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode (a one-time payment opens the
-/// ``EditOneTimePaymentView``); tapping a card
-/// subtotal (`home.card.<index>`) opens the card's edit form. Home reloads when a form closes.
-/// A gear button next to the title (`home.settings`) opens the ``SettingsView`` sheet.
-/// On iOS 26+, a sparkles button next to Analytics (`home.assistant`) pushes the ``AssistantView``
+/// ``EditOneTimePaymentView``); tapping a card subtotal (`home.card.<index>`) opens the card's edit form.
+/// When a form closes, `onDataChanged` runs (``HomeViewModel/reloadAfterChange()`` when `nil`).
+/// On iOS 26+, a sparkles button (`home.assistant`) pushes the ``AssistantView``
 /// unless ``HomeViewModel/showsAssistant`` is `false`.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
 public struct HomeView: View {
     @State private var model: HomeViewModel
-    // Açık ekleme formunun modeli; nil iken sayfa kapalı.
+    // Açık taksit düzenleme formunun modeli; nil iken sayfa kapalı.
     @State private var addModel: AddInstallmentViewModel?
-    // Açık kart formunun modeli; nil iken sayfa kapalı.
+    // Açık kart formunun modeli (ekleme veya düzenleme); nil iken sayfa kapalı.
     @State private var addCardModel: AddCardViewModel?
-    // Açık abonelik formunun modeli; nil iken sayfa kapalı.
+    // Açık abonelik düzenleme formunun modeli; nil iken sayfa kapalı.
     @State private var addSubscriptionModel: AddSubscriptionViewModel?
     // Açık tek seferlik ödeme düzenleme formunun modeli; nil iken sayfa kapalı.
     @State private var editOneTimeModel: EditOneTimePaymentViewModel?
-    // Açık ayarlar sayfasının modeli; nil iken sayfa kapalı.
-    @State private var settingsModel: SettingsViewModel?
-    // Açık Analytics ekranının modeli; nil iken ekran itilmemiştir.
-    @State private var analyticsModel: AnalyticsViewModel?
     // Açık asistan ekranının modeli; nil iken ekran itilmemiştir. Kapanınca sohbet atılır.
     @State private var assistantModel: AssistantViewModel?
-    // "Ekle" sayfası açık mı.
-    @State private var isAddSheetPresented: Bool
-    // Ekle sayfasında seçilen tür; sayfa kapanınca o türün formu açılır.
-    @State private var pendingAddKind: AddFlowKind?
-    #if DEBUG
-    // UI kontrolü için açılan ortak adım galerisinin başlangıç adımı; nil iken kapalı.
-    @State private var addFlowGalleryStep: AddFlowGalleryStep?
-    // UI kontrolü için doğrudan bir adımında açılan abonelik akışı; nil iken kapalı.
-    @State private var subscriptionFlowModel: SubscriptionFlowViewModel?
-    // UI kontrolü için doğrudan bir adımında açılan tek seferlik ödeme akışı; nil iken kapalı.
-    @State private var oneTimeFlowModel: OneTimeFlowViewModel?
-    #endif
+    private let onAdd: (() -> Void)?
+    private let onDataChanged: (() -> Void)?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
@@ -52,71 +38,29 @@ public struct HomeView: View {
     // Takvim düğmesinin kaydırma hedefi.
     private static let calendarAnchor = "home.calendarAnchor"
 
-    /// Creates the screen for `model`.
+    /// Creates the screen for `model`; `onAdd` is the hero's "Add" action (hidden when `nil`) and
+    /// `onDataChanged` runs when a form closes (``HomeViewModel/reloadAfterChange()`` when `nil`).
     ///
-    /// In debug builds, ``AddInstallmentView/launchArgument`` opens the add form right away
-    /// (with every error shown under ``AddInstallmentView/errorsLaunchArgument``), for the UI check.
-    /// ``AddCardView/launchArgument`` does the same for the add-card form
-    /// (errors: ``AddCardView/errorsLaunchArgument``), and ``AddSubscriptionView/launchArgument``
-    /// for the add-subscription form (errors: ``AddSubscriptionView/errorsLaunchArgument``).
-    /// ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument`` and
-    /// ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
-    /// month in its edit form. ``SettingsView/launchArgument`` (or ``SettingsView/deniedLaunchArgument``)
-    /// opens the settings sheet; ``CardListView/launchArgument`` (or ``CardListView/emptyLaunchArgument``)
-    /// opens it with the Cards screen pushed, ``PrivacyPolicyView/launchArgument`` with the privacy policy
-    /// pushed. ``AnalyticsView/launchArgument`` pushes the Analytics screen and
-    /// ``AssistantView/launchArgument`` the assistant chat. ``AddFlowSheet/launchArgument``
-    /// (`-ui-add-sheet`) opens the Add sheet, ``InstallmentFlowView/launchArgument``
-    /// (`-ui-add-installment-flow`) opens it running the installment flow; ``AddFlowGalleryStep/launchArgument``
-    /// (`-ui-add-flow-keypad`, `-ui-add-flow-chips`, `-ui-add-flow-card`, debug only) opens the
-    /// ``AddFlowGalleryView`` at that shared step, with the first card as the last used one.
-    /// ``SubscriptionFlowStep/launchArgument`` (`-ui-add-subscription-flow-<step>`, debug only) opens the
-    /// ``SubscriptionFlowView`` at that step, with the first card as the last used one and, after the
-    /// amount step, a ₺149,90 amount. ``OneTimeFlowStep/launchArgument`` (`-ui-add-onetime-flow-<step>`,
-    /// debug only) does the same for the ``OneTimeFlowView`` (amount ₺1.500 after the amount step), and
-    /// ``EditOneTimePaymentView/editLaunchArgument`` (`-ui-edit-onetime`) opens the first saved one-time
-    /// payment in its edit form.
-    public init(model: HomeViewModel) {
+    /// In debug builds, ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument``
+    /// and ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
+    /// month in its edit form, ``EditOneTimePaymentView/editLaunchArgument`` (`-ui-edit-onetime`) the
+    /// first saved one-time payment, and ``AssistantView/launchArgument`` pushes the assistant chat.
+    /// The add forms and flows are opened by the ``AppTabShell``.
+    public init(model: HomeViewModel, onAdd: (() -> Void)? = nil, onDataChanged: (() -> Void)? = nil) {
         _model = State(initialValue: model)
-        var initialAddSheetPresented = false
+        self.onAdd = onAdd
+        self.onDataChanged = onDataChanged
         var initialAddModel: AddInstallmentViewModel?
         var initialAddCardModel: AddCardViewModel?
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
         var initialEditOneTimeModel: EditOneTimePaymentViewModel?
-        var initialSettingsModel: SettingsViewModel?
-        var initialAnalyticsModel: AnalyticsViewModel?
         var initialAssistantModel: AssistantViewModel?
         #if DEBUG
-        var initialAddFlowGalleryStep: AddFlowGalleryStep?
-        var initialSubscriptionFlowModel: SubscriptionFlowViewModel?
-        var initialOneTimeFlowModel: OneTimeFlowViewModel?
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains(AnalyticsView.launchArgument) {
-            initialAnalyticsModel = model.makeAnalyticsModel()
-        } else if arguments.contains(AssistantView.launchArgument) {
-            // İki ekran aynı anda itilemez; Analytics önceliklidir.
+        if arguments.contains(AssistantView.launchArgument) {
             initialAssistantModel = model.makeAssistantModel()
         }
-        if arguments.contains(AddInstallmentView.launchArgument) {
-            let addModel = model.makeAddInstallmentModel()
-            if arguments.contains(AddInstallmentView.errorsLaunchArgument) {
-                addModel.showAllErrors()
-            }
-            initialAddModel = addModel
-        } else if arguments.contains(AddCardView.launchArgument) {
-            // İki sayfa aynı anda açılamaz; taksit formu önceliklidir.
-            let addCardModel = model.makeAddCardModel()
-            if arguments.contains(AddCardView.errorsLaunchArgument) {
-                addCardModel.showAllErrors()
-            }
-            initialAddCardModel = addCardModel
-        } else if arguments.contains(AddSubscriptionView.launchArgument) {
-            let addSubscriptionModel = model.makeAddSubscriptionModel()
-            if arguments.contains(AddSubscriptionView.errorsLaunchArgument) {
-                addSubscriptionModel.showAllErrors()
-            }
-            initialAddSubscriptionModel = addSubscriptionModel
-        } else if arguments.contains(AddInstallmentView.editLaunchArgument) {
+        if arguments.contains(AddInstallmentView.editLaunchArgument) {
             // Ayın ilk taksiti düzenleme modunda açılır.
             initialAddModel = model.rows.lazy
                 .filter { $0.entry.kind != .subscription }
@@ -134,155 +78,59 @@ public struct HomeView: View {
                 .first
         } else if arguments.contains(AddCardView.editLaunchArgument) {
             initialAddCardModel = model.cardSubtotals.first.flatMap { model.makeEditCardModel(id: $0.id) }
-        } else if arguments.contains(SettingsView.launchArgument)
-                    || arguments.contains(SettingsView.deniedLaunchArgument)
-                    || arguments.contains(CardListView.launchArgument)
-                    || arguments.contains(CardListView.emptyLaunchArgument)
-                    || arguments.contains(PrivacyPolicyView.launchArgument) {
-            initialSettingsModel = model.makeSettingsModel()
-        } else if arguments.contains(AddFlowSheet.launchArgument)
-                    || arguments.contains(InstallmentFlowView.launchArgument) {
-            initialAddSheetPresented = true
-        } else if let step = SubscriptionFlowStep.step(in: arguments) {
-            // Kart adımında bir seçim görünsün diye ilk kart son kullanılan sayılır.
-            model.lastUsedCardID = model.pickerCards().first?.id
-            // Tutar adımından sonraki adımlar örnek bir tutarla açılır (Decimal, Double değil).
-            initialSubscriptionFlowModel = model.makeSubscriptionFlowModel(
-                start: step, amount: step == .amount ? nil : Decimal(14990) / 100
-            )
-        } else if let step = OneTimeFlowStep.step(in: arguments) {
-            // Kart adımında bir seçim görünsün diye ilk kart son kullanılan sayılır; tutar Decimal.
-            initialOneTimeFlowModel = model.makeOneTimeFlowModel(
-                start: step, amount: step == .amount ? nil : Decimal(1_500),
-                lastUsedCardID: model.pickerCards().first?.id
-            )
-        } else {
-            initialAddFlowGalleryStep = AddFlowGalleryStep.step(in: arguments)
         }
-        _addFlowGalleryStep = State(initialValue: initialAddFlowGalleryStep)
-        _subscriptionFlowModel = State(initialValue: initialSubscriptionFlowModel)
-        _oneTimeFlowModel = State(initialValue: initialOneTimeFlowModel)
         #endif
-        _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
         _editOneTimeModel = State(initialValue: initialEditOneTimeModel)
-        _settingsModel = State(initialValue: initialSettingsModel)
-        _analyticsModel = State(initialValue: initialAnalyticsModel)
         _assistantModel = State(initialValue: initialAssistantModel)
     }
 
     public var body: some View {
-        // NavigationStack çubuğu verir; içerik saatin altına girmez.
-        NavigationStack {
-            scrollContent
-                .toolbar {
-                    // Asistan düğmesi yalnızca iOS 26+ ve motor desteklenen bir sistemdeyken görünür.
-                    if Self.isAssistantOS, model.showsAssistant {
-                        ToolbarItem(placement: .primaryAction) { assistantButton }
-                    }
-                    ToolbarItem(placement: .primaryAction) { analyticsButton }
-                    ToolbarItem(placement: .primaryAction) { settingsButton }
+        scrollContent
+            .toolbar {
+                // Asistan düğmesi yalnızca iOS 26+ ve motor desteklenen bir sistemdeyken görünür.
+                if Self.isAssistantOS, model.showsAssistant {
+                    ToolbarItem(placement: .primaryAction) { assistantButton }
                 }
-                // Başlık çubukta: sistem başlığı başlık (header) olarak okur ve AX5'te de kırpmaz.
-                .navigationTitle(Text("Vadem", bundle: .module))
-                .navigationDestination(isPresented: assistantPresented) {
-                    if let assistantModel {
-                        AssistantView(model: assistantModel)
-                    }
-                }
-                // Grafik ekranı itilir (sekme değil); geri düğmesi Home'a döner.
-                .navigationDestination(isPresented: analyticsPresented) {
-                    if let analyticsModel {
-                        AnalyticsView(model: analyticsModel, onAddPayment: addPaymentFromAnalytics)
-                    }
-                }
-                // Kart formu kapanınca Home yeniden yüklenir; yeni kart ve "kart ekle" girişi güncellenir.
-                .sheet(item: $addCardModel, onDismiss: reloadAfterForm) { addCardModel in
-                    AddCardView(model: addCardModel)
-                }
-                #if os(iOS)
-                .navigationBarTitleDisplayMode(.inline)
-                // Galeri gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
-                .toolbarColorScheme(colorScheme, for: .navigationBar)
-                .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
-                #endif
-        }
-        // Form kapanınca (kaydedilse de iptal edilse de) Home yeniden yüklenir; yeni ödeme hemen görünür.
-        .sheet(item: $addModel, onDismiss: reloadAfterForm) { addModel in
-            AddInstallmentView(model: addModel)
-        }
-        .sheet(item: $addSubscriptionModel, onDismiss: reloadAfterForm) { addSubscriptionModel in
-            AddSubscriptionView(model: addSubscriptionModel)
-        }
-        .sheet(item: $editOneTimeModel, onDismiss: reloadAfterForm) { editOneTimeModel in
-            EditOneTimePaymentView(model: editOneTimeModel)
-        }
-        // Ayarlar'daki Kartlar ekranı kartları değiştirebilir; sayfa kapanınca Home yeniden yüklenir.
-        .sheet(item: $settingsModel, onDismiss: reloadAfterForm) { settingsModel in
-            SettingsView(model: settingsModel)
-        }
-        // Ekle sayfası: seçilen formu sayfa tamamen kapandıktan sonra açar (iki sayfa üst üste açılamaz).
-        // Sayfa içindeki akış kaydetmiş olabilir; sayfa kapanınca Home yeniden yüklenir.
-        .sheet(isPresented: $isAddSheetPresented, onDismiss: addSheetDismissed) {
-            AddFlowSheet(
-                makeInstallmentFlow: { model.makeInstallmentFlowModel() },
-                makeSubscriptionFlow: { model.makeSubscriptionFlowModel() },
-                makeAddCardModel: model.makeAddCardModel,
-                makeOneTimeFlow: { model.makeOneTimeFlowModel() }
-            ) { kind in
-                pendingAddKind = kind
-                isAddSheetPresented = false
             }
-        }
-        #if DEBUG
-        // Yeni kart eklenmiş olabilir; galeri kapanınca Home yeniden yüklenir.
-        .sheet(item: $addFlowGalleryStep, onDismiss: reloadAfterForm) { step in
-            AddFlowGalleryView(
-                start: step, cards: model.pickerCards(), lastUsedCardID: model.pickerCards().first?.id,
-                makeAddCardModel: model.makeAddCardModel
-            )
-        }
-        .sheet(item: $subscriptionFlowModel, onDismiss: reloadAfterForm) { flowModel in
-            SubscriptionFlowView(model: flowModel, makeAddCardModel: model.makeAddCardModel)
-        }
-        .sheet(item: $oneTimeFlowModel, onDismiss: reloadAfterForm) { flowModel in
-            OneTimeFlowView(model: flowModel)
-        }
-        #endif
+            // Başlık çubukta: sistem başlığı başlık (header) olarak okur ve AX5'te de kırpmaz.
+            .navigationTitle(Text("Vadem", bundle: .module))
+            .navigationDestination(isPresented: assistantPresented) {
+                if let assistantModel {
+                    AssistantView(model: assistantModel)
+                }
+            }
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            // Galeri gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
+            .toolbarColorScheme(colorScheme, for: .navigationBar)
+            .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            #endif
+            // Form kapanınca (kaydedilse de iptal edilse de) veri yeniden yüklenir; değişiklik hemen görünür.
+            .sheet(item: $addCardModel, onDismiss: reloadAfterForm) { addCardModel in
+                AddCardView(model: addCardModel)
+            }
+            .sheet(item: $addModel, onDismiss: reloadAfterForm) { addModel in
+                AddInstallmentView(model: addModel)
+            }
+            .sheet(item: $addSubscriptionModel, onDismiss: reloadAfterForm) { addSubscriptionModel in
+                AddSubscriptionView(model: addSubscriptionModel)
+            }
+            .sheet(item: $editOneTimeModel, onDismiss: reloadAfterForm) { editOneTimeModel in
+                EditOneTimePaymentView(model: editOneTimeModel)
+            }
     }
 
-    // Ekle sayfası kapanınca Home yenilenir, sonra (seçildiyse) türün mevcut formu açılır.
-    private func addSheetDismissed() {
-        reloadAfterForm()
-        openPendingAddForm()
-    }
-
-    // Ekle sayfasında seçilen türün mevcut formu açılır; sayfa seçimsiz kapandıysa bir şey olmaz.
-    private func openPendingAddForm() {
-        defer { pendingAddKind = nil }
-        switch pendingAddKind {
-        case .subscription:
-            addSubscriptionModel = model.makeAddSubscriptionModel()
-        case .installment, .payment, nil:
-            // Taksit akışı sayfanın içinde kaydeder; yeni ödeme hemen görünsün diye Home yeniden yüklenir.
-            reloadAfterForm()
-        }
-    }
-
-    // Form kapanınca Home ve (açıksa) Analytics yeniden yüklenir.
+    // Form kapanınca kabuk tüm sekmeleri yeniler; kabuk yoksa yalnızca Home.
     private func reloadAfterForm() {
-        model.reloadAfterChange()
-        analyticsModel?.reload()
-    }
-
-    private var analyticsPresented: Binding<Bool> {
-        Binding(
-            get: { analyticsModel != nil },
-            set: { if !$0 { analyticsModel = nil } }
-        )
+        if let onDataChanged {
+            onDataChanged()
+        } else {
+            model.reloadAfterChange()
+        }
     }
 
     private var assistantPresented: Binding<Bool> {
@@ -311,30 +159,6 @@ public struct HomeView: View {
         }
         .accessibilityLabel(Text("Assistant", bundle: .module))
         .accessibilityIdentifier("home.assistant")
-    }
-
-    // Boş grafik ekranından ödeme ekleme: kart yoksa önce kart formu açılır. Sayfa Analytics'in üstünde açılır.
-    private func addPaymentFromAnalytics() {
-        if model.hasCards {
-            addModel = model.makeAddInstallmentModel()
-        } else {
-            addCardModel = model.makeAddCardModel()
-        }
-    }
-
-    // Araç çubuğundaki grafik düğmesi: Analytics ekranını açar.
-    private var analyticsButton: some View {
-        Button {
-            analyticsModel = model.makeAnalyticsModel()
-        } label: {
-            Image(systemName: "chart.bar")
-                .foregroundStyle(Color.vademTextPrimary)
-                // En az 44 pt dokunma alanı.
-                .frame(minWidth: 44, minHeight: 44)
-                .contentShape(.rect)
-        }
-        .accessibilityLabel(Text("Analytics", bundle: .module))
-        .accessibilityIdentifier("home.analytics")
     }
 
     private var scrollContent: some View {
@@ -380,7 +204,9 @@ public struct HomeView: View {
             total: model.total, paid: model.dueSoFar,
             captionPrefix: String(localized: "Due so far", bundle: .module), summaryIdentifier: "home.total"
         ) {
-            addButton
+            if let onAdd {
+                addButton(onAdd)
+            }
             // Takvim gizliyken (hata durumu) kaydırılacak yer yok; düğme de gösterilmez.
             if !model.calendarDays.isEmpty {
                 Button {
@@ -400,30 +226,13 @@ public struct HomeView: View {
     }
 
     // "Add" ekleme sayfasını açar: taksit, abonelik ya da ödeme orada seçilir.
-    private var addButton: some View {
-        Button {
-            isAddSheetPresented = true
-        } label: {
+    private func addButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") }
         }
         .buttonStyle(.heroPill)
         .accessibilityLabel(Text("Add payment", bundle: .module))
         .accessibilityIdentifier("home.add")
-    }
-
-    // Araç çubuğundaki dişli: ayarlar sayfasını açar.
-    private var settingsButton: some View {
-        Button {
-            settingsModel = model.makeSettingsModel()
-        } label: {
-            Image(systemName: "gearshape")
-                .foregroundStyle(Color.vademTextPrimary)
-                // En az 44 pt dokunma alanı.
-                .frame(minWidth: 44, minHeight: 44)
-                .contentShape(.rect)
-        }
-        .accessibilityLabel(Text("Settings", bundle: .module))
-        .accessibilityIdentifier("home.settings")
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
@@ -942,12 +751,16 @@ struct HomeRowView: View {
 
 #if DEBUG
 #Preview("Sample") {
-    HomeView(model: HomeSampleData.makeViewModel())
+    NavigationStack {
+        HomeView(model: HomeSampleData.makeViewModel(), onAdd: {})
+    }
 }
 
 #Preview("Empty") {
-    HomeView(model: HomeViewModel(
-        repository: InMemoryPaymentRepository(), today: HomeSampleData.today, calendar: HomeSampleData.calendar
-    ))
+    NavigationStack {
+        HomeView(model: HomeViewModel(
+            repository: InMemoryPaymentRepository(), today: HomeSampleData.today, calendar: HomeSampleData.calendar
+        ))
+    }
 }
 #endif
