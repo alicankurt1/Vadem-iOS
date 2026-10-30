@@ -47,6 +47,7 @@ public struct SettingsView: View {
     public var body: some View {
         // Sekme kökü: zemin AppTabShell'in ortam arka planı.
         FormScroll(opaqueBackground: false) {
+            // İlk görünüşte kademeli giriş: önce hatırlatma kartı, sonra diğer kartlar.
             FormCard {
                 FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
                     Toggle(isOn: Binding(
@@ -68,12 +69,18 @@ public struct SettingsView: View {
                     }
                 }
             }
+            .motionEntry(order: .header)
             if model.showsPermissionDenied {
                 permissionDeniedCard
+                    .motionEntry(order: .hero)
             }
             privacyCard
+                .motionEntry(order: .list)
             versionCard
+                .motionEntry(order: .list)
         }
+        // Giriş yalnızca ilk görünüşte; sonradan çıkan kartlar (izin uyarısı) doğrudan görünür.
+        .motionEntryScope()
         .foregroundStyle(Color.vademTextPrimary)
         .tint(Color.vademBrand)
         .navigationDestination(isPresented: $isChoosingTiming) {

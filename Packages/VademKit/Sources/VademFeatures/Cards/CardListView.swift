@@ -39,6 +39,8 @@ public struct CardListView: View {
             // Yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
             .padding(FormLayout.spacing)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Giriş yalnızca sekmenin ilk görünüşünde; sonradan eklenen kartlar doğrudan görünür.
+            .motionEntryScope()
         }
         .foregroundStyle(Color.vademTextPrimary)
         .tint(Color.vademBrand)
@@ -72,9 +74,12 @@ public struct CardListView: View {
         case .loaded:
             ForEach(Array(model.cards.enumerated()), id: \.element.id) { index, card in
                 row(card, index: index)
+                    // İlk kart panel gibi önce, diğerleri liste olarak hemen ardından girer.
+                    .motionEntry(order: index == 0 ? .hero : .list)
             }
         case .empty:
             emptyState
+                .motionEntry(order: .hero)
         case .error(let message):
             FormCard {
                 FormFailureRow(message: message)

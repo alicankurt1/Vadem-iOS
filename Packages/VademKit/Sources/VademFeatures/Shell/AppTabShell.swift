@@ -10,7 +10,8 @@ import VademCore
 /// inset as tall as the bar keeps the last row reachable. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
 /// form closes, Home, Analytics and Cards reload. The selected tab is published as
 /// `EnvironmentValues.selectedAppTab`. Each tab's root screen sits on an ``AmbientBackground`` tinted
-/// with the selected tab's ``AppTab/ambientTint``; switching tabs cross-fades the tint.
+/// with the selected tab's ``AppTab/ambientTint``; switching tabs cross-fades the tint and plays the shared ``Motion`` tab
+/// transition (off under Reduce Motion and `-ui-static-motion`).
 ///
 /// In debug builds ``AppTab/launchTab(in:)`` picks the first tab. ``AddInstallmentView/launchArgument``,
 /// ``AddCardView/launchArgument`` and ``AddSubscriptionView/launchArgument`` open their add forms
@@ -25,6 +26,13 @@ public struct AppTabShell: View {
     @State private var cardListModel: CardListViewModel
     @State private var settingsModel: SettingsViewModel
     @State private var selection: AppTab
+    // TabView'de gösterilen sekme; geçiş animasyonunda eski sekme sönünce `selection`a eşitlenir.
+    @State private var displayedTab: AppTab
+    // Sekme geçişinin anlık görünümü (sönme, bulanıklık, ölçek).
+    @State private var tabPhase: Motion.TabSwitchPhase = .visible
+    // Her yeni sekme geçişinde artar; yalnızca en son geçişin tamamlanma işi ve Task'ı uygulanır.
+    @State private var tabSwitchGeneration = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Ortam arka planının rengi; seçimden bir adım sonra değişir, yeni sekme eski renkten geçişle açılır.
     @State private var ambientTab: AppTab
     // Yüzen çubuğun ölçülen yüksekliği; sekme içeriği bu kadar alttan boşluk bırakır.
@@ -106,6 +114,7 @@ public struct AppTabShell: View {
         _oneTimeFlowModel = State(initialValue: initialOneTimeFlowModel)
         #endif
         _selection = State(initialValue: initialTab)
+        _displayedTab = State(initialValue: initialTab)
         _ambientTab = State(initialValue: initialTab)
         _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
         _addModel = State(initialValue: initialAddModel)
@@ -116,7 +125,7 @@ public struct AppTabShell: View {
     public var body: some View {
         // Sistem TabView'i sekmeleri canlı tutar ve yalnızca seçili sekmeyi hiyerarşide (VoiceOver ve
         // UI testleri dahil) gösterir; sistem çubuğu gizli, yerine yüzen çubuk çizilir.
-        TabView(selection: $selection) {
+        TabView(selection: $displayedTab) {
             tab(.home) {
                 HomeView(model: model, onAdd: openAddSheet, onDataChanged: reloadAll)
             }
@@ -132,6 +141,9 @@ public struct AppTabShell: View {
                 SettingsView(model: settingsModel)
             }
         }
+        // Sekme geçişi: eski içerik bulanıklaşıp küçülerek söner, yenisi belirir (Motion'dan).
+        .tabSwitchEffect(tabPhase)
+        .onChange(of: selection) { _, newTab in switchTab(to: newTab) }
         // Çubuk içeriğin üstünde yüzer; klavye açılınca yerinde kalır (klavyenin altında).
         .overlay(alignment: .bottom) {
             FloatingTabBar(selection: $selection, onAdd: openAddSheet)
@@ -207,6 +219,43 @@ public struct AppTabShell: View {
         .toolbar(.hidden, for: .tabBar)
         #endif
         .tag(tab)
+    }
+
+    // Hareket kapalıyken (Reduce Motion, -ui-static-motion) sekme anında değişir. Açıkken önce eski
+    // sekme söner, sonra yeni sekme yerine geçip belirir. Art arda dokunuşlarda (A→B→C) son seçim kazanır:
+    // - Sönme sürerken (.leaving) yeni geçiş başlatılmaz; süren sönme bitince zaten en son `selection`
+    //   gösterilir. Aynı değere ikinci bir withAnimation tamamlanmayı hemen tetikler, bu yüzden atlanır.
+    // - Her yeni geçiş sayacı artırır; eski geçişlerin tamamlanma işi ve belirme Task'ı sayaç tutmazsa
+    //   hiçbir şey yapmaz. Böylece değiştirme ve .entering yalnızca bir kez uygulanır (titreme olmaz).
+    // - Belirme sırasında (.entering veya .visible'a giderken) dokunulursa yeni sönme oradan başlar.
+    private func switchTab(to newTab: AppTab) {
+        guard Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested) else {
+            // Süren animasyonlu geçiş varsa geçersiz kılınır.
+            tabSwitchGeneration += 1
+            displayedTab = newTab
+            tabPhase = .visible
+            return
+        }
+        guard tabPhase != .leaving else { return }
+        tabSwitchGeneration += 1
+        let generation = tabSwitchGeneration
+        withAnimation(Motion.tabOut) {
+            tabPhase = .leaving
+        } completion: {
+            guard generation == tabSwitchGeneration else { return }
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                displayedTab = selection
+                tabPhase = .entering
+            }
+            // Bir sonraki turda: yeni sekme önce görünmez çizilir, sonra yalnızca saydamlıkla belirir.
+            // Bu arada yeni bir geçiş başladıysa sayaç değişmiştir; dokunulmaz.
+            Task { @MainActor in
+                guard generation == tabSwitchGeneration else { return }
+                withAnimation(Motion.tabIn) { tabPhase = .visible }
+            }
+        }
     }
 
     private func openAddSheet() {
