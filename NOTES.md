@@ -566,3 +566,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** `VademCore`'da saf `MonthlyInsightCalculator` (toplam değişim %20 eşiği, biten taksitler) ve `NotificationPlanner.planMonthlySummary` ile ayın 1'inde 09:00 bildirimi eklendi; boş kalan 64. bekleyen bildirim yuvası kullanıldı. Settings'e "Aylık özet" anahtarı kondu (PR #223). 27 dk, 6 verify, 1 başarısız, 1 düzeltme turu.
 - **Kapı neyi yakaladı:** Reviewer 2 minor, 3 nit buldu: tek biten planın metni yanlış okunuyordu; hatırlatmalar kapalı + özet açık + izin reddedilmiş durumda açıklama görünmüyordu. İkisi de düzeltildi, eski "denied" test durumunu test yazarı güncelledi.
 - **Ders:** Bir bildirim türü eklemek izin akışını, temizleme kimliklerini (`due-` ve `insight-`) ve "reddedildi" açıklama kuralını birlikte etkiler; iki anahtarlı durumlar için kombinasyon testi yaz.
+
+### Koşu #213 — Uygulama içi bildirim kutusu (Faz 20)
+
+- **Ne yapıldı:** `InboxEntry`/`InboxPlanner`, `InboxRepository` sözleşmesi (11 senaryo, bellek içi ve SwiftData uygulamaları aynı sözleşmeyi koşuyor), V4 şema ve V3→V4 hafif geçiş, Home'da okunmamış rozetli zil ve kutu ekranı, bildirime dokununca kutuyu açan yönlendirme (PR #225). 39 dk, 5 verify, 0 başarısız, 1 düzeltme turu.
+- **Kapı neyi yakaladı:** Reviewer 2 minor, 2 nit buldu. Kutu açıkken kaydedilen girdiler görünmüyordu; düzeltildi ve test eklendi. Add/Edit sayfası açıkken bildirime dokunmak kutuyu sayfanın arkasında açıyor; kabul edildi, sayfa kapanınca görünüyor.
+- **Ders:** Silinen girdinin geri gelmemesi için silme "mezar taşı" (tombstone) satırı gerektirir; bedeli hiç temizlenmeyen satırlardır (yılda ~20), bilinçli kabul edildi. Şema sürümü eklerken eski testlerdeki `VademSchemaV3.` referansları mekanik olarak V4'e taşınır; bu test zayıflatma değildir.
