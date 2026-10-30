@@ -87,6 +87,13 @@ public final class InboxViewModel: Identifiable {
         onChange?()
     }
 
+    /// New entries were added while the screen is open: reloads the rows (new ones keep their
+    /// unread marker for this visit) and marks every entry read, like ``open()``.
+    public func entriesAdded() {
+        reload()
+        open()
+    }
+
     /// Deletes the entry with `id`; it does not come back on the next launch.
     public func delete(id: InboxEntry.ID) {
         do {

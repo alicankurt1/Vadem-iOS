@@ -143,6 +143,8 @@ public final class HomeViewModel {
     @ObservationIgnored private let inbox: any InboxRepository
     // Gelen kutusunun tarihleri bu takvimin saat diliminde yazılır.
     @ObservationIgnored private let inboxCalendar: Calendar
+    // Açık gelen kutusu ekranının modeli (zayıf): yeni içgörüler eklenince listesi yenilenir.
+    @ObservationIgnored private weak var openInboxModel: InboxViewModel?
     // Kayıt/silme sonrası çağrılır (ör. hatırlatmaları yeniden planlamak için); nil ise hiçbir şey yapılmaz.
     @ObservationIgnored private let onDataChanged: (@MainActor () -> Void)?
     // Ayarlar sayfasının bağımlılıkları; verilmezse bellek içi depo (zamanlayıcı yok), açılışlar arasında korunur.
@@ -227,11 +229,13 @@ public final class HomeViewModel {
     }
 
     /// A new inbox screen model on the injected inbox; it updates ``inboxUnreadCount`` when it
-    /// marks entries read or deletes one.
+    /// marks entries read or deletes one, and shows entries ``recordInsights(at:)`` adds while it is open.
     public func makeInboxModel() -> InboxViewModel {
-        InboxViewModel(repository: inbox, calendar: inboxCalendar) { [weak self] in
+        let model = InboxViewModel(repository: inbox, calendar: inboxCalendar) { [weak self] in
             self?.refreshInboxCount()
         }
+        openInboxModel = model
+        return model
     }
 
     /// Asks Home to show the inbox (e.g. the user tapped a monthly summary notification):
@@ -250,8 +254,11 @@ public final class HomeViewModel {
     /// Adds the insights of the current month (the month of "today") to the inbox, created at
     /// `date`, then updates ``inboxUnreadCount``. Ids already seen are ignored (see ``InboxRepository``),
     /// so it can run on every launch and foreground. Runs whether or not notifications are allowed.
+    /// When entries are added while the inbox is open, it reloads and marks them read.
     public func recordInsights(at date: Date) {
-        InboxRecorder(payments: repository, inbox: inbox).record(month: todayMonth, at: date)
+        let added = InboxRecorder(payments: repository, inbox: inbox).record(month: todayMonth, at: date)
+        // Gelen kutusu açıkken eklenenler hemen görünür ve okundu sayılır; rozet tutarlı kalır.
+        if added > 0 { openInboxModel?.entriesAdded() }
         refreshInboxCount()
     }
 
