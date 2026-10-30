@@ -53,6 +53,18 @@ struct TokenContrastTests {
         Pair(foreground: "textSecondary", background: "ambientSettings"),
         Pair(foreground: "brand", background: "ambientSettings"),
         Pair(foreground: "paid", background: "ambientSettings"),
+        Pair(foreground: "dueToday", background: "ambientHome"),
+        Pair(foreground: "dueSoon", background: "ambientHome"),
+        Pair(foreground: "dueLater", background: "ambientHome"),
+        Pair(foreground: "dueToday", background: "ambientAnalytics"),
+        Pair(foreground: "dueSoon", background: "ambientAnalytics"),
+        Pair(foreground: "dueLater", background: "ambientAnalytics"),
+        Pair(foreground: "dueToday", background: "ambientCards"),
+        Pair(foreground: "dueSoon", background: "ambientCards"),
+        Pair(foreground: "dueLater", background: "ambientCards"),
+        Pair(foreground: "dueToday", background: "ambientSettings"),
+        Pair(foreground: "dueSoon", background: "ambientSettings"),
+        Pair(foreground: "dueLater", background: "ambientSettings"),
     ]
 
     @Test("Pair meets WCAG AA (4.5:1) in light and dark", arguments: pairs)
