@@ -70,6 +70,37 @@ struct SettingsViewModelTests {
         #expect(store.saves.count == 1)
     }
 
+    @Test("Monthly summary is on by default and shown independently of reminders")
+    func summaryDefault() {
+        #expect(Self.model().isMonthlySummaryEnabled)
+        let remindersOff = Self.model(store: InMemoryReminderPreferencesStore(
+            preferences: ReminderPreferences(isEnabled: false)
+        ))
+        #expect(remindersOff.isMonthlySummaryEnabled)
+    }
+
+    @Test("setMonthlySummaryEnabled saves immediately and keeps the other settings", arguments: [true, false])
+    func setSummarySaves(enabled: Bool) async {
+        let store = CountingStore(ReminderPreferences(isEnabled: false, timing: .dayBefore, monthlySummaryEnabled: !enabled))
+        let model = Self.model(store: store)
+        let task = model.setMonthlySummaryEnabled(enabled)
+        #expect(store.preferences == ReminderPreferences(isEnabled: false, timing: .dayBefore, monthlySummaryEnabled: enabled))
+        #expect(model.isMonthlySummaryEnabled == enabled)
+        await task.value
+        #expect(store.saves.count == 1)
+    }
+
+    @Test("Turning the summary off refreshes the scheduler: summary cancelled, no permission request")
+    func summaryOffRefreshes() async throws {
+        let center = Center(status: .allowed)
+        let store = CountingStore()
+        let scheduler = try Self.scheduler(center: center, store: store)
+        let model = Self.model(store: store, center: center, scheduler: scheduler)
+        await model.setMonthlySummaryEnabled(false).value
+        #expect(center.replacedSummaries.last == .some(nil))
+        #expect(center.requestCount == 0)
+    }
+
     @Test("setTiming saves immediately and keeps the enabled flag", arguments: ReminderTiming.allCases)
     func setTimingSaves(timing: ReminderTiming) async {
         let store = CountingStore(ReminderPreferences(isEnabled: false, timing: .both))
