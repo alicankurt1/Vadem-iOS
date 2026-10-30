@@ -174,7 +174,6 @@ public struct HomeView: View {
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .background(Color.vademBackground.ignoresSafeArea())
         }
     }
 

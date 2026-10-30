@@ -40,7 +40,6 @@ public struct CardListView: View {
             .padding(FormLayout.spacing)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.vademBackground.ignoresSafeArea())
         .foregroundStyle(Color.vademTextPrimary)
         .tint(Color.vademBrand)
         .navigationTitle(Text("Cards", bundle: .module))

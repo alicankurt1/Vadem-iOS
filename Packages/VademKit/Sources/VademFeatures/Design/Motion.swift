@@ -9,6 +9,10 @@ public enum Motion {
     public static let amount = Animation.smooth(duration: 0.4)
     /// Seconds for one full cycle of the card mesh drift.
     public static let meshDriftPeriod: Double = 14
+    /// Seconds for one full cycle of the ambient background drift (slower than the cards).
+    public static let ambientDriftPeriod: Double = 28
+    /// Cross-fade between two tab tints of the ambient background.
+    public static let ambientTint = Animation.easeInOut(duration: 0.6)
 
     /// The launch argument the UI check passes to stop continuous animations.
     public static let staticMotionArgument = "-ui-static-motion"
