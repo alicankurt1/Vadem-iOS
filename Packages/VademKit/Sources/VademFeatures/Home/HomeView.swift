@@ -183,7 +183,6 @@ public struct HomeView: View {
                 // Giriş yalnızca sekmenin ilk görünüşünde; ay değişince oluşan görünümler doğrudan görünür.
                 .motionEntryScope()
             }
-            .background(Color.vademBackground.ignoresSafeArea())
         }
     }
 

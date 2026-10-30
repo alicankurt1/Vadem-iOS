@@ -45,7 +45,8 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        FormScroll {
+        // Sekme kökü: zemin AppTabShell'in ortam arka planı.
+        FormScroll(opaqueBackground: false) {
             // İlk görünüşte kademeli giriş: önce hatırlatma kartı, sonra diğer kartlar.
             FormCard {
                 FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {

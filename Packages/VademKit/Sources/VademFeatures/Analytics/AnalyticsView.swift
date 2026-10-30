@@ -57,7 +57,6 @@ public struct AnalyticsView: View {
             // Giriş yalnızca sekmenin ilk görünüşünde; sonradan oluşan görünümler doğrudan görünür.
             .motionEntryScope()
         }
-        .background(Color.vademBackground.ignoresSafeArea())
         .navigationTitle(Text("Analytics", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

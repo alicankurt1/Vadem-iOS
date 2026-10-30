@@ -26,6 +26,10 @@ struct ColorTokenTests {
         ("dueLater", "3F6368", "A9D3D0"),
         ("dueLaterBackground", "D5EFEC", "143238"),
         ("paid", "067647", "6CE9A6"),
+        ("ambientHome", "CDEFEA", "0B2D30"),
+        ("ambientAnalytics", "E3E5FB", "181B3A"),
+        ("ambientCards", "FBE3D3", "2C1813"),
+        ("ambientSettings", "D9E9F8", "0D2238"),
     ]
 
     @Test("ColorToken has exactly the tokens in the issue table")
@@ -42,6 +46,7 @@ struct ColorTokenTests {
             .vademBrand, .vademDueToday, .vademDueTodayBackground, .vademDueSoon, .vademDueSoonBackground,
             .vademDueLater, .vademDueLaterBackground, .vademPaid,
             .vademHero, .vademHeroText, .vademHeroSecondary, .vademAccent, .vademOnAccent,
+            .vademAmbientHome, .vademAmbientAnalytics, .vademAmbientCards, .vademAmbientSettings,
         ]
         #expect(statics.count == Self.table.count)
     }

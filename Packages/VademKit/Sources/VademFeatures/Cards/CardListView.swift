@@ -42,7 +42,6 @@ public struct CardListView: View {
             // Giriş yalnızca sekmenin ilk görünüşünde; sonradan eklenen kartlar doğrudan görünür.
             .motionEntryScope()
         }
-        .background(Color.vademBackground.ignoresSafeArea())
         .foregroundStyle(Color.vademTextPrimary)
         .tint(Color.vademBrand)
         .navigationTitle(Text("Cards", bundle: .module))

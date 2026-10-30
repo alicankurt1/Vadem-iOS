@@ -9,8 +9,9 @@ import VademCore
 /// selected tab is in the view and accessibility hierarchy. Content scrolls under the bar; a bottom
 /// inset as tall as the bar keeps the last row reachable. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
 /// form closes, Home, Analytics and Cards reload. The selected tab is published as
-/// `EnvironmentValues.selectedAppTab`. Switching tabs plays the shared ``Motion`` tab transition
-/// (off under Reduce Motion and `-ui-static-motion`).
+/// `EnvironmentValues.selectedAppTab`. Each tab's root screen sits on an ``AmbientBackground`` tinted
+/// with the selected tab's ``AppTab/ambientTint``; switching tabs cross-fades the tint and plays the shared ``Motion`` tab
+/// transition (off under Reduce Motion and `-ui-static-motion`).
 ///
 /// In debug builds ``AppTab/launchTab(in:)`` picks the first tab. ``AddInstallmentView/launchArgument``,
 /// ``AddCardView/launchArgument`` and ``AddSubscriptionView/launchArgument`` open their add forms
@@ -32,6 +33,8 @@ public struct AppTabShell: View {
     // Her yeni sekme geçişinde artar; yalnızca en son geçişin tamamlanma işi ve Task'ı uygulanır.
     @State private var tabSwitchGeneration = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // Ortam arka planının rengi; seçimden bir adım sonra değişir, yeni sekme eski renkten geçişle açılır.
+    @State private var ambientTab: AppTab
     // Yüzen çubuğun ölçülen yüksekliği; sekme içeriği bu kadar alttan boşluk bırakır.
     @State private var barHeight: CGFloat = 0
     // "Ekle" sayfası açık mı.
@@ -112,6 +115,7 @@ public struct AppTabShell: View {
         #endif
         _selection = State(initialValue: initialTab)
         _displayedTab = State(initialValue: initialTab)
+        _ambientTab = State(initialValue: initialTab)
         _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
@@ -147,6 +151,8 @@ public struct AppTabShell: View {
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .environment(\.selectedAppTab, selection)
+        // Geçiş animasyonunu AmbientBackground kendisi seçer (Reduce Motion'da yok).
+        .onChange(of: selection) { _, tab in ambientTab = tab }
         // Form kapanınca (kaydedilse de iptal edilse de) tüm sekmeler yeniden yüklenir.
         .sheet(item: $addModel, onDismiss: reloadAll) { addModel in
             AddInstallmentView(model: addModel)
@@ -192,6 +198,8 @@ public struct AppTabShell: View {
     private func tab(_ tab: AppTab, @ViewBuilder content: () -> some View) -> some View {
         NavigationStack {
             content()
+                // Sadece kök ekranın arkasında; itilen ekranlar kendi düz zeminleriyle üstünü örter.
+                .background { AmbientBackground(tint: ambientTab.ambientTint) }
                 #if os(iOS)
                 // Kök ekranda da gizlenir: yığın içi tercih sistem çubuğunu geri getirmesin.
                 .toolbar(.hidden, for: .tabBar)

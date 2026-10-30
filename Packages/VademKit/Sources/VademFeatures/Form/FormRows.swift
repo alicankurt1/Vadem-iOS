@@ -31,6 +31,8 @@ struct FormCard<Content: View>: View {
 /// sayıyordu; ScrollView'da bu bulgu yok. ScrollView klavye açılınca içeriği kendiliğinden kaydırır.
 @MainActor
 struct FormScroll<Content: View>: View {
+    // false: zemin çizilmez, arkadaki ortam arka planı görünür (Ayarlar sekmesi).
+    var opaqueBackground = true
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -43,7 +45,11 @@ struct FormScroll<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(Color.vademBackground.ignoresSafeArea())
+        .background {
+            if opaqueBackground {
+                Color.vademBackground.ignoresSafeArea()
+            }
+        }
     }
 }
 
