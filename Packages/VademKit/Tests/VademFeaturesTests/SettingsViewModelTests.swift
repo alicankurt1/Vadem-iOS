@@ -122,21 +122,29 @@ struct SettingsViewModelTests {
     struct FlagCase: Sendable {
         let status: ReminderAuthorization
         let enabled: Bool
+        let summary: Bool
         let showsTiming: Bool
         let showsDenied: Bool
     }
 
-    @Test("Flags by permission and enabled state", arguments: [
-        FlagCase(status: .notDetermined, enabled: true, showsTiming: true, showsDenied: false),
-        FlagCase(status: .allowed, enabled: true, showsTiming: true, showsDenied: false),
-        FlagCase(status: .denied, enabled: true, showsTiming: true, showsDenied: true),
-        FlagCase(status: .denied, enabled: false, showsTiming: false, showsDenied: false),
-        FlagCase(status: .allowed, enabled: false, showsTiming: false, showsDenied: false),
+    // Reddedilme açıklaması: izin reddedilmişse ve hatırlatmalar YA DA aylık özet açıksa görünür.
+    @Test("Flags by permission, reminders and monthly summary", arguments: [
+        FlagCase(status: .notDetermined, enabled: true, summary: true, showsTiming: true, showsDenied: false),
+        FlagCase(status: .allowed, enabled: true, summary: true, showsTiming: true, showsDenied: false),
+        FlagCase(status: .denied, enabled: true, summary: true, showsTiming: true, showsDenied: true),
+        FlagCase(status: .denied, enabled: true, summary: false, showsTiming: true, showsDenied: true),
+        FlagCase(status: .denied, enabled: false, summary: true, showsTiming: false, showsDenied: true),
+        FlagCase(status: .denied, enabled: false, summary: false, showsTiming: false, showsDenied: false),
+        FlagCase(status: .allowed, enabled: false, summary: true, showsTiming: false, showsDenied: false),
+        FlagCase(status: .allowed, enabled: false, summary: false, showsTiming: false, showsDenied: false),
+        FlagCase(status: .notDetermined, enabled: false, summary: true, showsTiming: false, showsDenied: false),
     ])
     func flags(_ testCase: FlagCase) async {
         let center = Center(status: testCase.status)
         let model = Self.model(
-            store: InMemoryReminderPreferencesStore(preferences: ReminderPreferences(isEnabled: testCase.enabled)),
+            store: InMemoryReminderPreferencesStore(preferences: ReminderPreferences(
+                isEnabled: testCase.enabled, monthlySummaryEnabled: testCase.summary
+            )),
             center: center
         )
         await model.loadAuthorization()
