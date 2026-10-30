@@ -560,3 +560,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** #211'de karışık (blended) kontrast testi cam örtü üzerindeki `textSecondary` için 4.39:1 buldu (eşik 4.5); kart yüzey opaklığı 0.86'ya çıkarılarak düzeldi. Capture ile yakalanamayacak türden bir hata, birim test yakaladı. Reviewer'dan blocker/major çıkmadı.
 - **Ders 1:** Paralel oturumlar simülatörü beklerken `pgrep -f` deseni kendi bekleme döngüsünün komut satırıyla eşleşti; bekleme hiç bitmedi (#209'da döngü daha dar bir desenle yeniden başlatıldı), #210'da ilk capture atlandı. `pgrep -f` ile beklerken deseni döngünün kendi metninde geçmeyecek şekilde seç ya da süreç kimliği/kilit dosyası kullan.
 - **Ders 2:** Üç dal ortak dosyalarda çakıştı; çakışmalar iki tarafı da tutarak çözüldü (yalnızca ekleme yapılan dosyalarda güvenli). Paralel yük altında bir capture zaman aşımı yaşandı, yeniden koşuda geçti; ürün hatası değildi.
+
+### Koşu #212 — Aylık karşılaştırma içgörüsü ve özet bildirimi (Faz 20)
+
+- **Ne yapıldı:** `VademCore`'da saf `MonthlyInsightCalculator` (toplam değişim %20 eşiği, biten taksitler) ve `NotificationPlanner.planMonthlySummary` ile ayın 1'inde 09:00 bildirimi eklendi; boş kalan 64. bekleyen bildirim yuvası kullanıldı. Settings'e "Aylık özet" anahtarı kondu (PR #223). 27 dk, 6 verify, 1 başarısız, 1 düzeltme turu.
+- **Kapı neyi yakaladı:** Reviewer 2 minor, 3 nit buldu: tek biten planın metni yanlış okunuyordu; hatırlatmalar kapalı + özet açık + izin reddedilmiş durumda açıklama görünmüyordu. İkisi de düzeltildi, eski "denied" test durumunu test yazarı güncelledi.
+- **Ders:** Bir bildirim türü eklemek izin akışını, temizleme kimliklerini (`due-` ve `insight-`) ve "reddedildi" açıklama kuralını birlikte etkiler; iki anahtarlı durumlar için kombinasyon testi yaz.
