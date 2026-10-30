@@ -1016,4 +1016,32 @@ final class FunctionalFlowTests: XCTestCase {
         app.buttons["tab.home"].tap()
         XCTAssertTrue(scrollToInstallmentRow(in: app), "payment added with + not shown on This month")
     }
+
+    /// #208: her sekmenin kendi NavigationStack'i var; sekme değişince itilmiş ekran korunur ve çubuk görünür kalır.
+    @MainActor
+    func testTabKeepsPushedScreenWhenSwitchingTabs() throws {
+        let app = launchHome()
+        let tabIDs = ["tab.home", "tab.analytics", "tab.cards", "tab.settings", "tab.add"]
+
+        app.buttons["tab.settings"].tap()
+        let privacyRow = element("settings.privacy", in: app)
+        XCTAssertTrue(privacyRow.waitForExistence(timeout: 10), "Privacy row not shown in Settings")
+        privacyRow.tap()
+        XCTAssertTrue(element("privacy.policy", in: app).waitForExistence(timeout: 5), "Privacy policy not shown")
+        for id in tabIDs {
+            XCTAssertTrue(app.buttons[id].exists, "\(id) must stay visible on the pushed screen")
+        }
+
+        // Başka sekmeye geçip dönünce itilmiş ekran yerinde durur.
+        app.buttons["tab.analytics"].tap()
+        XCTAssertTrue(element("analytics.screen", in: app).waitForExistence(timeout: 10), "Analytics tab must show")
+        app.buttons["tab.settings"].tap()
+        XCTAssertTrue(element("privacy.policy", in: app).waitForExistence(timeout: 5), "pushed policy must be kept")
+        XCTAssertFalse(element("settings.privacy", in: app).exists, "Settings root must not show over the pushed policy")
+
+        // Geri düğmesi Ayarlar köküne döner.
+        app.navigationBars.buttons["BackButton"].tap()
+        XCTAssertTrue(element("settings.privacy", in: app).waitForExistence(timeout: 5), "must return to Settings")
+        XCTAssertFalse(element("privacy.policy", in: app).exists, "policy must close after going back")
+    }
 }
