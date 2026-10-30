@@ -3441,6 +3441,23 @@
         }
       }
     },
+    "Tab, %lld of %lld" : {
+      "comment" : "Spoken after a tab bar button's name, e.g. Tab, 2 of 4",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab, %lld of %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekme, %lld/%lld"
+          }
+        }
+      }
+    },
     "Tax" : {
       "comment" : "Quick title chip of the one-time payment flow",
       "localizations" : {

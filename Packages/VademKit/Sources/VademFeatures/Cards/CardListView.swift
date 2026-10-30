@@ -1,17 +1,17 @@
 import SwiftUI
 import VademCore
 
-/// The Cards screen, pushed from Settings: every saved card as a card face with its name and due day.
+/// The Cards tab of the ``AppTabShell``: every saved card as a card face with its name and due day.
 ///
 /// Tapping a card opens the edit-card form (edit and delete) as a sheet; the toolbar's Add button
-/// opens the add-card form. The list reloads whenever a form closes. Without cards an empty state
-/// explains the screen and offers an add button. The card faces stop drifting under Reduce Motion
-/// or `-ui-static-motion`, so the screen is idle in the UI check.
+/// opens the add-card form. The list reloads whenever a form closes, then `onDataChanged` runs.
+/// Without cards an empty state explains the screen and offers an add button. The card faces stop
+/// drifting under Reduce Motion or `-ui-static-motion`, so the screen is idle in the UI check.
 /// Identifiers: `cards.list` (the screen), `cards.add` (toolbar), `cards.row.<index>` (cards, from 0),
 /// `cards.empty` (empty-state text), `cards.empty.add` (empty-state button) and `cards.error`.
 @MainActor
 public struct CardListView: View {
-    /// The launch argument that opens Home with Settings presented and this screen pushed (debug builds).
+    /// The launch argument that opens the app on the Cards tab (debug builds).
     public nonisolated static let launchArgument = "-ui-card-list"
     /// The launch argument that opens this screen (like ``launchArgument``) on an empty store,
     /// in sample-data mode (`-ui-sample-data`), so the empty state shows.
@@ -20,13 +20,15 @@ public struct CardListView: View {
     @State private var model: CardListViewModel
     // Açık kart formunun modeli (ekleme veya düzenleme); nil iken sayfa kapalı.
     @State private var formModel: AddCardViewModel?
+    private let onDataChanged: (() -> Void)?
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
 
-    /// Creates the screen for `model`.
-    public init(model: CardListViewModel) {
+    /// Creates the screen for `model`; `onDataChanged` runs after a card form closes (e.g. to reload other tabs).
+    public init(model: CardListViewModel, onDataChanged: (() -> Void)? = nil) {
         _model = State(initialValue: model)
+        self.onDataChanged = onDataChanged
     }
 
     public var body: some View {
@@ -53,10 +55,16 @@ public struct CardListView: View {
             ToolbarItem(placement: .primaryAction) { addButton }
         }
         // Form kapanınca (kaydedilse, silinse veya iptal edilse de) liste yeniden yüklenir.
-        .sheet(item: $formModel, onDismiss: { model.refresh() }) { formModel in
+        // Kart değişikliği Home'u ve Analytics'i de etkiler; kabuk onları da yeniler.
+        .sheet(item: $formModel, onDismiss: formClosed) { formModel in
             AddCardView(model: formModel)
         }
         .accessibilityIdentifier("cards.list")
+    }
+
+    private func formClosed() {
+        model.refresh()
+        onDataChanged?()
     }
 
     @ViewBuilder

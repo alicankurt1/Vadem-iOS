@@ -14,7 +14,7 @@ import VademCore
 /// animate under Reduce Motion or `-ui-static-motion`.
 @MainActor
 public struct AnalyticsView: View {
-    /// The launch argument that opens Home with the Analytics screen already pushed (debug builds).
+    /// The launch argument that opens the app on the Analytics tab (debug builds).
     public nonisolated static let launchArgument = "-ui-analytics"
 
     // Seri adları lejantta görünür; katalogdan gelir.

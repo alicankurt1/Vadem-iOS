@@ -1,21 +1,20 @@
 import SwiftUI
 import VademCore
 
-/// The settings sheet, opened from Home: payment reminders on or off and when they fire.
+/// The Settings tab of the ``AppTabShell``: payment reminders on or off and when they fire.
 ///
 /// The "Remind me" row is shown only while reminders are on. When reminders are on but the
 /// system permission is denied, an explanation and an "Open Settings" button show.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 /// Identifiers: `settings.reminders` (toggle), `settings.timing` (row), the pushed list
 /// `settings.timing.options` with `settings.timing.option.<index>`, `settings.permissionDenied`
-/// (explanation), `settings.openSystemSettings`, `settings.version` (app version) and `settings.done`.
-/// When ``SettingsViewModel/showsCards`` is `true`, a Cards row (`settings.cards`) pushes the ``CardListView``.
-/// A Privacy Policy row (`settings.privacy`) pushes the ``PrivacyPolicyView``.
+/// (explanation), `settings.openSystemSettings` and `settings.version` (app version).
+/// Shown inside the shell's `NavigationStack`. A Privacy Policy row (`settings.privacy`) pushes the ``PrivacyPolicyView``.
 @MainActor
 public struct SettingsView: View {
-    /// The launch argument that opens Home with this sheet already presented (UI check).
+    /// The launch argument that opens the app on the Settings tab (UI check).
     public nonisolated static let launchArgument = "-ui-settings"
-    /// The launch argument that opens this sheet (like ``launchArgument``) with a denied permission,
+    /// The launch argument that opens this screen (like ``launchArgument``) with a denied permission,
     /// in sample-data mode (`-ui-sample-data`).
     public nonisolated static let deniedLaunchArgument = "-ui-settings-denied"
 
@@ -26,102 +25,74 @@ public struct SettingsView: View {
 
     @State private var model: SettingsViewModel
     @State private var isChoosingTiming = false
-    // İtilmiş Kartlar ekranının modeli; nil iken ekran itilmemiştir.
-    @State private var cardListModel: CardListViewModel?
     @State private var isShowingPrivacyPolicy: Bool
 
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
     @Environment(\.scenePhase) private var scenePhase
 
-    /// Creates the sheet for `model`.
+    /// Creates the screen for `model`.
     ///
-    /// In debug builds, ``CardListView/launchArgument`` (or ``CardListView/emptyLaunchArgument``)
-    /// pushes the Cards screen right away, for the UI check; ``PrivacyPolicyView/launchArgument``
-    /// pushes the privacy policy.
+    /// In debug builds, ``PrivacyPolicyView/launchArgument`` pushes the privacy policy right away,
+    /// for the UI check.
     public init(model: SettingsViewModel) {
         _model = State(initialValue: model)
-        var initialCardListModel: CardListViewModel?
         var initialShowsPrivacyPolicy = false
         #if DEBUG
-        let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains(CardListView.launchArgument) || arguments.contains(CardListView.emptyLaunchArgument) {
-            initialCardListModel = model.makeCardListModel()
-        } else if arguments.contains(PrivacyPolicyView.launchArgument) {
-            // İki ekran aynı anda itilemez; Kartlar önceliklidir.
-            initialShowsPrivacyPolicy = true
-        }
+        initialShowsPrivacyPolicy = ProcessInfo.processInfo.arguments.contains(PrivacyPolicyView.launchArgument)
         #endif
-        _cardListModel = State(initialValue: initialCardListModel)
         _isShowingPrivacyPolicy = State(initialValue: initialShowsPrivacyPolicy)
     }
 
     public var body: some View {
-        NavigationStack {
-            FormScroll {
-                FormCard {
-                    FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
-                        Toggle(isOn: Binding(
-                            get: { model.isEnabled },
-                            set: { model.setEnabled($0) }
-                        )) {
-                            Text("Payment reminders", bundle: .module)
-                        }
-                        .foregroundStyle(Color.vademTextPrimary)
-                        .accessibilityIdentifier("settings.reminders")
+        FormScroll {
+            FormCard {
+                FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
+                    Toggle(isOn: Binding(
+                        get: { model.isEnabled },
+                        set: { model.setEnabled($0) }
+                    )) {
+                        Text("Payment reminders", bundle: .module)
                     }
-                    // Hatırlatmalar kapalıyken zamanlama seçilemez; satır gizlenir.
-                    if model.showsTiming {
-                        FormField(errorMessage: nil, errorIdentifier: "settings.timing.error") {
-                            ChoiceRow(title: String(localized: "Remind me", bundle: .module), value: SettingsViewModel.title(of: model.timing)) {
-                                isChoosingTiming = true
-                            }
-                            .accessibilityIdentifier("settings.timing")
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .accessibilityIdentifier("settings.reminders")
+                }
+                // Hatırlatmalar kapalıyken zamanlama seçilemez; satır gizlenir.
+                if model.showsTiming {
+                    FormField(errorMessage: nil, errorIdentifier: "settings.timing.error") {
+                        ChoiceRow(title: String(localized: "Remind me", bundle: .module), value: SettingsViewModel.title(of: model.timing)) {
+                            isChoosingTiming = true
                         }
+                        .accessibilityIdentifier("settings.timing")
                     }
                 }
-                if model.showsPermissionDenied {
-                    permissionDeniedCard
-                }
-                if model.showsCards {
-                    cardsCard
-                }
-                privacyCard
-                versionCard
             }
-            .foregroundStyle(Color.vademTextPrimary)
-            .tint(Color.vademBrand)
-            .navigationDestination(isPresented: $isChoosingTiming) {
-                OptionList(
-                    title: String(localized: "Remind me", bundle: .module), identifierPrefix: "settings.timing",
-                    options: timingOptions,
-                    selection: Binding(get: { model.timing }, set: { model.setTiming($0) })
-                )
+            if model.showsPermissionDenied {
+                permissionDeniedCard
             }
-            .navigationDestination(isPresented: cardListPresented) {
-                if let cardListModel {
-                    CardListView(model: cardListModel)
-                }
-            }
-            .navigationDestination(isPresented: $isShowingPrivacyPolicy) {
-                PrivacyPolicyView()
-            }
-            .navigationTitle(Text("Settings", bundle: .module))
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            // Formlar gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
-            .toolbarColorScheme(colorScheme, for: .navigationBar)
-            .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button { dismiss() } label: { Text("Done", bundle: .module) }
-                        .accessibilityIdentifier("settings.done")
-                }
-            }
+            privacyCard
+            versionCard
         }
+        .foregroundStyle(Color.vademTextPrimary)
+        .tint(Color.vademBrand)
+        .navigationDestination(isPresented: $isChoosingTiming) {
+            OptionList(
+                title: String(localized: "Remind me", bundle: .module), identifierPrefix: "settings.timing",
+                options: timingOptions,
+                selection: Binding(get: { model.timing }, set: { model.setTiming($0) })
+            )
+        }
+        .navigationDestination(isPresented: $isShowingPrivacyPolicy) {
+            PrivacyPolicyView()
+        }
+        .navigationTitle(Text("Settings", bundle: .module))
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        // Formlar gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
+        .toolbarColorScheme(colorScheme, for: .navigationBar)
+        .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        #endif
         .task { await model.loadAuthorization() }
         // Ayarlar uygulamasından dönünce izin değişmiş olabilir.
         .onChange(of: scenePhase) { _, phase in
@@ -164,40 +135,7 @@ public struct SettingsView: View {
         }
     }
 
-    private var cardListPresented: Binding<Bool> {
-        Binding(
-            get: { cardListModel != nil },
-            set: { if !$0 { cardListModel = nil } }
-        )
-    }
-
-    // Kartlar satırı: kart listesini iter. ChoiceRow gibi düz düğme ve Dynamic Type ile büyüyen ok.
-    private var cardsCard: some View {
-        FormCard {
-            Button {
-                cardListModel = model.makeCardListModel()
-            } label: {
-                HStack(spacing: 8) {
-                    Text("Cards", bundle: .module)
-                        .font(.body)
-                        .foregroundStyle(Color.vademTextPrimary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Color.vademBrand)
-                        .accessibilityHidden(true)
-                }
-                .multilineTextAlignment(.leading)
-                .frame(minHeight: FormLayout.minRowHeight)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint(Text("Opens a list", bundle: .module))
-            .accessibilityIdentifier("settings.cards")
-        }
-    }
-
-    // Gizlilik politikası satırı: Kartlar satırı gibi düz düğme, politikayı uygulama içinde iter.
+    // Gizlilik politikası satırı: ChoiceRow gibi düz düğme, politikayı uygulama içinde iter.
     private var privacyCard: some View {
         FormCard {
             Button {
@@ -241,12 +179,16 @@ public struct SettingsView: View {
 
 #if DEBUG
 #Preview("Default") {
-    SettingsView(model: SettingsViewModel(dependencies: .inMemory(), repository: HomeSampleData.makeRepository()))
+    NavigationStack {
+        SettingsView(model: SettingsViewModel(dependencies: .inMemory(), repository: HomeSampleData.makeRepository()))
+    }
 }
 
 #Preview("Denied") {
-    SettingsView(model: SettingsViewModel(dependencies: SettingsDependencies(
-        store: InMemoryReminderPreferencesStore(), center: FixedStatusReminderCenter(status: .denied)
-    )))
+    NavigationStack {
+        SettingsView(model: SettingsViewModel(dependencies: SettingsDependencies(
+            store: InMemoryReminderPreferencesStore(), center: FixedStatusReminderCenter(status: .denied)
+        )))
+    }
 }
 #endif

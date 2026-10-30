@@ -39,7 +39,7 @@ public struct SettingsDependencies {
     }
 }
 
-/// Drives the settings sheet: the reminder toggle, the timing and the system permission.
+/// Drives the Settings screen: the reminder toggle, the timing and the system permission.
 ///
 /// Each change is saved to the store right away, then the scheduler is refreshed (turning reminders
 /// on may show the system permission prompt), then the permission is read again.
@@ -55,11 +55,11 @@ public final class SettingsViewModel: Identifiable {
     @ObservationIgnored private let center: (any ReminderCenter)?
     @ObservationIgnored private let scheduler: ReminderScheduler?
     @ObservationIgnored private let openSystemSettingsAction: @MainActor () -> Void
-    // Kartlar ekranının deposu; nil ise "Kartlar" satırı gösterilmez.
+    // Kartlar ekranının deposu; nil ise kart listesi modeli kurulmaz.
     @ObservationIgnored private let repository: (any PaymentRepository)?
 
     /// Loads the preferences from `dependencies.store`. `repository` backs the Cards screen
-    /// (``makeCardListModel()``); `nil` hides the Cards row.
+    /// (``makeCardListModel()``); `nil` gives no Cards model.
     public init(dependencies: SettingsDependencies, repository: (any PaymentRepository)? = nil) {
         self.repository = repository
         self.store = dependencies.store
@@ -91,7 +91,7 @@ public final class SettingsViewModel: Identifiable {
     /// it and offers ``openSystemSettings()``.
     public var showsPermissionDenied: Bool { preferences.isEnabled && authorization == .denied }
 
-    /// `true` when the Cards row is shown (a repository was given).
+    /// `true` when a repository was given, so ``makeCardListModel()`` builds a Cards screen model.
     public var showsCards: Bool { repository != nil }
 
     /// A new Cards screen model on the injected repository, or `nil` without one.

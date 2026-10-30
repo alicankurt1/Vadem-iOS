@@ -158,7 +158,7 @@ public final class HomeViewModel {
     /// Creates the view model for the month that contains `today` in `calendar`'s time zone, and loads it.
     ///
     /// `onDataChanged` runs after ``reloadAfterChange()``, i.e. after a form closes
-    /// (e.g. to refresh the reminders); `nil` does nothing. `settings` backs the settings sheet
+    /// (e.g. to refresh the reminders); `nil` does nothing. `settings` backs the Settings tab
     /// (``makeSettingsModel()``); `nil` uses an in-memory store without a scheduler.
     /// `assistant` answers in the assistant chat (``makeAssistantModel()``); `nil` uses the engine
     /// the OS offers (``AssistantEngineFactory/makeSystemEngine(snapshot:)``) on this repository.
@@ -206,10 +206,14 @@ public final class HomeViewModel {
         selectedDay.map { Self.dayText(day: $0, of: month) }
     }
 
-    /// A new settings sheet model on the injected ``SettingsDependencies``, with the Cards screen
-    /// on the same repository. Call ``reloadAfterChange()`` after the sheet closes.
+    /// A new Settings screen model on the injected ``SettingsDependencies`` and the same repository.
     public func makeSettingsModel() -> SettingsViewModel {
         SettingsViewModel(dependencies: settings, repository: repository)
+    }
+
+    /// A new Cards screen model on the same repository. Call ``CardListViewModel/refresh()`` after a form closes.
+    public func makeCardListModel() -> CardListViewModel {
+        CardListViewModel(repository: repository)
     }
 
     /// A new Analytics screen model on the same repository, starting at the current month.

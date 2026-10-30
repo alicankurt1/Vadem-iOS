@@ -8,7 +8,7 @@ import SwiftUI
 /// `privacy.policy.section.<index>` (section headings, from 0) as scroll markers for the UI check.
 @MainActor
 public struct PrivacyPolicyView: View {
-    /// The launch argument that opens Home with Settings presented and this screen pushed (debug builds).
+    /// The launch argument that opens the app on the Settings tab with this screen pushed (debug builds).
     public nonisolated static let launchArgument = "-ui-privacy-policy"
 
     // Bir bölüm: başlık ve sırayla paragraf / madde blokları.

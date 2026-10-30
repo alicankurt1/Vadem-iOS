@@ -1,7 +1,7 @@
 import SwiftUI
 import VademCore
 
-/// The app's root screen: Home, or a message when the store could not be opened.
+/// The app's root screen: the ``AppTabShell`` (Home and the other tabs), or a message when the store could not be opened.
 @MainActor
 public struct RootView: View {
     private enum Content {
@@ -16,7 +16,7 @@ public struct RootView: View {
 
     private let content: Content
 
-    /// Shows Home for `model`.
+    /// Shows the tab shell for `model`.
     public init(model: HomeViewModel) {
         content = .home(model)
     }
@@ -33,7 +33,7 @@ public struct RootView: View {
     public var body: some View {
         switch content {
         case .home(let model):
-            HomeView(model: model)
+            AppTabShell(model: model)
         case .unavailable:
             // Depo açılamazsa uygulama çökmez; başlık ve sürüm yine görünür.
             ScrollView {

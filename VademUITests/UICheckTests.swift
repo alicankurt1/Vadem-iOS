@@ -85,6 +85,42 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testTabBar() throws {
+        // Yüzen cam sekme çubuğu (#208): Home seçili; dört sekme ve ＋ düğmesi kimlikleriyle bulunur.
+        try capture(
+            screen: "tab-bar",
+            launchArguments: ["-ui-sample-data"],
+            sections: [.top]
+        ) { app, variant in
+            for id in ["tab.home", "tab.analytics", "tab.cards", "tab.settings", "tab.add"] {
+                XCTAssertTrue(
+                    app.buttons[id].waitForExistence(timeout: 10),
+                    "[ui-check] tab-bar__\(variant.name): \(id) not found"
+                )
+            }
+        }
+    }
+
+    @MainActor
+    func testTabBarSelected() throws {
+        // Seçim hapı başka sekmede (Ayarlar): çubuk Ayarlar ekranının üstünde, seçili sekme vurgulu.
+        try capture(
+            screen: "tab-bar-settings",
+            launchArguments: ["-ui-sample-data", "-ui-tab-settings"],
+            sections: [.top]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.buttons["tab.settings"].waitForExistence(timeout: 10),
+                "[ui-check] tab-bar-settings__\(variant.name): settings tab not found"
+            )
+            XCTAssertTrue(
+                app.switches["settings.reminders"].waitForExistence(timeout: 5),
+                "[ui-check] tab-bar-settings__\(variant.name): Settings screen not shown"
+            )
+        }
+    }
+
+    @MainActor
     func testHomeSelectedDay() throws {
         // Seçili gün (#91, #204): örnek veri 12 Ekim 2026'da Ekim ayında açılır; 15 Ekim (Shopping kartı vadesi)
         // bu ayda ödemesi olan bir gündür. Seçili günün listesi "By card" başlığından önce gelir.
