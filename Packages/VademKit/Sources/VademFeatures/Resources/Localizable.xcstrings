@@ -343,6 +343,23 @@
         }
       }
     },
+    "12 months" : {
+      "comment" : "Accented part of the Analytics display title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 months"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 ay"
+          }
+        }
+      }
+    },
     "1–31" : {
       "localizations" : {
         "en" : {
@@ -1799,6 +1816,23 @@
         }
       }
     },
+    "Glass" : {
+      "comment" : "Design gallery section",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cam"
+          }
+        }
+      }
+    },
     "Gym" : {
       "comment" : "Quick title chip of the subscription flow",
       "localizations" : {
@@ -2163,6 +2197,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Daha sonra"
+          }
+        }
+      }
+    },
+    "Make it %@" : {
+      "comment" : "Settings display title; the argument is accented",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make it %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sana %@"
           }
         }
       }
@@ -3912,6 +3963,23 @@
         }
       }
     },
+    "Titles" : {
+      "comment" : "Design gallery section",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titles"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başlıklar"
+          }
+        }
+      }
+    },
     "Today" : {
       "comment" : "Due chip",
       "localizations" : {
@@ -4222,6 +4290,23 @@
         }
       }
     },
+    "You pay %@" : {
+      "comment" : "Home display title; the amount is accented",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You pay %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ödüyorsun"
+          }
+        }
+      }
+    },
     "You pay %@ in %@, %@ still to go." : {
       "comment" : "Siri answer: month total, month, amount still to pay",
       "localizations" : {
@@ -4273,6 +4358,23 @@
         }
       }
     },
+    "Your %@ at a glance" : {
+      "comment" : "Cards display title; the argument is accented",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your %@ at a glance"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tek bakışta"
+          }
+        }
+      }
+    },
     "Your cards could not be loaded." : {
       "localizations" : {
         "en" : {
@@ -4301,6 +4403,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verileriniz açılamadı. Lütfen uygulamayı yeniden başlatın."
+          }
+        }
+      }
+    },
+    "Your next %@" : {
+      "comment" : "Analytics display title; the argument is accented",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your next %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önümüzdeki %@"
           }
         }
       }
@@ -4454,6 +4573,23 @@
         }
       }
     },
+    "cards" : {
+      "comment" : "Accented word of the Cards display title (Your cards at a glance)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cards"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartların"
+          }
+        }
+      }
+    },
     "due %@" : {
       "comment" : "Spoken due date, e.g. due 15 October",
       "localizations" : {
@@ -4599,6 +4735,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "LLLL yyyy"
+          }
+        }
+      }
+    },
+    "yours" : {
+      "comment" : "Accented word of the Settings display title (Make it yours)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "yours"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "özel"
           }
         }
       }

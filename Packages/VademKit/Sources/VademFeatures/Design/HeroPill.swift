@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A capsule button style for hero actions ("Add", "Calendar"): `vademAccent` fill
-/// with a `vademOnAccent` label.
+/// A capsule button style for hero actions ("Add", "Calendar"): a `vademAccent`-tinted glass
+/// surface (thin light border, soft shadow) with a `vademOnAccent` label.
 public struct HeroPill: ButtonStyle {
     public init() {}
 
@@ -23,7 +23,8 @@ extension View {
             .padding(.vertical, 10)
             // En az 44 pt dokunma alanı.
             .frame(minHeight: 44)
-            .background(Color.vademAccent, in: .capsule)
+            // Vurgu renginde cam; etiket onAccent/accent çiftinde okunur.
+            .vademGlassSurface(in: Capsule(), tint: Color.vademAccent)
             .contentShape(.capsule)
     }
 }

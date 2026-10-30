@@ -6,7 +6,7 @@ import VademCore
 /// The Analytics screen: a stacked bar chart of the next 12 months (installments, subscriptions
 /// and one-time payments).
 ///
-/// A summary card (`analytics.summary`) above the chart (`analytics.chart`) shows the selected
+/// A ``DisplayHeader`` (`analytics.header`) tops the screen. A summary card (`analytics.summary`) above the chart (`analytics.chart`) shows the selected
 /// month; selecting a bar changes it (with VoiceOver, swiping up or down on the summary does).
 /// The chart's VoiceOver summary names the 12-month total and the highest month. The current
 /// month is highlighted. Without data the screen shows an empty state (`analytics.empty`) with an
@@ -48,6 +48,7 @@ public struct AnalyticsView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                header
                 content
             }
             .padding(20)
@@ -65,6 +66,17 @@ public struct AnalyticsView: View {
         // Ekran her açıldığında (ve form kapanınca Home'dan) veri yenilenir.
         .onAppear { model.reload() }
         .accessibilityIdentifier("analytics.screen")
+    }
+
+    // Serif ekran başlığı: "Önümüzdeki 12 ay", vurgu ay sayısında.
+    private var header: some View {
+        let accent = String(localized: "12 months", bundle: .module, comment: "Accented part of the Analytics display title")
+        return DisplayHeader(
+            eyebrow: AppTab.analytics.title,
+            title: String(localized: "Your next \(accent)", bundle: .module, comment: "Analytics display title; the argument is accented"),
+            accent: accent,
+            identifier: "analytics.header"
+        )
     }
 
     @ViewBuilder

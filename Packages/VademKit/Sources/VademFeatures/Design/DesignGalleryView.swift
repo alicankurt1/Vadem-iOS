@@ -1,7 +1,8 @@
 import SwiftUI
 import VademCore
 
-/// Shows every color token, chip kind, card style and sample amounts in one screen,
+/// Shows every color token, chip kind, card style, sample amounts, display titles (`gallery.titles`)
+/// and glass surfaces (`gallery.glass`) in one screen,
 /// so the UI check can verify contrast and layout. Opened with the `-ui-gallery` launch argument.
 @MainActor
 public struct DesignGalleryView: View {
@@ -23,6 +24,9 @@ public struct DesignGalleryView: View {
         false
         #endif
     }
+
+    // Başlık örneğinin vurgulu tutarı.
+    nonisolated static let titleAmount = Money(Decimal(482_550) / 100)
 
     // "Ekle" düğmesinin eklediği tutar.
     nonisolated static let addedAmount = Money(100)
@@ -117,6 +121,32 @@ public struct DesignGalleryView: View {
                         Button {} label: { Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") } }
                             .buttonStyle(.heroPill)
                         Button {} label: { Text("Calendar", bundle: .module) }
+                            .buttonStyle(.heroPill)
+                    }
+
+                    section(String(localized: "Titles", bundle: .module, comment: "Design gallery section"), id: "gallery.titles") {
+                        let amount = AmountText.format(Self.titleAmount)
+                        let spokenAmount = AmountText.spokenLabel(Self.titleAmount)
+                        DisplayHeader(
+                            eyebrow: String(localized: "This month", bundle: .module),
+                            title: String(localized: "You pay \(amount)", bundle: .module, comment: "Home display title; the amount is accented"),
+                            accent: amount,
+                            accessibilityLabel: String(
+                                localized: "You pay \(spokenAmount)", bundle: .module, comment: "Home display title; the amount is accented"
+                            ),
+                            identifier: "gallery.displayTitle"
+                        )
+                        EyebrowLabel(String(localized: "Analytics", bundle: .module))
+                    }
+
+                    section(String(localized: "Glass", bundle: .module, comment: "Design gallery section"), id: "gallery.glass") {
+                        SurfaceCard {
+                            Text("Payment reminders", bundle: .module)
+                                .foregroundStyle(Color.vademTextPrimary)
+                            Text("Due so far", bundle: .module)
+                                .foregroundStyle(Color.vademTextSecondary)
+                        }
+                        Button {} label: { Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") } }
                             .buttonStyle(.heroPill)
                     }
 

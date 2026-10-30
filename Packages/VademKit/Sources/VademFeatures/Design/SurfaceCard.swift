@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A rounded `vademSurface` container that stacks its rows with hairline `vademSeparator`
-/// dividers between them (no border).
+/// A rounded glass card (``SwiftUI/View/vademGlassSurface(in:tint:)``: translucent `vademSurface`,
+/// thin light border, soft shadow) that stacks its rows with hairline `vademSeparator` dividers between them.
 @MainActor
 public struct SurfaceCard<Content: View>: View {
     private let content: Content
@@ -31,7 +31,7 @@ public struct SurfaceCard<Content: View>: View {
                 }
             }
         }
-        .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .vademGlassSurface(in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     // Tek piksel kalınlığında çizgi; satır metniyle hizalı başlar.

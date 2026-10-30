@@ -7,6 +7,7 @@ import VademCore
 /// opens the add-card form. The list reloads whenever a form closes, then `onDataChanged` runs.
 /// Without cards an empty state explains the screen and offers an add button. The card faces stop
 /// drifting under Reduce Motion or `-ui-static-motion`, so the screen is idle in the UI check.
+/// A ``DisplayHeader`` (`cards.header`) tops the list.
 /// Identifiers: `cards.list` (the screen), `cards.add` (toolbar), `cards.row.<index>` (cards, from 0),
 /// `cards.empty` (empty-state text), `cards.empty.add` (empty-state button) and `cards.error`.
 @MainActor
@@ -34,6 +35,7 @@ public struct CardListView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: FormLayout.spacing) {
+                header
                 content
             }
             // Yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
@@ -65,6 +67,17 @@ public struct CardListView: View {
     private func formClosed() {
         model.refresh()
         onDataChanged?()
+    }
+
+    // Serif ekran başlığı: "Kartların tek bakışta", vurgu "Kartların" sözcüğünde.
+    private var header: some View {
+        let accent = String(localized: "cards", bundle: .module, comment: "Accented word of the Cards display title (Your cards at a glance)")
+        return DisplayHeader(
+            eyebrow: AppTab.cards.title,
+            title: String(localized: "Your \(accent) at a glance", bundle: .module, comment: "Cards display title; the argument is accented"),
+            accent: accent,
+            identifier: "cards.header"
+        )
     }
 
     @ViewBuilder
