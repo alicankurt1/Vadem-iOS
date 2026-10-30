@@ -361,22 +361,22 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
-    func testAnalyticsOpensFromHomeAndGoesBack() throws {
+    func testAnalyticsTabShowsChartAndHomeTabComesBack() throws {
         let app = launchHome()
 
-        // Araç çubuğundaki grafik düğmesi Analytics ekranını iter.
-        let button = app.buttons["home.analytics"]
-        XCTAssertTrue(button.waitForExistence(timeout: 10), "analytics button not found on Home")
+        // Alttaki çubuktaki Analytics sekmesi grafik ekranını gösterir.
+        let button = app.buttons["tab.analytics"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "analytics tab not found")
         button.tap()
         XCTAssertTrue(element("analytics.screen", in: app).waitForExistence(timeout: 10), "Analytics screen must show")
         XCTAssertTrue(element("analytics.summary", in: app).waitForExistence(timeout: 5), "summary card must show")
         XCTAssertTrue(element("analytics.chart", in: app).exists, "chart must show")
         XCTAssertFalse(element("analytics.empty", in: app).exists, "sample data is not empty")
 
-        // Geri düğmesi Home'a döner.
-        app.navigationBars.buttons.firstMatch.tap()
-        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after going back")
-        XCTAssertFalse(element("analytics.screen", in: app).exists, "Analytics must be popped")
+        // "Bu ay" sekmesi Home'a döner; Analytics gizlenir.
+        app.buttons["tab.home"].tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after switching back")
+        XCTAssertFalse(element("analytics.screen", in: app).waitForExistence(timeout: 2), "Analytics must be hidden on the Home tab")
     }
 
     @MainActor
@@ -405,7 +405,7 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertFalse(element("assistant.empty", in: app).exists, "empty state must go away")
 
         // Geri düğmesi Home'a döner.
-        app.navigationBars.buttons.firstMatch.tap()
+        app.navigationBars.buttons["BackButton"].tap()
         XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after going back")
     }
 
@@ -425,8 +425,8 @@ final class FunctionalFlowTests: XCTestCase {
     @MainActor
     func testAnalyticsSelectingBarChangesDonut() throws {
         let app = launchHome()
-        let button = app.buttons["home.analytics"]
-        XCTAssertTrue(button.waitForExistence(timeout: 10), "analytics button not found on Home")
+        let button = app.buttons["tab.analytics"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "analytics tab not found")
         button.tap()
         XCTAssertTrue(element("analytics.screen", in: app).waitForExistence(timeout: 10), "Analytics screen must show")
 
@@ -455,8 +455,8 @@ final class FunctionalFlowTests: XCTestCase {
     func testHomeHasNoVersionAndSettingsShowsVersion() throws {
         let app = launchHome()
 
-        let gear = app.buttons["home.settings"]
-        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
+        let gear = app.buttons["tab.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings tab not found")
         // Başlık gezinme çubuğunda; Home'da sürüm metni yok (#154).
         XCTAssertTrue(app.staticTexts["Vadem"].exists, "Vadem title must show on Home")
         let versionQuery = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Version ", "Sürüm "))
@@ -475,8 +475,8 @@ final class FunctionalFlowTests: XCTestCase {
     func testSettingsTogglesRemindersAndPicksTiming() throws {
         let app = launchHome()
 
-        let gear = app.buttons["home.settings"]
-        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
+        let gear = app.buttons["tab.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings tab not found")
         gear.tap()
 
         // Açılışta hatırlatmalar açık ve zamanlama satırı görünür.
@@ -505,10 +505,10 @@ final class FunctionalFlowTests: XCTestCase {
         )
         XCTAssertFalse(element("settings.timing.option.1", in: app).exists, "option list must close after picking")
 
-        // Bitti: sayfa kapanır ve Home görünür.
-        app.buttons["settings.done"].tap()
-        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after Done")
-        XCTAssertFalse(app.switches["settings.reminders"].exists, "Settings must be dismissed")
+        // "Bu ay" sekmesi Home'u gösterir; Ayarlar gizlenir.
+        app.buttons["tab.home"].tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must be visible after switching tab")
+        XCTAssertFalse(app.switches["settings.reminders"].waitForExistence(timeout: 2), "Settings must be hidden on the Home tab")
     }
 
     @MainActor
@@ -733,8 +733,8 @@ final class FunctionalFlowTests: XCTestCase {
     @MainActor
     func testCardsScreenAddOpenAndDeleteCard() throws {
         let app = launchHome(extraArguments: ["-ui-card-list-empty"])
-        // Boş depo ile Kartlar ekranı açılış argümanıyla doğrudan açılır; Ayarlar'dan gezinme yapılmaz.
-        // (Ayarlar → Kartlar gezinmesi testSettingsCardsRowOpensCardsAndDeletesNewCard'da sınanır.)
+        // Boş depo ile Kartlar sekmesi açılış argümanıyla doğrudan seçilir.
+        // (Sekme çubuğundan geçiş testCardsTabListsCardsAndDeletesNewCard'da sınanır.)
         XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 10), "Cards screen not shown")
         XCTAssertTrue(element("cards.empty", in: app).exists, "empty state must show with no cards")
 
@@ -744,8 +744,8 @@ final class FunctionalFlowTests: XCTestCase {
     @MainActor
     func testSettingsPrivacyRowOpensPolicyAndGoesBack() throws {
         let app = launchHome()
-        let gear = app.buttons["home.settings"]
-        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
+        let gear = app.buttons["tab.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings tab not found")
         gear.tap()
         let privacyRow = element("settings.privacy", in: app)
         XCTAssertTrue(privacyRow.waitForExistence(timeout: 5), "Privacy row not shown in Settings")
@@ -753,13 +753,8 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(element("privacy.policy", in: app).waitForExistence(timeout: 5), "Privacy policy not shown")
         XCTAssertTrue(element("privacy.policy.intro", in: app).exists, "policy intro text not shown")
 
-        // Gezinme çubuğundaki geri düğmesiyle Ayarlar'a dönülür.
-        // Ayarlar sayfa (sheet) olarak açık; arkadaki Home'un çubuğu da var. Sheet'teki çubuk daha aşağıdadır
-        // (en büyük minY), geri düğmesi onun ilk düğmesidir. Başlık metni dile bağlı olduğundan kullanılmaz.
-        let policyBar = app.navigationBars.allElementsBoundByIndex
-            .filter { $0.exists }
-            .max { $0.frame.minY < $1.frame.minY }
-        let back = try XCTUnwrap(policyBar, "navigation bar of the policy not found").buttons.firstMatch
+        // Gizlilik metni Ayarlar sekmesinin yığınına itilir; geri düğmesi Ayarlar'a döner.
+        let back = app.navigationBars.buttons["BackButton"]
         XCTAssertTrue(back.waitForExistence(timeout: 5), "back button not found in the policy navigation bar")
         back.tap()
         XCTAssertTrue(element("settings.privacy", in: app).waitForExistence(timeout: 5), "must return to Settings")
@@ -767,14 +762,11 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
-    func testSettingsCardsRowOpensCardsAndDeletesNewCard() throws {
+    func testCardsTabListsCardsAndDeletesNewCard() throws {
         let app = launchHome()
-        let gear = app.buttons["home.settings"]
-        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings button not found on Home")
-        gear.tap()
-        let cardsRow = element("settings.cards", in: app)
-        XCTAssertTrue(cardsRow.waitForExistence(timeout: 5), "Cards row not shown in Settings")
-        cardsRow.tap()
+        let cardsTab = app.buttons["tab.cards"]
+        XCTAssertTrue(cardsTab.waitForExistence(timeout: 10), "cards tab not found")
+        cardsTab.tap()
         XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 5), "Cards screen not shown")
         // Örnek veride üç kart var, hepsi kullanımda.
         XCTAssertTrue(element("cards.row.0", in: app).waitForExistence(timeout: 5), "sample cards not listed")
@@ -992,5 +984,36 @@ final class FunctionalFlowTests: XCTestCase {
 
         XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "form must be dismissed after deleting")
         XCTAssertFalse(scrollToRow(titled: "Dentist", in: app), "deleted one-time payment must not appear on Home")
+    }
+
+    /// #208: tüm sekmelere geçilir; ＋ ile ödeme eklenir ve "Bu ay"da görünür.
+    @MainActor
+    func testTabBarSwitchesThroughAllTabsAndAddsPaymentWithPlus() throws {
+        let app = launchHome()
+
+        // Beş kimlik de çubukta var.
+        for id in ["tab.home", "tab.analytics", "tab.cards", "tab.settings", "tab.add"] {
+            XCTAssertTrue(app.buttons[id].waitForExistence(timeout: 10), "\(id) not found")
+        }
+
+        // Açılışta Home; her sekme kendi ekranını gösterir.
+        XCTAssertTrue(app.staticTexts["home.month"].waitForExistence(timeout: 5), "Home must be the first tab")
+        app.buttons["tab.analytics"].tap()
+        XCTAssertTrue(element("analytics.screen", in: app).waitForExistence(timeout: 10), "Analytics tab must show")
+        app.buttons["tab.cards"].tap()
+        XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 10), "Cards tab must show")
+        app.buttons["tab.settings"].tap()
+        XCTAssertTrue(app.switches["settings.reminders"].waitForExistence(timeout: 10), "Settings tab must show")
+        app.buttons["tab.home"].tap()
+        XCTAssertTrue(app.staticTexts["home.month"].waitForExistence(timeout: 5), "Home must show again")
+
+        // Başka bir sekmeden ＋: ekleme sayfası açılır, ödeme kaydedilir, "Bu ay"da görünür.
+        app.buttons["tab.cards"].tap()
+        XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 10))
+        app.buttons["tab.add"].tap()
+        chooseInSheet("installment", in: app)
+        try completeInstallmentFlow(in: app, amount: "1200")
+        app.buttons["tab.home"].tap()
+        XCTAssertTrue(scrollToInstallmentRow(in: app), "payment added with + not shown on This month")
     }
 }
