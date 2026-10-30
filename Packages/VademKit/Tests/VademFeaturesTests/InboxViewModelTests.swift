@@ -262,6 +262,94 @@ struct HomeInboxTests {
 }
 
 @MainActor
+@Suite("Inbox refresh while open")
+struct InboxRefreshWhileOpenTests {
+    private static func home(
+        payments: InMemoryPaymentRepository, inbox: any InboxRepository
+    ) -> HomeViewModel {
+        HomeViewModel(
+            repository: payments,
+            today: InboxTestSupport.date(2026, 11, 10), calendar: InboxTestSupport.calendar,
+            settings: SettingsDependencies(
+                store: InMemoryReminderPreferencesStore(preferences: .default),
+                center: ReminderSchedulerTests.FakeCenter(status: .allowed)
+            ),
+            inbox: inbox
+        )
+    }
+
+    @Test("Entries recorded while the inbox is open appear, are marked read and the badge stays 0")
+    func newEntryAppearsWhileOpen() throws {
+        let payments = try InboxTestSupport.paymentsWithoutInsight()
+        let inbox = InMemoryInboxRepository()
+        let home = Self.home(payments: payments, inbox: inbox)
+        home.recordInsights(at: InboxTestSupport.date(2026, 11, 10))
+        let model = home.makeInboxModel()
+        model.open()
+        #expect(model.state == .empty)
+
+        // Ekran açıkken yeni bir içgörü doğuran ödeme eklenir.
+        try payments.save(InboxTestSupport.subscription("Gym", 1500, from: 11))
+        home.recordInsights(at: InboxTestSupport.date(2026, 11, 11))
+
+        #expect(model.rows.map(\.id) == ["insight-2026-11-totalChange"])
+        #expect(model.state == .loaded)
+        // Bu ziyarette yeni satır okunmamış işaretiyle görünür, depoda okundu.
+        #expect(model.rows.allSatisfy { $0.isUnread })
+        #expect(try inbox.unreadCount() == 0)
+        #expect(home.inboxUnreadCount == 0)
+    }
+
+    @Test("updateToday also refreshes the open inbox")
+    func updateTodayRefreshes() throws {
+        let payments = try InboxTestSupport.paymentsWithoutInsight()
+        let inbox = InMemoryInboxRepository()
+        let home = Self.home(payments: payments, inbox: inbox)
+        let model = home.makeInboxModel()
+        model.open()
+        try payments.save(InboxTestSupport.subscription("Gym", 1500, from: 11))
+        home.updateToday(InboxTestSupport.date(2026, 11, 10))
+        #expect(model.rows.count == 1)
+        #expect(home.inboxUnreadCount == 0)
+        #expect(try inbox.unreadCount() == 0)
+    }
+
+    @Test("Recording with nothing new does not reload the open model")
+    func nothingNewNoReload() throws {
+        let inbox = InMemoryInboxRepository()
+        let home = Self.home(payments: try InboxTestSupport.paymentsWithOneInsight(), inbox: inbox)
+        home.recordInsights(at: InboxTestSupport.date(2026, 11, 10))
+        let model = home.makeInboxModel()
+        model.open()
+        // Yeniden yükleme olsaydı satır okundu görünürdü; yüklenmediği için işaret kalır.
+        #expect(model.rows.allSatisfy { $0.isUnread })
+        home.recordInsights(at: InboxTestSupport.date(2026, 11, 11))
+        #expect(model.rows.count == 1)
+        #expect(model.rows.allSatisfy { $0.isUnread })
+        #expect(home.inboxUnreadCount == 0)
+    }
+
+    @Test("After the inbox is closed, recording refreshes nothing and the badge counts the new entry")
+    func closedInboxNotRefreshed() throws {
+        let payments = try InboxTestSupport.paymentsWithoutInsight()
+        let inbox = InMemoryInboxRepository()
+        let home = Self.home(payments: payments, inbox: inbox)
+        weak var weakModel: InboxViewModel?
+        do {
+            let model = home.makeInboxModel()
+            model.open()
+            weakModel = model
+        }
+        #expect(weakModel == nil)
+        try payments.save(InboxTestSupport.subscription("Gym", 1500, from: 11))
+        home.recordInsights(at: InboxTestSupport.date(2026, 11, 11))
+        // Kapalıyken eklenen girdi okunmamış kalır ve rozette sayılır.
+        #expect(try inbox.unreadCount() == 1)
+        #expect(home.inboxUnreadCount == 1)
+    }
+}
+
+@MainActor
 @Suite("NotificationTapHandler")
 struct NotificationTapHandlerTests {
     @Test("A monthly summary tap routes to the inbox")
