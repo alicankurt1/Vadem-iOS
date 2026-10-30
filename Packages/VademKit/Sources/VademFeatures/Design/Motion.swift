@@ -139,12 +139,14 @@ private struct MotionEntryModifier: ViewModifier {
     let order: Motion.EntryOrder
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // Ekranın girişi bittiyse (bkz. motionEntryScope) sonradan oluşan görünümler doğrudan görünür.
+    @Environment(\.motionEntryFinished) private var entryFinished
     // İlk görünüşte bir kez oynar; sekme canlı kaldığı için sonraki görünüşlerde tekrar etmez.
     @State private var hasEntered = false
 
     func body(content: Content) -> some View {
         let isAnimated = Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested)
-        let state = Motion.entryState(hasEntered: hasEntered, isAnimated: isAnimated)
+        let state = Motion.entryState(hasEntered: hasEntered || entryFinished, isAnimated: isAnimated)
         // Görünüm hiyerarşiden çıkarılmaz; yalnızca saydamlık, kayma ve ölçek değişir.
         content
             .opacity(state.opacity)
@@ -152,11 +154,38 @@ private struct MotionEntryModifier: ViewModifier {
             .offset(y: state.offsetY)
             .onAppear {
                 guard !hasEntered else { return }
-                if isAnimated {
+                // Giriş zaten oynadıysa (yeni eklenen kart, ay değişimi, dal değişimi) animasyon yok.
+                if isAnimated, !entryFinished {
                     withAnimation(Motion.entryAnimation(order: order)) { hasEntered = true }
                 } else {
                     hasEntered = true
                 }
+            }
+    }
+}
+
+extension EnvironmentValues {
+    // Ekranın kademeli girişi bitti mi; `motionEntryScope` yazar, `MotionEntryModifier` okur.
+    @Entry var motionEntryFinished = false
+}
+
+/// Owns the "entry has played" flag of one screen (see `motionEntryScope()`).
+@MainActor
+private struct MotionEntryScopeModifier: ViewModifier {
+    // Ekranın ilk görünüşündeki giriş bitince true olur ve ekran yaşadıkça öyle kalır.
+    @State private var isFinished = false
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.motionEntryFinished, isFinished)
+            .task {
+                guard !isFinished else { return }
+                // En son giren adımın (liste) gecikmesi ve süresi kadar beklenir; bu arada oluşan
+                // görünümler de girişe katılır, sonrakiler doğrudan görünür.
+                let total = Motion.entryDelay(order: .list) + Motion.entryDuration
+                try? await Task.sleep(for: .seconds(total))
+                guard !Task.isCancelled else { return }
+                isFinished = true
             }
     }
 }
@@ -167,6 +196,9 @@ private struct TabSwitchModifier: ViewModifier {
     let phase: Motion.TabSwitchPhase
 
     func body(content: Content) -> some View {
+        // Efektler `if` ile eklenip kaldırılmaz: dal değişimi TabView'in kimliğini değiştirir ve
+        // sekmelerin yığınları ile kaydırma konumları sıfırlanır. Yerleşik durumda (.visible) değerler
+        // birim değerlerdir (saydamlık 1, bulanıklık 0, ölçek 1), yani görüntüye etkileri yoktur.
         content
             .opacity(phase.opacity)
             .blur(radius: phase.blurRadius)
@@ -181,6 +213,13 @@ public extension View {
     /// The view stays in the hierarchy (and hittable) the whole time.
     func motionEntry(order: Motion.EntryOrder) -> some View {
         modifier(MotionEntryModifier(order: order))
+    }
+
+    /// Marks this view as a screen whose ``motionEntry(order:)`` elements play only on its first appearance.
+    ///
+    /// Elements created after that entry (a card added later, a month or branch change) just appear.
+    func motionEntryScope() -> some View {
+        modifier(MotionEntryScopeModifier())
     }
 
     /// Draws this tab content as in `phase` of a tab switch (fade, blur and scale).

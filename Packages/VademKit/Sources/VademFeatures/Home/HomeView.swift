@@ -171,12 +171,17 @@ public struct HomeView: View {
                     // Hata durumunda da görünür (toplam sıfır): ekleme düğmesi her zaman erişilebilir.
                     hero(proxy)
                         .motionEntry(order: .hero)
-                    sections
-                        .motionEntry(order: .list)
+                    // Tek kapsayıcı: girişi bölümlerin her biri değil, liste bir bütün olarak bir kez oynar.
+                    VStack(alignment: .leading, spacing: 24) {
+                        sections
+                    }
+                    .motionEntry(order: .list)
                 }
                 // 20 pt yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                // Giriş yalnızca sekmenin ilk görünüşünde; ay değişince oluşan görünümler doğrudan görünür.
+                .motionEntryScope()
             }
             .background(Color.vademBackground.ignoresSafeArea())
         }

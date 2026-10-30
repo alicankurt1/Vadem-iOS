@@ -78,6 +78,8 @@ public struct SettingsView: View {
             versionCard
                 .motionEntry(order: .list)
         }
+        // Giriş yalnızca ilk görünüşte; sonradan çıkan kartlar (izin uyarısı) doğrudan görünür.
+        .motionEntryScope()
         .foregroundStyle(Color.vademTextPrimary)
         .tint(Color.vademBrand)
         .navigationDestination(isPresented: $isChoosingTiming) {

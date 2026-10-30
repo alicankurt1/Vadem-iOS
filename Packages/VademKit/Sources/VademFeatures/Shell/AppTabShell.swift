@@ -29,6 +29,8 @@ public struct AppTabShell: View {
     @State private var displayedTab: AppTab
     // Sekme geçişinin anlık görünümü (sönme, bulanıklık, ölçek).
     @State private var tabPhase: Motion.TabSwitchPhase = .visible
+    // Her yeni sekme geçişinde artar; yalnızca en son geçişin tamamlanma işi ve Task'ı uygulanır.
+    @State private var tabSwitchGeneration = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Yüzen çubuğun ölçülen yüksekliği; sekme içeriği bu kadar alttan boşluk bırakır.
     @State private var barHeight: CGFloat = 0
@@ -212,16 +214,27 @@ public struct AppTabShell: View {
     }
 
     // Hareket kapalıyken (Reduce Motion, -ui-static-motion) sekme anında değişir. Açıkken önce eski
-    // sekme söner, sonra yeni sekme yerine geçip belirir. Art arda dokunuşlarda son seçim kazanır.
+    // sekme söner, sonra yeni sekme yerine geçip belirir. Art arda dokunuşlarda (A→B→C) son seçim kazanır:
+    // - Sönme sürerken (.leaving) yeni geçiş başlatılmaz; süren sönme bitince zaten en son `selection`
+    //   gösterilir. Aynı değere ikinci bir withAnimation tamamlanmayı hemen tetikler, bu yüzden atlanır.
+    // - Her yeni geçiş sayacı artırır; eski geçişlerin tamamlanma işi ve belirme Task'ı sayaç tutmazsa
+    //   hiçbir şey yapmaz. Böylece değiştirme ve .entering yalnızca bir kez uygulanır (titreme olmaz).
+    // - Belirme sırasında (.entering veya .visible'a giderken) dokunulursa yeni sönme oradan başlar.
     private func switchTab(to newTab: AppTab) {
         guard Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested) else {
+            // Süren animasyonlu geçiş varsa geçersiz kılınır.
+            tabSwitchGeneration += 1
             displayedTab = newTab
             tabPhase = .visible
             return
         }
+        guard tabPhase != .leaving else { return }
+        tabSwitchGeneration += 1
+        let generation = tabSwitchGeneration
         withAnimation(Motion.tabOut) {
             tabPhase = .leaving
         } completion: {
+            guard generation == tabSwitchGeneration else { return }
             var transaction = Transaction()
             transaction.disablesAnimations = true
             withTransaction(transaction) {
@@ -229,9 +242,9 @@ public struct AppTabShell: View {
                 tabPhase = .entering
             }
             // Bir sonraki turda: yeni sekme önce görünmez çizilir, sonra yalnızca saydamlıkla belirir.
-            // Bu arada başka bir sekmeye geçilmeye başlandıysa (söner durumda) dokunulmaz.
+            // Bu arada yeni bir geçiş başladıysa sayaç değişmiştir; dokunulmaz.
             Task { @MainActor in
-                guard tabPhase == .entering else { return }
+                guard generation == tabSwitchGeneration else { return }
                 withAnimation(Motion.tabIn) { tabPhase = .visible }
             }
         }

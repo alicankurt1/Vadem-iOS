@@ -39,6 +39,8 @@ public struct CardListView: View {
             // Yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
             .padding(FormLayout.spacing)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Giriş yalnızca sekmenin ilk görünüşünde; sonradan eklenen kartlar doğrudan görünür.
+            .motionEntryScope()
         }
         .background(Color.vademBackground.ignoresSafeArea())
         .foregroundStyle(Color.vademTextPrimary)

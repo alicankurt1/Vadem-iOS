@@ -54,6 +54,8 @@ public struct AnalyticsView: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Giriş yalnızca sekmenin ilk görünüşünde; sonradan oluşan görünümler doğrudan görünür.
+            .motionEntryScope()
         }
         .background(Color.vademBackground.ignoresSafeArea())
         .navigationTitle(Text("Analytics", bundle: .module))
