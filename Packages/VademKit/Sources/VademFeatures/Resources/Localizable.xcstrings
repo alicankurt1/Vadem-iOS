@@ -86,23 +86,6 @@
         }
       }
     },
-    "%@ installments ended; you pay %@ less this month" : {
-      "comment" : "Monthly summary body: installment title, amount paid less",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ installments ended; you pay %2$@ less this month"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ taksitleri bitti; bu ay %2$@ daha az ödeyeceksin"
-          }
-        }
-      }
-    },
     "%@, %@ TL" : {
       "comment" : "Spoken chart bar: month, amount",
       "localizations" : {
@@ -137,16 +120,33 @@
         }
       }
     },
-    "%lld installment plans ended; you pay %@ less this month" : {
-      "comment" : "Monthly summary body: number of ended installment plans, amount paid less",
+    "%@: installment ended; you pay %@ less this month" : {
+      "comment" : "Monthly summary body: installment title, amount paid less",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@plans@ ended; you pay %2$@ less this month"
+            "value" : "%1$@: installment ended; you pay %2$@ less this month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: taksit bitti; bu ay %2$@ daha az ödeyeceksin"
+          }
+        }
+      }
+    },
+    "%lld installments ended; you pay %@ less this month" : {
+      "comment" : "Monthly summary body: number of ended installments, amount paid less",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@items@ ended; you pay %2$@ less this month"
           },
           "substitutions" : {
-            "plans" : {
+            "items" : {
               "argNum" : 1,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -154,13 +154,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg installment plan"
+                      "value" : "%arg installment"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg installment plans"
+                      "value" : "%arg installments"
                     }
                   }
                 }
@@ -171,10 +171,10 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@plans@ bitti; bu ay %2$@ daha az ödeyeceksin"
+            "value" : "%#@items@ bitti; bu ay %2$@ daha az ödeyeceksin"
           },
           "substitutions" : {
-            "plans" : {
+            "items" : {
               "argNum" : 1,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -182,13 +182,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg taksit planı"
+                      "value" : "%arg taksit"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg taksit planı"
+                      "value" : "%arg taksit"
                     }
                   }
                 }

@@ -90,9 +90,12 @@ public final class SettingsViewModel: Identifiable {
     public var isMonthlySummaryEnabled: Bool { preferences.monthlySummaryEnabled }
     /// The timing row is shown only while reminders are on.
     public var showsTiming: Bool { preferences.isEnabled }
-    /// `true` when reminders are on but the system permission is denied: the screen explains
-    /// it and offers ``openSystemSettings()``.
-    public var showsPermissionDenied: Bool { preferences.isEnabled && authorization == .denied }
+    /// `true` when reminders or the monthly summary are on but the system permission is denied:
+    /// the screen explains it and offers ``openSystemSettings()``.
+    public var showsPermissionDenied: Bool {
+        // Hatırlatmalar kapalı olsa da açık aylık özet izne ihtiyaç duyar.
+        (preferences.isEnabled || preferences.monthlySummaryEnabled) && authorization == .denied
+    }
 
     /// `true` when a repository was given, so ``makeCardListModel()`` builds a Cards screen model.
     public var showsCards: Bool { repository != nil }

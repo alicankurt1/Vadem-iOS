@@ -53,7 +53,7 @@ public enum ReminderText {
 
     /// The monthly summary body, from its insight: e.g.
     /// `"Your payments rose 50% this month (₺3.200,00 → ₺4.800,00)"` or
-    /// `"Rent installments ended; you pay ₺500,00 less this month"`.
+    /// `"Laptop: installment ended; you pay ₺500,00 less this month"`.
     public static func body(
         for summary: PlannedMonthlySummary,
         formatAmount: (Money) -> String = AmountText.format,
@@ -89,14 +89,14 @@ public enum ReminderText {
             // Tek plan adıyla söylenir; birden fazlası sayıyla.
             if titles.count == 1, let title = titles.first {
                 return String(
-                    localized: "\(title) installments ended; you pay \(less) less this month", bundle: .module,
+                    localized: "\(title): installment ended; you pay \(less) less this month", bundle: .module,
                     comment: "Monthly summary body: installment title, amount paid less"
                 )
             }
             let count = titles.count
             return String(
-                localized: "\(count) installment plans ended; you pay \(less) less this month", bundle: .module,
-                comment: "Monthly summary body: number of ended installment plans, amount paid less"
+                localized: "\(count) installments ended; you pay \(less) less this month", bundle: .module,
+                comment: "Monthly summary body: number of ended installments, amount paid less"
             )
         }
     }
