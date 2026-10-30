@@ -73,9 +73,12 @@ public struct CardListView: View {
         case .loaded:
             ForEach(Array(model.cards.enumerated()), id: \.element.id) { index, card in
                 row(card, index: index)
+                    // İlk kart panel gibi önce, diğerleri liste olarak hemen ardından girer.
+                    .motionEntry(order: index == 0 ? .hero : .list)
             }
         case .empty:
             emptyState
+                .motionEntry(order: .hero)
         case .error(let message):
             FormCard {
                 FormFailureRow(message: message)

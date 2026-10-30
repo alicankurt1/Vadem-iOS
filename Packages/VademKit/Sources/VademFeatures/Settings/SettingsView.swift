@@ -46,6 +46,7 @@ public struct SettingsView: View {
 
     public var body: some View {
         FormScroll {
+            // İlk görünüşte kademeli giriş: önce hatırlatma kartı, sonra diğer kartlar.
             FormCard {
                 FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
                     Toggle(isOn: Binding(
@@ -67,11 +68,15 @@ public struct SettingsView: View {
                     }
                 }
             }
+            .motionEntry(order: .header)
             if model.showsPermissionDenied {
                 permissionDeniedCard
+                    .motionEntry(order: .hero)
             }
             privacyCard
+                .motionEntry(order: .list)
             versionCard
+                .motionEntry(order: .list)
         }
         .foregroundStyle(Color.vademTextPrimary)
         .tint(Color.vademBrand)

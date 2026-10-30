@@ -165,10 +165,14 @@ public struct HomeView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    // İlk görünüşte kademeli giriş: önce ay başlığı, sonra panel, sonra liste.
                     monthBar
+                        .motionEntry(order: .header)
                     // Hata durumunda da görünür (toplam sıfır): ekleme düğmesi her zaman erişilebilir.
                     hero(proxy)
+                        .motionEntry(order: .hero)
                     sections
+                        .motionEntry(order: .list)
                 }
                 // 20 pt yan boşluk: ekranın sol kenarında her zaman arka plan rengi kalır.
                 .padding(20)

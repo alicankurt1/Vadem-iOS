@@ -37,6 +37,8 @@ public struct AnalyticsView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.self) private var environment
+    // Sütunlar ilk görünüşte sıfırdan dolar; hareket kapalıyken baştan tam çizilir.
+    @State private var barsHaveAppeared = false
 
     /// Creates the screen for `model`; `onAddPayment` is the empty state's "Add a payment" action
     /// (the button is hidden when it is `nil`).
@@ -97,13 +99,18 @@ public struct AnalyticsView: View {
                 .accessibilityIdentifier("analytics.addPayment")
             }
         case .loaded:
+            // İlk görünüşte kademeli giriş: önce özet, sonra grafik, sonra dağılım.
             if let summary = model.summary {
                 summaryCard(summary)
+                    .motionEntry(order: .header)
             }
             chart
+                .motionEntry(order: .hero)
             breakdown
+                .motionEntry(order: .list)
             if let insight = model.insight {
                 insightCard(insight)
+                    .motionEntry(order: .list)
             }
         }
     }
@@ -252,23 +259,30 @@ public struct AnalyticsView: View {
     }
 
     private var barChart: some View {
-        Chart {
+        let isAnimated = Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested)
+        // Doluluk çarpanı: ilk görünüşte 0'dan 1'e; okunan değerler Decimal'den gelir, etkilenmez.
+        let fill = Motion.fillFraction(1, hasAppeared: barsHaveAppeared, isAnimated: isAnimated)
+        // Eksen tam değerlere göre kalır; yoksa sütunlarla birlikte ölçeklenip dolum görünmezdi.
+        let fullMaximum = model.months.map {
+            Self.value($0.installments) + Self.value($0.subscriptions) + Self.value($0.oneTimePayments)
+        }.max() ?? 0
+        return Chart {
             ForEach(model.months, id: \.month) { total in
                 let id = AnalyticsViewModel.id(of: total.month)
                 let label = AnalyticsViewModel.accessibilityLabel(for: total)
                 let opacity = Self.opacity(for: total.month, in: model)
                 // Grafik değerleri için Double kaçınılmaz; gösterilen metinler Decimal'den gelir.
-                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.installments)))
+                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.installments) * fill))
                     .foregroundStyle(by: .value(Self.kindLabel, Self.installmentsName))
                     .opacity(opacity)
                     .accessibilityLabel(label)
                     .accessibilityValue(Self.partValue(Self.installmentsName, total.installments))
-                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.subscriptions)))
+                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.subscriptions) * fill))
                     .foregroundStyle(by: .value(Self.kindLabel, Self.subscriptionsName))
                     .opacity(opacity)
                     .accessibilityLabel(label)
                     .accessibilityValue(Self.partValue(Self.subscriptionsName, total.subscriptions))
-                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.oneTimePayments)))
+                BarMark(x: .value(Self.monthLabel, id), y: .value(Self.amountLabel, Self.value(total.oneTimePayments) * fill))
                     .foregroundStyle(by: .value(Self.kindLabel, Self.oneTimePaymentsName))
                     .opacity(opacity)
                     .accessibilityLabel(label)
@@ -280,6 +294,7 @@ public struct AnalyticsView: View {
             Self.subscriptionsName: Color.vademAccent,
             Self.oneTimePaymentsName: Self.oneTimeColor,
         ])
+        .chartYScale(domain: .automatic(dataType: Double.self) { $0.append(fullMaximum) })
         .chartXSelection(value: $chartSelection)
         .chartXAxis {
             AxisMarks(values: model.months.map { AnalyticsViewModel.id(of: $0.month) }) { value in
@@ -316,6 +331,10 @@ public struct AnalyticsView: View {
         }
         // Reduce Motion / -ui-static-motion açıkken veri değişimi animasyonsuz çizilir.
         .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: model.months)
+        .onAppear {
+            guard !barsHaveAppeared else { return }
+            withAnimation(Motion.animation(Motion.fill, reduceMotion: reduceMotion)) { barsHaveAppeared = true }
+        }
         .accessibilityChartDescriptor(AnalyticsChartDescriptor(months: model.months))
         .accessibilityIdentifier("analytics.chart")
     }

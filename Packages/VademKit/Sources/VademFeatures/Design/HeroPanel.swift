@@ -14,6 +14,8 @@ public struct HeroPanel<Actions: View>: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    // Çubuk ilk görünüşte boştan dolar; hareket kapalıyken baştan dolu çizilir.
+    @State private var hasAppeared = false
 
     /// Creates a panel showing `paid` of `total`, with `actions` (usually ``HeroPill`` buttons) below.
     ///
@@ -73,18 +75,24 @@ public struct HeroPanel<Actions: View>: View {
     // Çubuk yalnızca görsel; bilgisi özet etiketinde.
     private var progressBar: some View {
         let value = Self.progress(paid: paid, total: total)
+        let isAnimated = Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested)
+        let drawn = Motion.fillFraction(value, hasAppeared: hasAppeared, isAnimated: isAnimated)
         return GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule()
                     .fill(Color.vademHeroSecondary.opacity(0.3))
                 Capsule()
                     .fill(Color.vademAccent)
-                    .frame(width: proxy.size.width * value)
+                    .frame(width: proxy.size.width * drawn)
             }
         }
         .frame(height: 8)
         // Reduce Motion veya -ui-static-motion açıkken çubuk animasyonsuz değişir.
         .animation(Motion.animation(Motion.amount, reduceMotion: reduceMotion), value: value)
+        .onAppear {
+            guard !hasAppeared else { return }
+            withAnimation(Motion.animation(Motion.fill, reduceMotion: reduceMotion)) { hasAppeared = true }
+        }
     }
 
     // Düğmeler normalde yan yana, erişilebilirlik boyutlarında alt alta durur.

@@ -9,7 +9,8 @@ import VademCore
 /// selected tab is in the view and accessibility hierarchy. Content scrolls under the bar; a bottom
 /// inset as tall as the bar keeps the last row reachable. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
 /// form closes, Home, Analytics and Cards reload. The selected tab is published as
-/// `EnvironmentValues.selectedAppTab`.
+/// `EnvironmentValues.selectedAppTab`. Switching tabs plays the shared ``Motion`` tab transition
+/// (off under Reduce Motion and `-ui-static-motion`).
 ///
 /// In debug builds ``AppTab/launchTab(in:)`` picks the first tab. ``AddInstallmentView/launchArgument``,
 /// ``AddCardView/launchArgument`` and ``AddSubscriptionView/launchArgument`` open their add forms
@@ -24,6 +25,11 @@ public struct AppTabShell: View {
     @State private var cardListModel: CardListViewModel
     @State private var settingsModel: SettingsViewModel
     @State private var selection: AppTab
+    // TabView'de gösterilen sekme; geçiş animasyonunda eski sekme sönünce `selection`a eşitlenir.
+    @State private var displayedTab: AppTab
+    // Sekme geçişinin anlık görünümü (sönme, bulanıklık, ölçek).
+    @State private var tabPhase: Motion.TabSwitchPhase = .visible
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Yüzen çubuğun ölçülen yüksekliği; sekme içeriği bu kadar alttan boşluk bırakır.
     @State private var barHeight: CGFloat = 0
     // "Ekle" sayfası açık mı.
@@ -103,6 +109,7 @@ public struct AppTabShell: View {
         _oneTimeFlowModel = State(initialValue: initialOneTimeFlowModel)
         #endif
         _selection = State(initialValue: initialTab)
+        _displayedTab = State(initialValue: initialTab)
         _isAddSheetPresented = State(initialValue: initialAddSheetPresented)
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
@@ -112,7 +119,7 @@ public struct AppTabShell: View {
     public var body: some View {
         // Sistem TabView'i sekmeleri canlı tutar ve yalnızca seçili sekmeyi hiyerarşide (VoiceOver ve
         // UI testleri dahil) gösterir; sistem çubuğu gizli, yerine yüzen çubuk çizilir.
-        TabView(selection: $selection) {
+        TabView(selection: $displayedTab) {
             tab(.home) {
                 HomeView(model: model, onAdd: openAddSheet, onDataChanged: reloadAll)
             }
@@ -128,6 +135,9 @@ public struct AppTabShell: View {
                 SettingsView(model: settingsModel)
             }
         }
+        // Sekme geçişi: eski içerik bulanıklaşıp küçülerek söner, yenisi belirir (Motion'dan).
+        .tabSwitchEffect(tabPhase)
+        .onChange(of: selection) { _, newTab in switchTab(to: newTab) }
         // Çubuk içeriğin üstünde yüzer; klavye açılınca yerinde kalır (klavyenin altında).
         .overlay(alignment: .bottom) {
             FloatingTabBar(selection: $selection, onAdd: openAddSheet)
@@ -199,6 +209,32 @@ public struct AppTabShell: View {
         .toolbar(.hidden, for: .tabBar)
         #endif
         .tag(tab)
+    }
+
+    // Hareket kapalıyken (Reduce Motion, -ui-static-motion) sekme anında değişir. Açıkken önce eski
+    // sekme söner, sonra yeni sekme yerine geçip belirir. Art arda dokunuşlarda son seçim kazanır.
+    private func switchTab(to newTab: AppTab) {
+        guard Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested) else {
+            displayedTab = newTab
+            tabPhase = .visible
+            return
+        }
+        withAnimation(Motion.tabOut) {
+            tabPhase = .leaving
+        } completion: {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                displayedTab = selection
+                tabPhase = .entering
+            }
+            // Bir sonraki turda: yeni sekme önce görünmez çizilir, sonra yalnızca saydamlıkla belirir.
+            // Bu arada başka bir sekmeye geçilmeye başlandıysa (söner durumda) dokunulmaz.
+            Task { @MainActor in
+                guard tabPhase == .entering else { return }
+                withAnimation(Motion.tabIn) { tabPhase = .visible }
+            }
+        }
     }
 
     private func openAddSheet() {
