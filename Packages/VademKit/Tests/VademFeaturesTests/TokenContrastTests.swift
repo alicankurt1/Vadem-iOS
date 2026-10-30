@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import VademFeatures
 
@@ -38,22 +39,62 @@ struct TokenContrastTests {
         Pair(foreground: "onAccent", background: "accent"),
     ]
 
-    // #211: serif başlık ve eyebrow metinlerinin oturduğu zeminler (cam yüzey surface ile örtülü).
-    static let displayTitlePairs: [Pair] = [
-        Pair(foreground: "brand", background: "background"),  // vurgulu sözcük
-        Pair(foreground: "brand", background: "surface"),
-        Pair(foreground: "textPrimary", background: "background"),  // başlık
-        Pair(foreground: "textSecondary", background: "background"),  // eyebrow
-        Pair(foreground: "textSecondary", background: "surface"),
-        Pair(foreground: "onAccent", background: "accent"),  // renkli cam yüzey (＋ ve hero hap)
+    // MARK: - Cam yüzey karışımı (#211)
+
+    /// Cam yüzeyde bir ön plan token'ı, örtü rengi ve altından görünen zemin.
+    struct GlassCase: Sendable, CustomTestStringConvertible {
+        let foreground: String
+        let veil: String
+        let opacity: Double
+        var testDescription: String { "\(foreground) on \(veil) veil @\(opacity)" }
+    }
+
+    static let glassCases: [GlassCase] = [
+        GlassCase(foreground: "textPrimary", veil: "surface", opacity: GlassSurfaceModifier<Capsule>.surfaceOpacity),
+        GlassCase(foreground: "textSecondary", veil: "surface", opacity: GlassSurfaceModifier<Capsule>.surfaceOpacity),
+        GlassCase(foreground: "onAccent", veil: "accent", opacity: GlassSurfaceModifier<Capsule>.tintOpacity),
     ]
 
-    @Test("Display title and eyebrow pairs are all in the contrast table")
-    func displayTitlePairsAreListed() {
-        let listed = Set(Self.pairs.map(\.testDescription))
-        for pair in Self.displayTitlePairs {
-            #expect(listed.contains(pair.testDescription), "missing pair: \(pair.testDescription)")
+    /// Örtünün altında görünebilecek en kötü zeminler: ekran zemini, hero ve saf siyah/beyaz.
+    static let backdrops: [String] = ["background", "hero", "black", "white"]
+
+    @Test("Glass veil constants are valid opacities")
+    func glassOpacitiesAreValid() {
+        for value in [GlassSurfaceModifier<Capsule>.surfaceOpacity, GlassSurfaceModifier<Capsule>.tintOpacity] {
+            #expect(value > 0 && value <= 1)
         }
+    }
+
+    @Test("Text on blended glass surface meets WCAG AA (4.5:1) over worst-case backdrops", arguments: glassCases)
+    func glassBlendContrast(glass: GlassCase) throws {
+        for (mode, dark) in [("light", false), ("dark", true)] {
+            let foreground = try Self.hex(glass.foreground, dark: dark)
+            let veil = try Self.hex(glass.veil, dark: dark)
+            for backdropName in Self.backdrops {
+                let backdrop: UInt32
+                switch backdropName {
+                case "black": backdrop = 0x000000
+                case "white": backdrop = 0xFFFFFF
+                default: backdrop = try Self.hex(backdropName, dark: dark)
+                }
+                let blended = Self.blend(veil, over: backdrop, alpha: glass.opacity)
+                let ratio = CardContrastTests.contrast(foreground, blended)
+                #expect(
+                    ratio >= 4.5,
+                    "\(glass.testDescription) over \(backdropName) (\(mode)): contrast \(String(format: "%.2f", ratio)) < 4.5"
+                )
+            }
+        }
+    }
+
+    /// `top` rengini `alpha` ile `bottom` üzerine karıştırır (kanal başına doğrusal).
+    static func blend(_ top: UInt32, over bottom: UInt32, alpha: Double) -> UInt32 {
+        func channel(_ shift: UInt32) -> UInt32 {
+            let t = Double((top >> shift) & 0xFF)
+            let b = Double((bottom >> shift) & 0xFF)
+            return UInt32((t * alpha + b * (1 - alpha)).rounded()) & 0xFF
+        }
+        return channel(16) << 16 | channel(8) << 8 | channel(0)
     }
 
     @Test("Pair meets WCAG AA (4.5:1) in light and dark", arguments: pairs)
