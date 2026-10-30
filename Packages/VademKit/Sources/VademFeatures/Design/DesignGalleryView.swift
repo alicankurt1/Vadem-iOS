@@ -149,8 +149,7 @@ public struct DesignGalleryView: View {
                         Button {} label: { Label { Text("Add", bundle: .module) } icon: { Image(systemName: "plus") } }
                             .buttonStyle(.heroPill)
                     }
-
-                    }
+                    } // if !Self.cardsOnly
 
                     section(String(localized: "Cards", bundle: .module, comment: "Design gallery section"), id: "gallery.cards") {
                         ForEach(CardStyle.allCases, id: \.self) { style in

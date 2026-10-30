@@ -16,12 +16,14 @@ struct GlassModifier<S: Shape>: ViewModifier {
 
 public extension View {
     /// Glass background for floating controls only, in a capsule.
+    /// For cards, hero pills and the ＋ button use ``vademGlassSurface(in:tint:)`` instead.
     /// Uses `glassEffect` on iOS 26+ and a material on iOS 18–25.
     func vademGlass() -> some View {
         modifier(GlassModifier(shape: Capsule()))
     }
 
     /// Glass background for floating controls only, in `shape`.
+    /// For cards, hero pills and the ＋ button use ``vademGlassSurface(in:tint:)`` instead.
     /// Uses `glassEffect` on iOS 26+ and a material on iOS 18–25.
     func vademGlass<S: Shape>(in shape: S) -> some View {
         modifier(GlassModifier(shape: shape))
@@ -38,9 +40,9 @@ struct GlassSurfaceModifier<S: InsettableShape>: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
 
     // Renkli (tint) yüzey neredeyse opak: üstündeki metin token çiftinin kontrastını korur.
-    static var tintOpacity: Double { 0.88 }
+    nonisolated static var tintOpacity: Double { 0.88 }
     // Renksiz yüzeyde vademSurface örtüsü; metin surface ve background çiftleri arasında kalır.
-    static var surfaceOpacity: Double { 0.72 }
+    nonisolated static var surfaceOpacity: Double { 0.72 }
 
     func body(content: Content) -> some View {
         content
@@ -79,6 +81,7 @@ public extension View {
     /// a thin light border and a soft shadow. Without `tint` the material is veiled with
     /// `vademSurface`; with `tint` (e.g. `vademAccent`) it is nearly opaque in that color,
     /// so the matching foreground token stays readable in light and dark.
+    /// For floating controls (e.g. the tab bar) use ``vademGlass(in:)`` instead.
     func vademGlassSurface<S: InsettableShape>(in shape: S, tint: Color? = nil) -> some View {
         modifier(GlassSurfaceModifier(shape: shape, tint: tint))
     }

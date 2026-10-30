@@ -33,7 +33,7 @@ public struct DisplayTitle: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityLabel(Text(spokenLabel ?? title))
             .accessibilityAddTraits(.isHeader)
-            .accessibilityIdentifier(identifier ?? "")
+            .modifier(OptionalIdentifier(identifier: identifier))
     }
 
     // Sistem serif yazısı (New York); metin stiliyle Dynamic Type'a göre büyür.
@@ -54,6 +54,20 @@ public struct DisplayTitle: View {
         attributed[range].font = font.italic()
         attributed[range].foregroundColor = Color.vademBrand
         return attributed
+    }
+}
+
+// Kimlik yalnızca verildiğinde uygulanır; boş kimlik atanmaz.
+@MainActor
+private struct OptionalIdentifier: ViewModifier {
+    let identifier: String?
+
+    func body(content: Content) -> some View {
+        if let identifier {
+            content.accessibilityIdentifier(identifier)
+        } else {
+            content
+        }
     }
 }
 

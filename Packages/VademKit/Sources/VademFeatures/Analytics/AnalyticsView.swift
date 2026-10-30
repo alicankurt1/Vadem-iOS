@@ -6,12 +6,13 @@ import VademCore
 /// The Analytics screen: a stacked bar chart of the next 12 months (installments, subscriptions
 /// and one-time payments).
 ///
-/// A ``DisplayHeader`` (`analytics.header`) tops the screen. A summary card (`analytics.summary`) above the chart (`analytics.chart`) shows the selected
-/// month; selecting a bar changes it (with VoiceOver, swiping up or down on the summary does).
-/// The chart's VoiceOver summary names the 12-month total and the highest month. The current
-/// month is highlighted. Without data the screen shows an empty state (`analytics.empty`) with an
-/// "Add a payment" button (`analytics.addPayment`) that calls `onAddPayment`. The chart does not
-/// animate under Reduce Motion or `-ui-static-motion`.
+/// A ``DisplayHeader`` (`analytics.header`) tops the screen. A summary card (`analytics.summary`)
+/// above the chart (`analytics.chart`) shows the selected month; selecting a bar changes it
+/// (with VoiceOver, swiping up or down on the summary does). The chart's VoiceOver summary names
+/// the 12-month total and the highest month. The current month is highlighted. Without data the
+/// screen shows an empty state (`analytics.empty`) with an "Add a payment" button
+/// (`analytics.addPayment`) that calls `onAddPayment`. The chart does not animate under Reduce
+/// Motion or `-ui-static-motion`.
 @MainActor
 public struct AnalyticsView: View {
     /// The launch argument that opens the app on the Analytics tab (debug builds).
