@@ -41,8 +41,9 @@ struct GlassSurfaceModifier<S: InsettableShape>: ViewModifier {
 
     // Renkli (tint) yüzey neredeyse opak: üstündeki metin token çiftinin kontrastını korur.
     nonisolated static var tintOpacity: Double { 0.88 }
-    // Renksiz yüzeyde vademSurface örtüsü; metin surface ve background çiftleri arasında kalır.
-    nonisolated static var surfaceOpacity: Double { 0.72 }
+    // Renksiz yüzeyde vademSurface örtüsü. Arka plan sabit değil (siyah/beyaz dahil her zemin
+    // olabilir); 0.86 textSecondary'yi en kötü zeminde de AA (4.5:1) üstünde tutar, hafif saydamlık kalır.
+    nonisolated static var surfaceOpacity: Double { 0.86 }
 
     func body(content: Content) -> some View {
         content
