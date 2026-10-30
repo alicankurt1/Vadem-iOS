@@ -62,6 +62,33 @@ public enum ReminderText {
         body(for: summary.insight, formatAmount: formatAmount, locale: locale)
     }
 
+    /// The inbox title of `insight`: `"Payments rose"`, `"Payments fell"`, `"Installment ended"`
+    /// or, for more than one plan, `"Installments ended"`.
+    public static func title(for insight: MonthlyInsight) -> String {
+        switch insight.detail {
+        case .totalChange(_, _, let percent):
+            return percent >= 0
+                ? String(localized: "Payments rose", bundle: .module, comment: "Inbox entry title: the month's total went up")
+                : String(localized: "Payments fell", bundle: .module, comment: "Inbox entry title: the month's total went down")
+        case .installmentEnded(let titles, _):
+            return titles.count == 1
+                ? String(localized: "Installment ended", bundle: .module, comment: "Inbox entry title: one installment plan ended")
+                : String(localized: "Installments ended", bundle: .module, comment: "Inbox entry title: several installment plans ended")
+        }
+    }
+
+    /// The inbox text of `insight`: its inbox title and the monthly summary body.
+    public static func inboxText(
+        for insight: MonthlyInsight,
+        formatAmount: (Money) -> String = AmountText.format,
+        locale: Locale = VademLocalization.locale
+    ) -> InboxPlanner.Text {
+        InboxPlanner.Text(
+            title: title(for: insight),
+            body: body(for: insight, formatAmount: formatAmount, locale: locale)
+        )
+    }
+
     /// The text of `insight`, as in the monthly summary body;
     /// the percentage is written with `locale` (e.g. `50%`, Turkish `%50`).
     public static func body(

@@ -83,10 +83,46 @@ public enum HomeSampleData {
         return LastUsedCardStore(defaults: defaults)
     }
 
+    /// `true` when `arguments` start the app on sample data: ``launchArgument`` or any of
+    /// ``InboxView/launchArguments``.
+    public static func isRequested(in arguments: [String]) -> Bool {
+        arguments.contains(launchArgument) || InboxView.launchArguments.contains { arguments.contains($0) }
+    }
+
+    /// A new in-memory inbox with three sample entries, newest first: two unread insights about
+    /// October 2026 (total rose, an installment ended) and a read one about September 2026 (total fell).
+    /// The text comes from the string catalog, so it follows the device language.
+    public static func makeInboxRepository() -> InMemoryInboxRepository {
+        let october = YearMonth(year: 2026, month: 10)!
+        let september = YearMonth(year: 2026, month: 9)!
+        // Sabit tarihler: ayın 1'i 09:00 UTC (aylık özetin saati).
+        let octoberFirst = calendar.date(from: DateComponents(year: 2026, month: 10, day: 1, hour: 9))!
+        let septemberFirst = calendar.date(from: DateComponents(year: 2026, month: 9, day: 1, hour: 9))!
+        let insights: [(MonthlyInsight, Date, Bool)] = [
+            (MonthlyInsight(month: october, detail: .totalChange(
+                previous: Money(20_000), current: Money(Decimal(2_654_999) / 100), percent: 33
+            )), octoberFirst, false),
+            (MonthlyInsight(month: october, detail: .installmentEnded(
+                titles: ["Phone"], amount: Money(750)
+            )), octoberFirst, false),
+            (MonthlyInsight(month: september, detail: .totalChange(
+                previous: Money(24_000), current: Money(20_000), percent: -17
+            )), septemberFirst, true),
+        ]
+        return InMemoryInboxRepository(entries: insights.map { insight, date, isRead in
+            let text = ReminderText.inboxText(for: insight)
+            var entry = InboxEntry(insight: insight, title: text.title, body: text.body, createdAt: date)
+            entry.isRead = isRead
+            return entry
+        })
+    }
+
     /// A view model on ``makeRepository()`` with the fixed ``today`` and ``calendar``.
     ///
     /// Settings use an in-memory store and no scheduler; under ``SettingsView/deniedLaunchArgument``
     /// the permission reads as denied. Under ``CardListView/emptyLaunchArgument`` the repository is empty.
+    /// Under ``InboxView/launchArgument`` or ``InboxView/openLaunchArgument`` the inbox holds
+    /// ``makeInboxRepository()``'s entries; otherwise it is empty.
     public static func makeViewModel() -> HomeViewModel {
         // Zamanlayıcı yok: sistem izin penceresi çıkmaz. Reddedilmiş izin sahte merkezle gösterilir.
         let isDenied = ProcessInfo.processInfo.arguments.contains(SettingsView.deniedLaunchArgument)
@@ -96,13 +132,18 @@ public enum HomeSampleData {
         )
         // Kartlar ekranının boş durumu için boş depo.
         let isEmpty = ProcessInfo.processInfo.arguments.contains(CardListView.emptyLaunchArgument)
+        // Gelen kutusu bellek içi; örnek girdiler yalnızca istenince (boş durum için boş).
+        let arguments = ProcessInfo.processInfo.arguments
+        let hasInboxSamples = arguments.contains(InboxView.launchArgument)
+            || arguments.contains(InboxView.openLaunchArgument)
         return HomeViewModel(
             repository: isEmpty ? InMemoryPaymentRepository() : makeRepository(),
             today: today,
             calendar: calendar,
             settings: settings,
             assistant: makeAssistantEngine(arguments: ProcessInfo.processInfo.arguments),
-            lastUsedCard: makeLastUsedCardStore()
+            lastUsedCard: makeLastUsedCardStore(),
+            inbox: hasInboxSamples ? makeInboxRepository() : InMemoryInboxRepository()
         )
     }
 

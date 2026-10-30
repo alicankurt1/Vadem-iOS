@@ -18,7 +18,8 @@ import VademCore
 /// (all errors shown with their `errorsLaunchArgument`); ``AddFlowSheet/launchArgument`` and
 /// ``InstallmentFlowView/launchArgument`` open the Add sheet; ``SubscriptionFlowStep/launchArgument``,
 /// ``OneTimeFlowStep/launchArgument`` and ``AddFlowGalleryStep/launchArgument`` open those flows at a
-/// step (see ``HomeView/init(model:onAdd:onDataChanged:)`` for the edit forms and the assistant).
+/// step (see ``HomeView/init(model:onAdd:onDataChanged:)`` for the edit forms, the assistant and the inbox).
+/// ``HomeViewModel/requestInbox()`` selects This month, where Home pushes the ``InboxView``.
 @MainActor
 public struct AppTabShell: View {
     @State private var model: HomeViewModel
@@ -144,6 +145,8 @@ public struct AppTabShell: View {
         // Sekme geçişi: eski içerik bulanıklaşıp küçülerek söner, yenisi belirir (Motion'dan).
         .tabSwitchEffect(tabPhase)
         .onChange(of: selection) { _, newTab in switchTab(to: newTab) }
+        // Bildirimden gelen kutusu istendi: This month seçilir, Home gelen kutusunu iter.
+        .onChange(of: model.inboxRequestCount) { _, _ in selection = .home }
         // Çubuk içeriğin üstünde yüzer; klavye açılınca yerinde kalır (klavyenin altında).
         .overlay(alignment: .bottom) {
             FloatingTabBar(selection: $selection, onAdd: openAddSheet)

@@ -130,8 +130,19 @@ public final class HomeViewModel {
     public private(set) var upcoming: [MonthSummary] = []
     /// `true` when the repository has at least one card; `false` before loading or after a repository error.
     public private(set) var hasCards = false
+    /// The number of unread inbox entries (the bell's badge); `0` when the inbox cannot be read.
+    public private(set) var inboxUnreadCount = 0
+    /// `true` while a request to open the inbox (e.g. a tapped monthly summary notification) waits
+    /// for Home to push it; Home calls ``takeInboxRequest()`` when it does.
+    public private(set) var isInboxRequested = false
+    /// Grows with every ``requestInbox()``; the tab shell selects This month when it changes.
+    public private(set) var inboxRequestCount = 0
 
     @ObservationIgnored private let repository: any PaymentRepository
+    // Gelen kutusu: içgörüler burada saklanır, okundu durumu rozeti belirler.
+    @ObservationIgnored private let inbox: any InboxRepository
+    // Gelen kutusunun tarihleri bu takvimin saat diliminde yazılır.
+    @ObservationIgnored private let inboxCalendar: Calendar
     // Kayıt/silme sonrası çağrılır (ör. hatırlatmaları yeniden planlamak için); nil ise hiçbir şey yapılmaz.
     @ObservationIgnored private let onDataChanged: (@MainActor () -> Void)?
     // Ayarlar sayfasının bağımlılıkları; verilmezse bellek içi depo (zamanlayıcı yok), açılışlar arasında korunur.
@@ -163,7 +174,8 @@ public final class HomeViewModel {
     /// `assistant` answers in the assistant chat (``makeAssistantModel()``); `nil` uses the engine
     /// the OS offers (``AssistantEngineFactory/makeSystemEngine(snapshot:)``) on this repository.
     /// `lastUsedCard` remembers the add flow's card (``makeInstallmentFlowModel(locale:)``);
-    /// `nil` uses `UserDefaults.standard`.
+    /// `nil` uses `UserDefaults.standard`. `inbox` keeps the monthly insights (``makeInboxModel()``,
+    /// ``inboxUnreadCount``); `nil` uses an empty ``InMemoryInboxRepository``.
     public init(
         repository: any PaymentRepository,
         today: Date,
@@ -171,9 +183,12 @@ public final class HomeViewModel {
         onDataChanged: (@MainActor () -> Void)? = nil,
         settings: SettingsDependencies? = nil,
         assistant: (any AssistantEngine)? = nil,
-        lastUsedCard: LastUsedCardStore? = nil
+        lastUsedCard: LastUsedCardStore? = nil,
+        inbox: (any InboxRepository)? = nil
     ) {
         self.repository = repository
+        self.inbox = inbox ?? InMemoryInboxRepository()
+        self.inboxCalendar = calendar
         self.onDataChanged = onDataChanged
         self.lastUsedCard = lastUsedCard ?? LastUsedCardStore()
         self.settings = settings ?? .inMemory()
@@ -209,6 +224,40 @@ public final class HomeViewModel {
     /// A new Settings screen model on the injected ``SettingsDependencies`` and the same repository.
     public func makeSettingsModel() -> SettingsViewModel {
         SettingsViewModel(dependencies: settings, repository: repository)
+    }
+
+    /// A new inbox screen model on the injected inbox; it updates ``inboxUnreadCount`` when it
+    /// marks entries read or deletes one.
+    public func makeInboxModel() -> InboxViewModel {
+        InboxViewModel(repository: inbox, calendar: inboxCalendar) { [weak self] in
+            self?.refreshInboxCount()
+        }
+    }
+
+    /// Asks Home to show the inbox (e.g. the user tapped a monthly summary notification):
+    /// sets ``isInboxRequested`` and grows ``inboxRequestCount``.
+    public func requestInbox() {
+        isInboxRequested = true
+        inboxRequestCount += 1
+    }
+
+    /// Returns ``isInboxRequested`` and clears it (Home pushes the inbox when it was `true`).
+    public func takeInboxRequest() -> Bool {
+        defer { isInboxRequested = false }
+        return isInboxRequested
+    }
+
+    /// Adds the insights of the current month (the month of "today") to the inbox, created at
+    /// `date`, then updates ``inboxUnreadCount``. Ids already seen are ignored (see ``InboxRepository``),
+    /// so it can run on every launch and foreground. Runs whether or not notifications are allowed.
+    public func recordInsights(at date: Date) {
+        InboxRecorder(payments: repository, inbox: inbox).record(month: todayMonth, at: date)
+        refreshInboxCount()
+    }
+
+    // Rozet: okunmamış girdi sayısı; okunamazsa rozet gösterilmez.
+    private func refreshInboxCount() {
+        inboxUnreadCount = (try? inbox.unreadCount()) ?? 0
     }
 
     /// A new Cards screen model on the same repository. Call ``CardListViewModel/refresh()`` after a form closes.
@@ -407,7 +456,8 @@ public final class HomeViewModel {
         reload()
     }
 
-    /// Moves "today" to `date` (e.g. when the app becomes active after midnight) and reloads.
+    /// Moves "today" to `date` (e.g. when the app becomes active after midnight), records the
+    /// current month's insights in the inbox (``recordInsights(at:)``) and reloads.
     ///
     /// If the selected month was the old current month, the new current month is selected;
     /// a month the user navigated to is kept.
@@ -420,6 +470,8 @@ public final class HomeViewModel {
         }
         todayMonth = newMonth
         todayDay = calendar.component(.day, from: date)
+        // Açılışta ve öne gelişte bu ayın içgörüleri gelen kutusuna eklenir (tekrarlar yok sayılır).
+        recordInsights(at: date)
         reload()
     }
 
@@ -441,6 +493,7 @@ public final class HomeViewModel {
             apply(schedule, cards: cards)
             upcoming = upcomingMonths.schedules.map(makeSummary)
             hasCards = !cards.isEmpty
+            refreshInboxCount()
         } catch {
             // Hata sessizce boş liste olmaz; ekranda hata durumu gösterilir.
             schedule = nil
@@ -452,6 +505,7 @@ public final class HomeViewModel {
             calendarDays = []
             upcoming = []
             hasCards = false
+            refreshInboxCount()
             state = .error(message: Self.loadErrorMessage)
         }
     }

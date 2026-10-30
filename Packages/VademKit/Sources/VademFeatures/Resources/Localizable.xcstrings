@@ -320,6 +320,23 @@
         }
       }
     },
+    "%lld unread" : {
+      "comment" : "Inbox button value: number of unread entries",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld unread"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld okunmamış"
+          }
+        }
+      }
+    },
     "%lld%%" : {
       "localizations" : {
         "en" : {
@@ -2132,6 +2149,22 @@
         }
       }
     },
+    "Inbox" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inbox"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gelen kutusu"
+          }
+        }
+      }
+    },
     "Installment" : {
       "localizations" : {
         "en" : {
@@ -2144,6 +2177,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taksit"
+          }
+        }
+      }
+    },
+    "Installment ended" : {
+      "comment" : "Inbox entry title: one installment plan ended",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installment ended"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit bitti"
           }
         }
       }
@@ -2193,6 +2243,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Önümüzdeki 12 ayın her birinde ödenecek taksit ve abonelikler. Toplam: %@ TL. En yüksek: %@, %@ TL."
+          }
+        }
+      }
+    },
+    "Installments ended" : {
+      "comment" : "Inbox entry title: several installment plans ended",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installments ended"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksitler bitti"
           }
         }
       }
@@ -2341,6 +2408,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aylık"
+          }
+        }
+      }
+    },
+    "Monthly insights about your payments appear here." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monthly insights about your payments appear here."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemelerinle ilgili aylık içgörüler burada görünür."
           }
         }
       }
@@ -2598,6 +2681,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Henüz kart yok"
+          }
+        }
+      }
+    },
+    "No notifications yet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No notifications yet"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Henüz bildirim yok"
           }
         }
       }
@@ -3047,6 +3146,23 @@
         }
       }
     },
+    "Payments fell" : {
+      "comment" : "Inbox entry title: the month's total went down",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payments fell"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeler azaldı"
+          }
+        }
+      }
+    },
     "Payments on %@" : {
       "comment" : "The argument is a day, e.g. 12 October",
       "localizations" : {
@@ -3060,6 +3176,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ ödemeleri"
+          }
+        }
+      }
+    },
+    "Payments rose" : {
+      "comment" : "Inbox entry title: the month's total went up",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payments rose"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ödemeler arttı"
           }
         }
       }
@@ -4141,6 +4274,23 @@
         }
       }
     },
+    "Unread" : {
+      "comment" : "VoiceOver prefix of an unread inbox entry",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unread"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okunmadı"
+          }
+        }
+      }
+    },
     "Upcoming" : {
       "localizations" : {
         "en" : {
@@ -4531,6 +4681,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Önümüzdeki %@"
+          }
+        }
+      }
+    },
+    "Your notifications" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your notifications"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildirimlerin"
+          }
+        }
+      }
+    },
+    "Your notifications could not be loaded." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your notifications could not be loaded."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildirimlerin yüklenemedi."
           }
         }
       }

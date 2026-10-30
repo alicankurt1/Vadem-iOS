@@ -2,7 +2,7 @@ import SwiftData
 import Testing
 import VademPersistence
 
-// Şema ilk günden sürümlü: V1 = 1.0.0, V2 = 2.0.0, V3 = 3.0.0; göç planı V1 → V2 → V3 aşamalarını listeler.
+// Şema ilk günden sürümlü: V1 = 1.0.0, V2 = 2.0.0, V3 = 3.0.0, V4 = 4.0.0; göç planı V1 → V2 → V3 → V4 aşamalarını listeler.
 @Suite("Vadem schema")
 struct VademSchemaTests {
     @Test("Schema V1 has version 1.0.0")
@@ -21,24 +21,24 @@ struct VademSchemaTests {
         #expect(VademSchemaV2.models.count == 3)
     }
 
-    @Test("Migration plan lists V1, V2 then V3 and has two stages")
+    @Test("Migration plan lists V1, V2, V3 then V4 and has three stages")
     func migrationPlan() {
         let schemas = VademMigrationPlan.schemas
-        #expect(schemas.count == 3)
+        #expect(schemas.count == 4)
         #expect(schemas.first.map { $0 == VademSchemaV1.self } == true)
-        #expect(schemas.last.map { $0 == VademSchemaV3.self } == true)
+        #expect(schemas.last.map { $0 == VademSchemaV4.self } == true)
         #expect(schemas.first?.versionIdentifier == Schema.Version(1, 0, 0))
-        #expect(schemas.last?.versionIdentifier == Schema.Version(3, 0, 0))
-        #expect(VademMigrationPlan.stages.count == 2)
+        #expect(schemas.last?.versionIdentifier == Schema.Version(4, 0, 0))
+        #expect(VademMigrationPlan.stages.count == 3)
     }
 
-    @Test("Container schema is version 3.0.0", arguments: [StorageKind.inMemory, .file])
+    @Test("Container schema is version 4.0.0", arguments: [StorageKind.inMemory, .file])
     @MainActor
     func containerSchemaVersion(kind: StorageKind) throws {
         try TemporaryStore.with { url in
             let container = try VademPersistence.makeContainer(storage: kind.storage(url))
-            #expect(container.schema.version == Schema.Version(3, 0, 0))
-            #expect(container.schema.entities.count == 4)
+            #expect(container.schema.version == Schema.Version(4, 0, 0))
+            #expect(container.schema.entities.count == 5)
         }
     }
 }
