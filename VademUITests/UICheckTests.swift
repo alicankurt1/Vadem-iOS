@@ -576,6 +576,26 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testInboxScreen() throws {
+        // Gelen kutusu (#213): üç örnek girdi; AX5'te uzar, son girdinin işaretçisine kaydırılır.
+        try capture(
+            screen: "inbox",
+            launchArguments: ["-ui-sample-data", "-ui-inbox-open"],
+            sections: [.top, .scrolled(to: "inbox.entry.2", named: "last")]
+        )
+    }
+
+    @MainActor
+    func testInboxEmptyScreen() throws {
+        // Boş durum: simge, başlık ve açıklama.
+        try capture(
+            screen: "inboxEmpty",
+            launchArguments: ["-ui-sample-data", "-ui-inbox-empty"],
+            sections: [.top]
+        )
+    }
+
+    @MainActor
     func testSettingsDenied() throws {
         // İzin reddedilmiş: açıklama ve sistem Ayarları düğmesi görünür.
         try capture(

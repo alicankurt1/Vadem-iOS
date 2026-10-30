@@ -6,6 +6,8 @@ public enum PersistenceError: Error, Sendable, Hashable {
     /// A stored record breaks a `VademCore` rule (e.g. an empty name or an unreadable amount).
     /// `entity` is the record type, `id` the record's id.
     case invalidRecord(entity: String, id: UUID)
+    /// A stored inbox entry cannot be read (e.g. an unknown kind or month); `id` is the entry's id.
+    case invalidInboxEntry(id: String)
 }
 
 // Kayıt ↔ değer tipi eşlemesi. Okurken VademCore'un failable init'leri kullanılır;
@@ -155,5 +157,25 @@ enum MoneyText {
         guard let value = Decimal(string: text, locale: posixLocale), !value.isNaN else { return nil }
         let money = Money(value)
         return encode(money) == text ? money : nil
+    }
+}
+
+extension InboxEntryRecord {
+    convenience init(_ entry: InboxEntry) {
+        self.init(
+            id: entry.id, year: entry.month.year, month: entry.month.month, kind: entry.kind.rawValue,
+            title: entry.title, body: entry.body, createdAt: entry.createdAt, isRead: entry.isRead,
+            isTombstone: false
+        )
+    }
+
+    func value() throws -> InboxEntry {
+        guard let value = YearMonth(year: year, month: self.month),
+              let insightKind = MonthlyInsight.Kind(rawValue: self.kind) else {
+            throw PersistenceError.invalidInboxEntry(id: id)
+        }
+        return InboxEntry(
+            id: id, month: value, kind: insightKind, title: title, body: body, createdAt: createdAt, isRead: isRead
+        )
     }
 }

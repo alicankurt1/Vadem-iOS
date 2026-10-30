@@ -1108,4 +1108,23 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(element("settings.privacy", in: app).waitForExistence(timeout: 5), "must return to Settings")
         XCTAssertFalse(element("privacy.policy", in: app).exists, "policy must close after going back")
     }
+    /// #213: Home'daki zil rozeti okunmamışları gösterir; gelen kutusu açılınca girdi görünür ve rozet temizlenir.
+    @MainActor
+    func testInboxBadgeOpensInboxAndClearsBadge() throws {
+        let app = launchHome(extraArguments: ["-ui-inbox", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let bell = app.buttons["home.inbox"]
+        XCTAssertTrue(bell.waitForExistence(timeout: 10), "Home inbox button not found")
+        XCTAssertEqual(bell.value as? String, "2 unread", "badge must show the two unread sample entries")
+
+        bell.tap()
+        XCTAssertTrue(element("inbox.list", in: app).waitForExistence(timeout: 5), "inbox list not shown")
+        XCTAssertTrue(element("inbox.entry.0", in: app).waitForExistence(timeout: 5), "first inbox entry not shown")
+        XCTAssertTrue(element("inbox.entry.2", in: app).exists, "all three sample entries must be listed")
+        XCTAssertFalse(element("inbox.empty", in: app).exists, "empty state must not show with entries")
+
+        // Geri dönünce rozet temizlenmiştir (girdiler okundu sayıldı).
+        app.navigationBars.buttons["BackButton"].tap()
+        XCTAssertTrue(bell.waitForExistence(timeout: 5), "Home must be visible after leaving the inbox")
+        XCTAssertEqual(bell.value as? String, "0 unread", "badge must be cleared after opening the inbox")
+    }
 }

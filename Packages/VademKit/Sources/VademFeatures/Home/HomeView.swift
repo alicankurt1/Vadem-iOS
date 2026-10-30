@@ -13,7 +13,9 @@ import VademCore
 /// ``EditOneTimePaymentView``); tapping a card subtotal (`home.card.<index>`) opens the card's edit form.
 /// When a form closes, `onDataChanged` runs (``HomeViewModel/reloadAfterChange()`` when `nil`).
 /// On iOS 26+, a sparkles button (`home.assistant`) pushes the ``AssistantView``
-/// unless ``HomeViewModel/showsAssistant`` is `false`.
+/// unless ``HomeViewModel/showsAssistant`` is `false`. A bell button (`home.inbox`, VoiceOver
+/// "Inbox, N unread") with the unread count as a badge pushes the ``InboxView``; so does
+/// ``HomeViewModel/requestInbox()`` (a tapped monthly summary notification).
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
 public struct HomeView: View {
@@ -28,6 +30,8 @@ public struct HomeView: View {
     @State private var editOneTimeModel: EditOneTimePaymentViewModel?
     // Açık asistan ekranının modeli; nil iken ekran itilmemiştir. Kapanınca sohbet atılır.
     @State private var assistantModel: AssistantViewModel?
+    // Açık gelen kutusu ekranının modeli; nil iken ekran itilmemiştir.
+    @State private var inboxModel: InboxViewModel?
     private let onAdd: (() -> Void)?
     private let onDataChanged: (() -> Void)?
 
@@ -45,7 +49,8 @@ public struct HomeView: View {
     /// In debug builds, ``AddInstallmentView/editLaunchArgument``, ``AddSubscriptionView/editLaunchArgument``
     /// and ``AddCardView/editLaunchArgument`` open the first installment, subscription or card of the
     /// month in its edit form, ``EditOneTimePaymentView/editLaunchArgument`` (`-ui-edit-onetime`) the
-    /// first saved one-time payment, and ``AssistantView/launchArgument`` pushes the assistant chat.
+    /// first saved one-time payment, ``AssistantView/launchArgument`` pushes the assistant chat, and
+    /// ``InboxView/openLaunchArgument`` or ``InboxView/emptyLaunchArgument`` push the inbox.
     /// The add forms and flows are opened by the ``AppTabShell``.
     public init(model: HomeViewModel, onAdd: (() -> Void)? = nil, onDataChanged: (() -> Void)? = nil) {
         _model = State(initialValue: model)
@@ -56,10 +61,13 @@ public struct HomeView: View {
         var initialAddSubscriptionModel: AddSubscriptionViewModel?
         var initialEditOneTimeModel: EditOneTimePaymentViewModel?
         var initialAssistantModel: AssistantViewModel?
+        var initialInboxModel: InboxViewModel?
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(AssistantView.launchArgument) {
             initialAssistantModel = model.makeAssistantModel()
+        } else if arguments.contains(InboxView.openLaunchArgument) || arguments.contains(InboxView.emptyLaunchArgument) {
+            initialInboxModel = model.makeInboxModel()
         }
         if arguments.contains(AddInstallmentView.editLaunchArgument) {
             // Ayın ilk taksiti düzenleme modunda açılır.
@@ -86,6 +94,7 @@ public struct HomeView: View {
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
         _editOneTimeModel = State(initialValue: initialEditOneTimeModel)
         _assistantModel = State(initialValue: initialAssistantModel)
+        _inboxModel = State(initialValue: initialInboxModel)
     }
 
     public var body: some View {
@@ -95,12 +104,25 @@ public struct HomeView: View {
                 if Self.isAssistantOS, model.showsAssistant {
                     ToolbarItem(placement: .primaryAction) { assistantButton }
                 }
+                ToolbarItem(placement: .primaryAction) { inboxButton }
             }
             // Başlık çubukta: sistem başlığı başlık (header) olarak okur ve AX5'te de kırpmaz.
             .navigationTitle(Text("Vadem", bundle: .module))
             .navigationDestination(isPresented: assistantPresented) {
                 if let assistantModel {
                     AssistantView(model: assistantModel)
+                }
+            }
+            .navigationDestination(isPresented: inboxPresented) {
+                if let inboxModel {
+                    InboxView(model: inboxModel)
+                }
+            }
+            // Bildirime dokunulunca (soğuk açılışta da) gelen kutusu itilir.
+            .onChange(of: model.isInboxRequested, initial: true) { _, requested in
+                if requested, model.takeInboxRequest() {
+                    assistantModel = nil
+                    inboxModel = model.makeInboxModel()
                 }
             }
             #if os(iOS)
@@ -139,6 +161,46 @@ public struct HomeView: View {
             get: { assistantModel != nil },
             set: { if !$0 { assistantModel = nil } }
         )
+    }
+
+    private var inboxPresented: Binding<Bool> {
+        Binding(
+            get: { inboxModel != nil },
+            set: { if !$0 { inboxModel = nil } }
+        )
+    }
+
+    // Araç çubuğundaki zil: gelen kutusunu açar; okunmamış varsa sayıyı rozetle gösterir.
+    private var inboxButton: some View {
+        let count = model.inboxUnreadCount
+        return Button {
+            inboxModel = model.makeInboxModel()
+        } label: {
+            Image(systemName: "bell")
+                .foregroundStyle(Color.vademTextPrimary)
+                .overlay(alignment: .topTrailing) {
+                    if count > 0 {
+                        // Rozet metin değil simge: araç çubuğunda AX5'te de taşmaz, kırpılmaz.
+                        Image(systemName: Self.badgeSymbol(count: count))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(Color.vademOnAccent, Color.vademAccent)
+                            .font(.caption.weight(.bold))
+                            .offset(x: 8, y: -8)
+                            .accessibilityHidden(true)
+                    }
+                }
+                // En az 44 pt dokunma alanı.
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel(Text("Inbox", bundle: .module))
+        .accessibilityValue(Text("\(count) unread", bundle: .module, comment: "Inbox button value: number of unread entries"))
+        .accessibilityIdentifier("home.inbox")
+    }
+
+    // Numaralı daire simgesi 0...50 için var; daha fazlası artı simgesiyle gösterilir.
+    nonisolated static func badgeSymbol(count: Int) -> String {
+        count <= 50 ? "\(max(count, 0)).circle.fill" : "plus.circle.fill"
     }
 
     // Yerel model iOS 26 ile gelir; daha eski sistemde giriş hiç gösterilmez.

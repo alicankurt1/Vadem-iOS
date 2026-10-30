@@ -111,31 +111,3 @@ public enum VademSchemaV3: VersionedSchema {
         }
     }
 }
-
-// Güncel şemanın kayıtları; depo ve eşleme kodu sürüm adını tekrar etmez.
-typealias CardRecord = VademSchemaV3.CardRecord
-typealias InstallmentRecord = VademSchemaV3.InstallmentRecord
-typealias SubscriptionRecord = VademSchemaV3.SubscriptionRecord
-typealias OneTimePaymentRecord = VademSchemaV3.OneTimePaymentRecord
-
-/// The migration plan for the store. Every stage is lightweight, so every saved record is kept as is:
-/// - V1 → V2: an attribute becomes optional and an optional attribute is added.
-/// - V2 → V3: a new entity (one-time payments) is added; it starts empty.
-public enum VademMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] {
-        [VademSchemaV1.self, VademSchemaV2.self, VademSchemaV3.self]
-    }
-
-    public static var stages: [MigrationStage] { [migrateV1toV2, migrateV2toV3] }
-
-    // V1 → V2: `InstallmentRecord.cardID` isteğe bağlı olur, `paymentDay` eklenir (eski kayıtlarda nil).
-    // Hesaplanan özellik: MigrationStage Sendable değil, statik saklı değer olamaz.
-    static var migrateV1toV2: MigrationStage {
-        .lightweight(fromVersion: VademSchemaV1.self, toVersion: VademSchemaV2.self)
-    }
-
-    // V2 → V3: yalnızca `OneTimePaymentRecord` varlığı eklenir; mevcut kayıtlar değişmez.
-    static var migrateV2toV3: MigrationStage {
-        .lightweight(fromVersion: VademSchemaV2.self, toVersion: VademSchemaV3.self)
-    }
-}

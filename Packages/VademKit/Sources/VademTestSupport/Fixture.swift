@@ -60,6 +60,23 @@ public enum Fixture {
         ))
     }
 
+    /// An inbox entry for `kind` in `month` (id from ``MonthlyInsight/id(of:in:)``), created
+    /// `createdAt` seconds after the reference date.
+    public static func inboxEntry(
+        _ kind: MonthlyInsight.Kind = .totalChange,
+        month: YearMonth? = nil,
+        title: String = "Aylık özet",
+        body: String = "Ödemelerin bu ay %50 arttı",
+        createdAt: TimeInterval = 0,
+        isRead: Bool = false
+    ) throws -> InboxEntry {
+        let value = try month ?? Fixture.month(2026, 11)
+        return InboxEntry(
+            id: MonthlyInsight.id(of: kind, in: value), month: value, kind: kind, title: title, body: body,
+            createdAt: Date(timeIntervalSinceReferenceDate: createdAt), isRead: isRead
+        )
+    }
+
     // Sabit, sıralaması belli UUID'ler: hem bayt hem metin karşılaştırmasında 1 < 2 < 3.
     public static func id(_ last: Int) -> UUID {
         UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", last))!
