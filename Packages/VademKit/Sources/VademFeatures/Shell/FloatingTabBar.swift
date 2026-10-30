@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// The selected tab carries a highlight pill that slides to a newly selected tab
 /// (`matchedGeometryEffect`) with a light haptic; under Reduce Motion or `-ui-static-motion` it
-/// moves without animation. Tabs read as buttons with the selected trait. At accessibility text
+/// moves without animation. Tabs read as buttons with the selected trait and the value "Tab, n of 4". At accessibility text
 /// sizes the labels hide (icons only), the bar stops growing so it never overflows, and a long
 /// press shows the Large Content Viewer. Identifiers: see ``AppTab``.
 @MainActor
@@ -83,12 +83,22 @@ struct FloatingTabBar: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(tab.title))
+        // VoiceOver bunun bir sekme olduğunu ve sırasını söyler: "Sekme, 2/4".
+        .accessibilityValue(Text(
+            "Tab, \(Self.position(of: tab)) of \(AppTab.allCases.count)", bundle: .module,
+            comment: "Spoken after a tab bar button's name, e.g. Tab, 2 of 4"
+        ))
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
         .accessibilityShowsLargeContentViewer {
             Image(systemName: tab.systemImage)
             Text(tab.title)
         }
         .accessibilityIdentifier(tab.accessibilityIdentifier)
+    }
+
+    // Sekmenin 1'den başlayan sırası.
+    private static func position(of tab: AppTab) -> Int {
+        (AppTab.allCases.firstIndex(of: tab) ?? 0) + 1
     }
 
     // Ekleme sayfasını her sekmeden açan yuvarlak ＋ düğmesi.

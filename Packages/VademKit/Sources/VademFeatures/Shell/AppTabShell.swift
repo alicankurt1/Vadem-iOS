@@ -4,9 +4,10 @@ import VademCore
 /// The app's tab shell: This month (``HomeView``), ``AnalyticsView``, ``CardListView`` and
 /// ``SettingsView``, switched with the ``FloatingTabBar`` floating over the content.
 ///
-/// Every tab has its own `NavigationStack` and stays alive while hidden, so scroll positions and
-/// pushed screens survive tab switches. Content scrolls under the bar; a bottom inset as tall as the
-/// bar keeps the last row reachable. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
+/// Every tab has its own `NavigationStack` in a `TabView` whose system tab bar is hidden: tabs stay
+/// alive while not shown (scroll positions and pushed screens survive tab switches), and only the
+/// selected tab is in the view and accessibility hierarchy. Content scrolls under the bar; a bottom
+/// inset as tall as the bar keeps the last row reachable. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
 /// form closes, Home, Analytics and Cards reload. The selected tab is published as
 /// `EnvironmentValues.selectedAppTab`.
 ///
@@ -109,12 +110,15 @@ public struct AppTabShell: View {
     }
 
     public var body: some View {
-        ZStack {
+        // Sistem TabView'i sekmeleri canlı tutar ve yalnızca seçili sekmeyi hiyerarşide (VoiceOver ve
+        // UI testleri dahil) gösterir; sistem çubuğu gizli, yerine yüzen çubuk çizilir.
+        TabView(selection: $selection) {
             tab(.home) {
                 HomeView(model: model, onAdd: openAddSheet, onDataChanged: reloadAll)
             }
             tab(.analytics) {
-                // Boş grafikteki "ödeme ekle" de ortak Ekle sayfasını açar.
+                // Boş grafikteki "ödeme ekle" de ortak Ekle sayfasını açar. Kart yokken de çalışır:
+                // akışların kart adımında "Kart yok" ve "Yeni kart" satırları hep vardır.
                 AnalyticsView(model: analyticsModel, onAddPayment: openAddSheet)
             }
             tab(.cards) {
@@ -171,24 +175,30 @@ public struct AppTabShell: View {
         #endif
     }
 
-    // Her sekme kendi NavigationStack'inde ve hep canlı: gizliyken görünmez, dokunulamaz,
-    // VoiceOver'dan gizli; kaydırma konumu ve itilmiş ekranlar korunur.
+    // Her sekme kendi NavigationStack'inde; TabView sekmeyi seçili değilken de canlı tutar,
+    // kaydırma konumu ve itilmiş ekranlar korunur.
     private func tab(_ tab: AppTab, @ViewBuilder content: () -> some View) -> some View {
-        let isSelected = selection == tab
-        return NavigationStack {
+        NavigationStack {
             content()
+                #if os(iOS)
+                // Kök ekranda da gizlenir: yığın içi tercih sistem çubuğunu geri getirmesin.
+                .toolbar(.hidden, for: .tabBar)
+                #endif
         }
-        // Çubuk kadar alt boşluk: son satır çubuğun üstüne kaydırılabilir, içerik altından geçer.
+        // Çubuğun yüksekliği kadar alt boşluk. Çubuk alt güvenli alanın (ana ekran çizgisi) üstünde
+        // durur ve bu boşluk da güvenli alana eklenir; çizgi payı iki kez sayılmaz, son satır çubuğun
+        // tam üstünde biter, içerik çubuğun altından geçer.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             Color.clear
                 .frame(height: barHeight)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
-        .opacity(isSelected ? 1 : 0)
-        .allowsHitTesting(isSelected)
-        .accessibilityHidden(!isSelected)
-        .zIndex(isSelected ? 1 : 0)
+        #if os(iOS)
+        // Sistem sekme çubuğu hiç görünmez; itilen ekranlarda da.
+        .toolbar(.hidden, for: .tabBar)
+        #endif
+        .tag(tab)
     }
 
     private func openAddSheet() {

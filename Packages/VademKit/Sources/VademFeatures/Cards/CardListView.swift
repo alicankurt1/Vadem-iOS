@@ -4,9 +4,9 @@ import VademCore
 /// The Cards tab of the ``AppTabShell``: every saved card as a card face with its name and due day.
 ///
 /// Tapping a card opens the edit-card form (edit and delete) as a sheet; the toolbar's Add button
-/// opens the add-card form. The list reloads whenever a form closes, then `onDataChanged` runs. Without cards an empty state
-/// explains the screen and offers an add button. The card faces stop drifting under Reduce Motion
-/// or `-ui-static-motion`, so the screen is idle in the UI check.
+/// opens the add-card form. The list reloads whenever a form closes, then `onDataChanged` runs.
+/// Without cards an empty state explains the screen and offers an add button. The card faces stop
+/// drifting under Reduce Motion or `-ui-static-motion`, so the screen is idle in the UI check.
 /// Identifiers: `cards.list` (the screen), `cards.add` (toolbar), `cards.row.<index>` (cards, from 0),
 /// `cards.empty` (empty-state text), `cards.empty.add` (empty-state button) and `cards.error`.
 @MainActor
