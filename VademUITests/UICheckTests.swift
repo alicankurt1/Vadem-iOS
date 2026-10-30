@@ -1204,6 +1204,24 @@ final class UICheckTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testGalleryTitlesAndGlass() throws {
+        // #211: serif başlık + eyebrow ("Titles") ve cam yüzeyler ("Glass") kendi parçalarında; ayrı test, 3 dk sınırı için.
+        try capture(
+            screen: "gallery",
+            launchArguments: ["-ui-gallery"],
+            sections: [
+                .scrolled(to: "gallery.titles", named: "titles"),
+                .scrolled(to: "gallery.glass", named: "glass"),
+            ]
+        ) { app, variant in
+            XCTAssertTrue(
+                Self.galleryTitle(in: app).waitForExistence(timeout: 5),
+                "[ui-check] gallery__\(variant.name): 'Design gallery' title not found"
+            )
+        }
+    }
+
     /// Sürüm etiketi sorgusu: "Version x.y" / "Sürüm x.y".
     @MainActor
     private static func versionTexts(in app: XCUIApplication) -> XCUIElementQuery {

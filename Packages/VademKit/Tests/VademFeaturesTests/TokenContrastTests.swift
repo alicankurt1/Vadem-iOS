@@ -38,6 +38,24 @@ struct TokenContrastTests {
         Pair(foreground: "onAccent", background: "accent"),
     ]
 
+    // #211: serif başlık ve eyebrow metinlerinin oturduğu zeminler (cam yüzey surface ile örtülü).
+    static let displayTitlePairs: [Pair] = [
+        Pair(foreground: "brand", background: "background"),  // vurgulu sözcük
+        Pair(foreground: "brand", background: "surface"),
+        Pair(foreground: "textPrimary", background: "background"),  // başlık
+        Pair(foreground: "textSecondary", background: "background"),  // eyebrow
+        Pair(foreground: "textSecondary", background: "surface"),
+        Pair(foreground: "onAccent", background: "accent"),  // renkli cam yüzey (＋ ve hero hap)
+    ]
+
+    @Test("Display title and eyebrow pairs are all in the contrast table")
+    func displayTitlePairsAreListed() {
+        let listed = Set(Self.pairs.map(\.testDescription))
+        for pair in Self.displayTitlePairs {
+            #expect(listed.contains(pair.testDescription), "missing pair: \(pair.testDescription)")
+        }
+    }
+
     @Test("Pair meets WCAG AA (4.5:1) in light and dark", arguments: pairs)
     func pairContrast(pair: Pair) throws {
         for (mode, dark) in [("light", false), ("dark", true)] {
