@@ -6,6 +6,7 @@ import VademCore
 /// The "Remind me" row is shown only while reminders are on. When reminders are on but the
 /// system permission is denied, an explanation and an "Open Settings" button show.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
+/// A ``DisplayHeader`` (`settings.header`) tops the screen.
 /// Identifiers: `settings.reminders` (toggle), `settings.timing` (row), the pushed list
 /// `settings.timing.options` with `settings.timing.option.<index>`, `settings.permissionDenied`
 /// (explanation), `settings.openSystemSettings` and `settings.version` (app version).
@@ -47,7 +48,9 @@ public struct SettingsView: View {
     public var body: some View {
         // Sekme kökü: zemin AppTabShell'in ortam arka planı.
         FormScroll(opaqueBackground: false) {
-            // İlk görünüşte kademeli giriş: önce hatırlatma kartı, sonra diğer kartlar.
+            // İlk görünüşte kademeli giriş: önce başlık ve hatırlatma kartı, sonra diğer kartlar.
+            header
+                .motionEntry(order: .header)
             FormCard {
                 FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
                     Toggle(isOn: Binding(
@@ -108,6 +111,17 @@ public struct SettingsView: View {
                 Task { await model.loadAuthorization() }
             }
         }
+    }
+
+    // Serif ekran başlığı: "Sana özel", vurgu son sözcükte.
+    private var header: some View {
+        let accent = String(localized: "yours", bundle: .module, comment: "Accented word of the Settings display title (Make it yours)")
+        return DisplayHeader(
+            eyebrow: AppTab.settings.title,
+            title: String(localized: "Make it \(accent)", bundle: .module, comment: "Settings display title; the argument is accented"),
+            accent: accent,
+            identifier: "settings.header"
+        )
     }
 
     // İzin reddedilmiş: açıklama ve sistem Ayarları'nı açan düğme.

@@ -360,6 +360,33 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
     }
 
+    /// #211: dört sekmenin serif başlığı görünür; VoiceOver başlığı vurgu sözcüğünde bölmeden tek öğe okur.
+    @MainActor
+    func testTabHeadersShowAsSingleElements() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+
+        // (sekme, başlık kimliği, başlığın tam metninde geçmesi gereken parçalar)
+        let headers: [(tab: String, id: String, fragments: [String])] = [
+            ("tab.home", "home.header", ["You pay"]),
+            ("tab.analytics", "analytics.header", ["Your next", "12 months"]),
+            ("tab.cards", "cards.header", ["Your", "cards", "at a glance"]),
+            ("tab.settings", "settings.header", ["Make it", "yours"]),
+        ]
+        for header in headers {
+            let tab = app.buttons[header.tab]
+            XCTAssertTrue(tab.waitForExistence(timeout: 10), "\(header.tab) not found")
+            tab.tap()
+            let title = app.staticTexts.matching(identifier: header.id)
+            XCTAssertTrue(title.firstMatch.waitForExistence(timeout: 10), "\(header.id) not shown")
+            // Tek öğe: vurgu sözcüğü ayrı bir öğe olmamalı.
+            XCTAssertEqual(title.count, 1, "\(header.id) must be exactly one element (not split by the accent word)")
+            let label = title.firstMatch.label
+            for fragment in header.fragments {
+                XCTAssertTrue(label.contains(fragment), "\(header.id) label '\(label)' must contain '\(fragment)'")
+            }
+        }
+    }
+
     @MainActor
     func testAnalyticsTabShowsChartAndHomeTabComesBack() throws {
         let app = launchHome()
@@ -777,6 +804,8 @@ final class FunctionalFlowTests: XCTestCase {
         try fillAndSaveCard(named: "Zzz Fresh", in: app)
         let fresh = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Zzz Fresh'")).firstMatch
         XCTAssertTrue(fresh.waitForExistence(timeout: 5), "new card not listed")
+        // Başlık (#211) listeyi aşağı iter: son kart ekran dışında kalabilir.
+        for _ in 0..<4 where !fresh.isHittable { app.swipeUp() }
         XCTAssertTrue(element("cards.row.3", in: app).exists, "list must have four cards now")
         fresh.tap()
 

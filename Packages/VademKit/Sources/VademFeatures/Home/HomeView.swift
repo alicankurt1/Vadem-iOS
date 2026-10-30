@@ -4,7 +4,8 @@ import VademCore
 /// The Home screen ("This month" tab of the ``AppTabShell``): how much is due in the selected month,
 /// per card, and when.
 ///
-/// Shown inside the shell's `NavigationStack` (the "Vadem" title is in its bar). Below the month
+/// Shown inside the shell's `NavigationStack` (the "Vadem" title is in its bar). A ``DisplayHeader``
+/// (`home.header`, "You pay ₺…") sits above the month bar. Below the month
 /// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
 /// (`home.add`, shown when `onAdd` is given) that calls `onAdd` (the shell opens the ``AddFlowSheet``)
 /// and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
@@ -165,7 +166,9 @@ public struct HomeView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // İlk görünüşte kademeli giriş: önce ay başlığı, sonra panel, sonra liste.
+                    // İlk görünüşte kademeli giriş: önce başlık ve ay şeridi, sonra panel, sonra liste.
+                    header
+                        .motionEntry(order: .header)
                     monthBar
                         .motionEntry(order: .header)
                     // Hata durumunda da görünür (toplam sıfır): ekleme düğmesi her zaman erişilebilir.
@@ -241,6 +244,22 @@ public struct HomeView: View {
         .buttonStyle(.heroPill)
         .accessibilityLabel(Text("Add payment", bundle: .module))
         .accessibilityIdentifier("home.add")
+    }
+
+    // Serif ekran başlığı: "Bu ay" etiketi ve vurgulu tutarla "₺4.825,50 ödüyorsun".
+    // VoiceOver tutarı "₺" yerine okunabilir biçimde, tek başlık olarak okur.
+    private var header: some View {
+        let amount = AmountText.format(model.total)
+        let spokenAmount = AmountText.spokenLabel(model.total)
+        return DisplayHeader(
+            eyebrow: AppTab.home.title,
+            title: String(localized: "You pay \(amount)", bundle: .module, comment: "Home display title; the amount is accented"),
+            accent: amount,
+            accessibilityLabel: String(
+                localized: "You pay \(spokenAmount)", bundle: .module, comment: "Home display title; the amount is accented"
+            ),
+            identifier: "home.header"
+        )
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.

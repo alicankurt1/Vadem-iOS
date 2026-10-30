@@ -108,7 +108,8 @@ struct FloatingTabBar: View {
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(Color.vademOnAccent)
                 .frame(width: 56, height: 56)
-                .background(Color.vademAccent, in: Circle())
+                // Hero hapları gibi vurgu renginde cam yüzey.
+                .vademGlassSurface(in: Circle(), tint: Color.vademAccent)
                 .contentShape(.circle)
         }
         .buttonStyle(.plain)
