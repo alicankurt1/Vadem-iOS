@@ -45,7 +45,8 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        FormScroll {
+        // Sekme kökü: zemin AppTabShell'in ortam arka planı.
+        FormScroll(opaqueBackground: false) {
             FormCard {
                 FormField(errorMessage: nil, errorIdentifier: "settings.reminders.error") {
                     Toggle(isOn: Binding(

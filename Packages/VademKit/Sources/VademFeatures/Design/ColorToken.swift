@@ -21,6 +21,10 @@ public enum ColorToken: String, CaseIterable, Sendable {
     case dueLater
     case dueLaterBackground
     case paid
+    case ambientHome
+    case ambientAnalytics
+    case ambientCards
+    case ambientSettings
 
     /// The adaptive color for this token, loaded from `Bundle.module`.
     public var color: Color {
@@ -67,4 +71,12 @@ public extension Color {
     static var vademDueLaterBackground: Color { ColorToken.dueLaterBackground.color }
     /// Paid state.
     static var vademPaid: Color { ColorToken.paid.color }
+    /// Ambient background tint of the This month tab; text tokens keep AA contrast on it.
+    static var vademAmbientHome: Color { ColorToken.ambientHome.color }
+    /// Ambient background tint of the Analytics tab; text tokens keep AA contrast on it.
+    static var vademAmbientAnalytics: Color { ColorToken.ambientAnalytics.color }
+    /// Ambient background tint of the Cards tab; text tokens keep AA contrast on it.
+    static var vademAmbientCards: Color { ColorToken.ambientCards.color }
+    /// Ambient background tint of the Settings tab; text tokens keep AA contrast on it.
+    static var vademAmbientSettings: Color { ColorToken.ambientSettings.color }
 }

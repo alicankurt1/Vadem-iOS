@@ -53,7 +53,6 @@ public struct AnalyticsView: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color.vademBackground.ignoresSafeArea())
         .navigationTitle(Text("Analytics", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

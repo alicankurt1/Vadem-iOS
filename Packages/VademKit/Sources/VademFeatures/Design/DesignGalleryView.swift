@@ -120,6 +120,20 @@ public struct DesignGalleryView: View {
                             .buttonStyle(.heroPill)
                     }
 
+                    // Her sekmenin ortam arka planı; üstteki metin gerçek ekranlardaki gibi doğrudan zeminde.
+                    section(String(localized: "Ambient", bundle: .module, comment: "Design gallery section"), id: "gallery.ambient") {
+                        ForEach(AppTab.allCases) { tab in
+                            Text(tab.title)
+                                .font(.headline)
+                                .foregroundStyle(Color.vademTextPrimary)
+                                .padding(.leading, 28)
+                                .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
+                                .background { AmbientBackground(tint: tab.ambientTint) }
+                                .clipShape(.rect(cornerRadius: 18, style: .continuous))
+                                .accessibilityIdentifier("gallery.ambient.\(tab.rawValue)")
+                        }
+                    }
+
                     }
 
                     section(String(localized: "Cards", bundle: .module, comment: "Design gallery section"), id: "gallery.cards") {
