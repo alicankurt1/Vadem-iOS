@@ -139,6 +139,20 @@ public struct DesignGalleryView: View {
                         EyebrowLabel(String(localized: "Analytics", bundle: .module))
                     }
 
+                    // Her sekmenin ortam arka planı; üstteki metin gerçek ekranlardaki gibi doğrudan zeminde.
+                    section(String(localized: "Ambient", bundle: .module, comment: "Design gallery section"), id: "gallery.ambient") {
+                        ForEach(AppTab.allCases) { tab in
+                            Text(tab.title)
+                                .font(.headline)
+                                .foregroundStyle(Color.vademTextPrimary)
+                                .padding(.leading, 28)
+                                .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
+                                .background { AmbientBackground(tint: tab.ambientTint) }
+                                .clipShape(.rect(cornerRadius: 18, style: .continuous))
+                                .accessibilityIdentifier("gallery.ambient.\(tab.rawValue)")
+                        }
+                    }
+
                     section(String(localized: "Glass", bundle: .module, comment: "Design gallery section"), id: "gallery.glass") {
                         SurfaceCard {
                             Text("Payment reminders", bundle: .module)
