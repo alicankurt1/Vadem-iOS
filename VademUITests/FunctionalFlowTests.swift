@@ -539,6 +539,41 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testSettingsTogglesMonthlySummary() throws {
+        // Aylık özet anahtarı: varsayılan açık, hatırlatmalardan bağımsız; açıp kapatmak izin sorusu açmaz.
+        let app = launchHome()
+
+        let gear = app.buttons["tab.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings tab not found")
+        gear.tap()
+
+        let summary = app.switches["settings.monthlySummary"]
+        // Uzun ekranda anahtar kaydırma gerektirebilir.
+        var attempts = 0
+        while !(summary.exists && summary.isHittable) && attempts < 6 {
+            app.swipeUp()
+            attempts += 1
+        }
+        XCTAssertTrue(summary.exists, "monthly summary toggle not found")
+        XCTAssertEqual(summary.value as? String, "1", "monthly summary must start on")
+
+        summary.tap()
+        XCTAssertEqual(summary.value as? String, "0", "monthly summary must turn off")
+        // Hatırlatma anahtarı etkilenmez; zamanlama satırı görünür kalır.
+        XCTAssertTrue(element("settings.timing", in: app).exists, "reminders must stay on when the summary is off")
+        summary.tap()
+        XCTAssertEqual(summary.value as? String, "1", "monthly summary must turn on again")
+
+        // Sistem izin penceresi (springboard) açılmamış olmalı.
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        XCTAssertFalse(
+            springboard.alerts.firstMatch.waitForExistence(timeout: 1),
+            "toggling the summary must not show a system permission prompt"
+        )
+        XCTAssertTrue(app.switches["settings.monthlySummary"].exists, "Settings must still be shown")
+    }
+
+    @MainActor
     func testCancelAddInstallmentLeavesHomeUnchanged() throws {
         let app = launchHome()
 

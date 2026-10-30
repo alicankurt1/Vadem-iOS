@@ -70,6 +70,37 @@ struct SettingsViewModelTests {
         #expect(store.saves.count == 1)
     }
 
+    @Test("Monthly summary is on by default and shown independently of reminders")
+    func summaryDefault() {
+        #expect(Self.model().isMonthlySummaryEnabled)
+        let remindersOff = Self.model(store: InMemoryReminderPreferencesStore(
+            preferences: ReminderPreferences(isEnabled: false)
+        ))
+        #expect(remindersOff.isMonthlySummaryEnabled)
+    }
+
+    @Test("setMonthlySummaryEnabled saves immediately and keeps the other settings", arguments: [true, false])
+    func setSummarySaves(enabled: Bool) async {
+        let store = CountingStore(ReminderPreferences(isEnabled: false, timing: .dayBefore, monthlySummaryEnabled: !enabled))
+        let model = Self.model(store: store)
+        let task = model.setMonthlySummaryEnabled(enabled)
+        #expect(store.preferences == ReminderPreferences(isEnabled: false, timing: .dayBefore, monthlySummaryEnabled: enabled))
+        #expect(model.isMonthlySummaryEnabled == enabled)
+        await task.value
+        #expect(store.saves.count == 1)
+    }
+
+    @Test("Turning the summary off refreshes the scheduler: summary cancelled, no permission request")
+    func summaryOffRefreshes() async throws {
+        let center = Center(status: .allowed)
+        let store = CountingStore()
+        let scheduler = try Self.scheduler(center: center, store: store)
+        let model = Self.model(store: store, center: center, scheduler: scheduler)
+        await model.setMonthlySummaryEnabled(false).value
+        #expect(center.replacedSummaries.last == .some(nil))
+        #expect(center.requestCount == 0)
+    }
+
     @Test("setTiming saves immediately and keeps the enabled flag", arguments: ReminderTiming.allCases)
     func setTimingSaves(timing: ReminderTiming) async {
         let store = CountingStore(ReminderPreferences(isEnabled: false, timing: .both))
@@ -91,21 +122,29 @@ struct SettingsViewModelTests {
     struct FlagCase: Sendable {
         let status: ReminderAuthorization
         let enabled: Bool
+        let summary: Bool
         let showsTiming: Bool
         let showsDenied: Bool
     }
 
-    @Test("Flags by permission and enabled state", arguments: [
-        FlagCase(status: .notDetermined, enabled: true, showsTiming: true, showsDenied: false),
-        FlagCase(status: .allowed, enabled: true, showsTiming: true, showsDenied: false),
-        FlagCase(status: .denied, enabled: true, showsTiming: true, showsDenied: true),
-        FlagCase(status: .denied, enabled: false, showsTiming: false, showsDenied: false),
-        FlagCase(status: .allowed, enabled: false, showsTiming: false, showsDenied: false),
+    // Reddedilme açıklaması: izin reddedilmişse ve hatırlatmalar YA DA aylık özet açıksa görünür.
+    @Test("Flags by permission, reminders and monthly summary", arguments: [
+        FlagCase(status: .notDetermined, enabled: true, summary: true, showsTiming: true, showsDenied: false),
+        FlagCase(status: .allowed, enabled: true, summary: true, showsTiming: true, showsDenied: false),
+        FlagCase(status: .denied, enabled: true, summary: true, showsTiming: true, showsDenied: true),
+        FlagCase(status: .denied, enabled: true, summary: false, showsTiming: true, showsDenied: true),
+        FlagCase(status: .denied, enabled: false, summary: true, showsTiming: false, showsDenied: true),
+        FlagCase(status: .denied, enabled: false, summary: false, showsTiming: false, showsDenied: false),
+        FlagCase(status: .allowed, enabled: false, summary: true, showsTiming: false, showsDenied: false),
+        FlagCase(status: .allowed, enabled: false, summary: false, showsTiming: false, showsDenied: false),
+        FlagCase(status: .notDetermined, enabled: false, summary: true, showsTiming: false, showsDenied: false),
     ])
     func flags(_ testCase: FlagCase) async {
         let center = Center(status: testCase.status)
         let model = Self.model(
-            store: InMemoryReminderPreferencesStore(preferences: ReminderPreferences(isEnabled: testCase.enabled)),
+            store: InMemoryReminderPreferencesStore(preferences: ReminderPreferences(
+                isEnabled: testCase.enabled, monthlySummaryEnabled: testCase.summary
+            )),
             center: center
         )
         await model.loadAuthorization()

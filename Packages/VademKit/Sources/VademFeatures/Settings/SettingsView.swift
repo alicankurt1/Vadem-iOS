@@ -1,13 +1,15 @@
 import SwiftUI
 import VademCore
 
-/// The Settings tab of the ``AppTabShell``: payment reminders on or off and when they fire.
+/// The Settings tab of the ``AppTabShell``: payment reminders on or off and when they fire,
+/// and the monthly summary on or off.
 ///
 /// The "Remind me" row is shown only while reminders are on. When reminders are on but the
 /// system permission is denied, an explanation and an "Open Settings" button show.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 /// A ``DisplayHeader`` (`settings.header`) tops the screen.
-/// Identifiers: `settings.reminders` (toggle), `settings.timing` (row), the pushed list
+/// Identifiers: `settings.reminders` (toggle), `settings.timing` (row), `settings.monthlySummary`
+/// (toggle), the pushed list
 /// `settings.timing.options` with `settings.timing.option.<index>`, `settings.permissionDenied`
 /// (explanation), `settings.openSystemSettings` and `settings.version` (app version).
 /// Shown inside the shell's `NavigationStack`. A Privacy Policy row (`settings.privacy`) pushes the ``PrivacyPolicyView``.
@@ -70,6 +72,17 @@ public struct SettingsView: View {
                         }
                         .accessibilityIdentifier("settings.timing")
                     }
+                }
+                // Aylık özet, hatırlatmalardan bağımsız açılıp kapanır.
+                FormField(errorMessage: nil, errorIdentifier: "settings.monthlySummary.error") {
+                    Toggle(isOn: Binding(
+                        get: { model.isMonthlySummaryEnabled },
+                        set: { model.setMonthlySummaryEnabled($0) }
+                    )) {
+                        Text("Monthly summary", bundle: .module)
+                    }
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .accessibilityIdentifier("settings.monthlySummary")
                 }
             }
             .motionEntry(order: .header)

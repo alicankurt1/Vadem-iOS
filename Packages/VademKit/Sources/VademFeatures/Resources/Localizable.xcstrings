@@ -120,6 +120,84 @@
         }
       }
     },
+    "%@: installment ended; you pay %@ less this month" : {
+      "comment" : "Monthly summary body: installment title, amount paid less",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: installment ended; you pay %2$@ less this month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: taksit bitti; bu ay %2$@ daha az ödeyeceksin"
+          }
+        }
+      }
+    },
+    "%lld installments ended; you pay %@ less this month" : {
+      "comment" : "Monthly summary body: number of ended installments, amount paid less",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@items@ ended; you pay %2$@ less this month"
+          },
+          "substitutions" : {
+            "items" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg installment"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg installments"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@items@ bitti; bu ay %2$@ daha az ödeyeceksin"
+          },
+          "substitutions" : {
+            "items" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld payments due today, %@ total" : {
       "comment" : "Notification body: number of payments, total amount",
       "localizations" : {
@@ -2279,6 +2357,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aylık ödemeler"
+          }
+        }
+      }
+    },
+    "Monthly summary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monthly summary"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aylık özet"
           }
         }
       }
@@ -4453,6 +4547,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödemeleriniz yüklenemedi."
+          }
+        }
+      }
+    },
+    "Your payments fell %@ this month (%@ → %@)" : {
+      "comment" : "Monthly summary body: percentage, last month's total, this month's total",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your payments fell %1$@ this month (%2$@ → %3$@)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödemelerin %1$@ azaldı (%2$@ → %3$@)"
+          }
+        }
+      }
+    },
+    "Your payments rose %@ this month (%@ → %@)" : {
+      "comment" : "Monthly summary body: percentage, last month's total, this month's total",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your payments rose %1$@ this month (%2$@ → %3$@)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödemelerin %1$@ arttı (%2$@ → %3$@)"
           }
         }
       }

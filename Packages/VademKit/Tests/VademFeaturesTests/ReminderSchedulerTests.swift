@@ -24,6 +24,8 @@ struct ReminderSchedulerTests {
         private(set) var statusQueries = 0
         private(set) var requestCount = 0
         private(set) var replaced: [[PlannedReminder]] = []
+        // Her replacePending çağrısındaki aylık özet (nil = özet yok).
+        private(set) var replacedSummaries: [PlannedMonthlySummary?] = []
 
         init(status: ReminderAuthorization, requestResult: Bool = true) {
             self.status = status
@@ -42,8 +44,9 @@ struct ReminderSchedulerTests {
             return requestResult
         }
 
-        func replacePending(_ reminders: [PlannedReminder]) async throws {
+        func replacePending(_ reminders: [PlannedReminder], summary: PlannedMonthlySummary?) async throws {
             replaced.append(reminders)
+            replacedSummaries.append(summary)
             if throwsOnReplace { throw Failure() }
         }
     }

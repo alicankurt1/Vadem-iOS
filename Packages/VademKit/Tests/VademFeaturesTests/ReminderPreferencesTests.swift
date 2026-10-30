@@ -25,6 +25,15 @@ struct ReminderPreferencesTests {
         #expect(ReminderPreferences().isEnabled)
         #expect(ReminderPreferences().timing == .both)
     }
+
+    @Test("Monthly summary is on by default and independent of the reminder switch")
+    func summaryDefault() {
+        #expect(ReminderPreferences.default.monthlySummaryEnabled)
+        #expect(ReminderPreferences().monthlySummaryEnabled)
+        #expect(ReminderPreferences(isEnabled: false).monthlySummaryEnabled)
+        #expect(!ReminderPreferences(monthlySummaryEnabled: false).monthlySummaryEnabled)
+        #expect(ReminderPreferences(monthlySummaryEnabled: false).isEnabled)
+    }
 }
 
 @MainActor
@@ -57,6 +66,34 @@ struct ReminderPreferencesStoreTests {
             UserDefaultsReminderPreferencesStore(defaults: defaults).save(preferences)
             // Yeni bir depo örneği aynı değeri okur.
             #expect(UserDefaultsReminderPreferencesStore(defaults: defaults).load() == preferences)
+        }
+    }
+
+    @Test("UserDefaults: monthly summary round trip", arguments: [true, false])
+    func summaryRoundTrip(enabled: Bool) {
+        withDefaults { defaults in
+            let preferences = ReminderPreferences(isEnabled: false, timing: .dueDay, monthlySummaryEnabled: enabled)
+            UserDefaultsReminderPreferencesStore(defaults: defaults).save(preferences)
+            #expect(UserDefaultsReminderPreferencesStore(defaults: defaults).load() == preferences)
+            #expect(defaults.object(forKey: UserDefaultsReminderPreferencesStore.monthlySummaryEnabledKey) as? Bool == enabled)
+        }
+    }
+
+    @Test("UserDefaults: a missing summary key means on, even when other keys are saved")
+    func missingSummaryKeyIsOn() {
+        withDefaults { defaults in
+            defaults.set(false, forKey: UserDefaultsReminderPreferencesStore.isEnabledKey)
+            defaults.set("dueDay", forKey: UserDefaultsReminderPreferencesStore.timingKey)
+            let loaded = UserDefaultsReminderPreferencesStore(defaults: defaults).load()
+            #expect(loaded == ReminderPreferences(isEnabled: false, timing: .dueDay, monthlySummaryEnabled: true))
+        }
+    }
+
+    @Test("UserDefaults: an explicit false summary key is kept")
+    func explicitSummaryOff() {
+        withDefaults { defaults in
+            defaults.set(false, forKey: UserDefaultsReminderPreferencesStore.monthlySummaryEnabledKey)
+            #expect(!UserDefaultsReminderPreferencesStore(defaults: defaults).load().monthlySummaryEnabled)
         }
     }
 

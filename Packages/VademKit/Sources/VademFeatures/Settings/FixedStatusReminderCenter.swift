@@ -20,6 +20,6 @@ final class FixedStatusReminderCenter: ReminderCenter {
         false
     }
 
-    func replacePending(_ reminders: [PlannedReminder]) async throws {}
+    func replacePending(_ reminders: [PlannedReminder], summary: PlannedMonthlySummary?) async throws {}
 }
 #endif

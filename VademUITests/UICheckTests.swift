@@ -535,7 +535,7 @@ final class UICheckTests: XCTestCase {
         try capture(
             screen: "settings",
             launchArguments: ["-ui-sample-data", "-ui-settings"],
-            sections: [.top]
+            sections: [.top, .scrolled(to: "settings.monthlySummary", named: "summary")]
         ) { app, variant in
             Self.assertSettingsVersionLabel(in: app, name: "settings__\(variant.name)")
         }

@@ -32,13 +32,25 @@ public struct PlannedReminder: Sendable, Hashable, Identifiable {
     public let total: Money
 }
 
+/// The monthly summary notification the app should schedule: the top ``MonthlyInsight`` of a
+/// month, delivered at ``NotificationPlanner/fireHour``:00 on that month's 1st.
+public struct PlannedMonthlySummary: Sendable, Hashable, Identifiable {
+    /// A deterministic id, one per month: `insight-YYYY-MM` (see ``MonthlyInsight/idPrefix(for:)``).
+    public let id: String
+    /// The moment the notification fires; always after the planner's `now`.
+    public let fireDate: Date
+    /// The most important insight about the month the notification fires in.
+    public let insight: MonthlyInsight
+}
+
 /// Plans local payment reminders (pure; no side effects, no notification framework).
 ///
 /// Each due day gets up to two reminders at ``fireHour``:00 — the day before and on the day —
 /// in the given calendar's time zone (dates themselves are Gregorian, like ``YearMonth``).
 /// Reminders at or before `now` are dropped. Only the nearest ``windowSize`` reminders are
 /// kept, because iOS keeps at most ``maxPending`` pending local notifications; the rest are
-/// planned again later (rolling window).
+/// planned again later (rolling window). The spare slot holds the monthly summary
+/// (``planMonthlySummary(now:calendar:cards:installments:subscriptions:oneTimePayments:)``).
 public enum NotificationPlanner {
     /// The most pending local notifications iOS keeps.
     public static let maxPending = 64
@@ -126,6 +138,51 @@ public enum NotificationPlanner {
             lhs.fireDate != rhs.fireDate ? lhs.fireDate < rhs.fireDate : lhs.id < rhs.id
         }
         return Array(reminders.prefix(windowSize))
+    }
+
+    /// Plans the next monthly summary: at ``fireHour``:00 on the 1st of the next month, or of
+    /// `now`'s month while that moment is still ahead (the 1st, before ``fireHour``), with the
+    /// top insight of the month it fires in
+    /// (``MonthlyInsightCalculator/topInsight(for:cards:installments:subscriptions:oneTimePayments:)``).
+    ///
+    /// - Parameters:
+    ///   - now: The current moment; the summary always fires after it.
+    ///   - calendar: Its time zone sets the local 09:00 and the current month.
+    /// - Returns: At most one summary; `nil` when that month has no insight, or after 9999-12.
+    public static func planMonthlySummary(
+        now: Date,
+        calendar: Calendar,
+        cards: [Card],
+        installments: [InstallmentItem],
+        subscriptions: [SubscriptionItem],
+        oneTimePayments: [OneTimePaymentItem] = []
+    ) -> PlannedMonthlySummary? {
+        var gregorian = Calendar(identifier: .gregorian)
+        gregorian.timeZone = calendar.timeZone
+
+        // Bu ayın 1'i 09:00 henüz gelmediyse bu ay, yoksa sonraki ay; 9999-12 sonrası temsil edilemez.
+        let currentMonth = YearMonth(date: now, calendar: calendar)
+        var month = currentMonth
+        var fireDate = firstDayFireDate(of: month, in: gregorian)
+        if fireDate.map({ $0 <= now }) ?? true {
+            let last = YearMonth(year: YearMonth.supportedYears.upperBound, month: 12)!
+            guard currentMonth < last else { return nil }
+            month = currentMonth.adding(months: 1)
+            fireDate = firstDayFireDate(of: month, in: gregorian)
+        }
+        guard let fireDate, fireDate > now,
+              let insight = MonthlyInsightCalculator.topInsight(
+                  for: month, cards: cards, installments: installments,
+                  subscriptions: subscriptions, oneTimePayments: oneTimePayments
+              ) else { return nil }
+        return PlannedMonthlySummary(id: MonthlyInsight.idPrefix(for: month), fireDate: fireDate, insight: insight)
+    }
+
+    // Ayın 1'i, yerel saatle 09:00.
+    private static func firstDayFireDate(of month: YearMonth, in calendar: Calendar) -> Date? {
+        calendar.date(from: DateComponents(
+            year: month.year, month: month.month, day: 1, hour: fireHour, minute: 0, second: 0
+        ))
     }
 
     // Vade günü (veya bir önceki gün) yerel saatle 09:00. Gün 0, önceki ayın son gününe normalize edilir

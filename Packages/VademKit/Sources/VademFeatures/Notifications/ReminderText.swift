@@ -45,4 +45,59 @@ public enum ReminderText {
             )
         }
     }
+
+    /// The monthly summary title: `"Monthly summary"`.
+    public static func title(for summary: PlannedMonthlySummary) -> String {
+        String(localized: "Monthly summary", bundle: .module, comment: "Notification title of the monthly summary")
+    }
+
+    /// The monthly summary body, from its insight: e.g.
+    /// `"Your payments rose 50% this month (₺3.200,00 → ₺4.800,00)"` or
+    /// `"Laptop: installment ended; you pay ₺500,00 less this month"`.
+    public static func body(
+        for summary: PlannedMonthlySummary,
+        formatAmount: (Money) -> String = AmountText.format,
+        locale: Locale = VademLocalization.locale
+    ) -> String {
+        body(for: summary.insight, formatAmount: formatAmount, locale: locale)
+    }
+
+    /// The text of `insight`, as in the monthly summary body;
+    /// the percentage is written with `locale` (e.g. `50%`, Turkish `%50`).
+    public static func body(
+        for insight: MonthlyInsight,
+        formatAmount: (Money) -> String = AmountText.format,
+        locale: Locale = VademLocalization.locale
+    ) -> String {
+        switch insight.detail {
+        case .totalChange(let previous, let current, let percent):
+            // Yüzde işaretsiz yazılır; yön cümlenin fiilinden anlaşılır.
+            let change = (Decimal(abs(percent)) / 100).formatted(.percent.locale(locale))
+            let from = formatAmount(previous)
+            let to = formatAmount(current)
+            return percent >= 0
+                ? String(
+                    localized: "Your payments rose \(change) this month (\(from) → \(to))", bundle: .module,
+                    comment: "Monthly summary body: percentage, last month's total, this month's total"
+                )
+                : String(
+                    localized: "Your payments fell \(change) this month (\(from) → \(to))", bundle: .module,
+                    comment: "Monthly summary body: percentage, last month's total, this month's total"
+                )
+        case .installmentEnded(let titles, let amount):
+            let less = formatAmount(amount)
+            // Tek plan adıyla söylenir; birden fazlası sayıyla.
+            if titles.count == 1, let title = titles.first {
+                return String(
+                    localized: "\(title): installment ended; you pay \(less) less this month", bundle: .module,
+                    comment: "Monthly summary body: installment title, amount paid less"
+                )
+            }
+            let count = titles.count
+            return String(
+                localized: "\(count) installments ended; you pay \(less) less this month", bundle: .module,
+                comment: "Monthly summary body: number of ended installments, amount paid less"
+            )
+        }
+    }
 }

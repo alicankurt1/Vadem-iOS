@@ -39,7 +39,8 @@ public struct SettingsDependencies {
     }
 }
 
-/// Drives the Settings screen: the reminder toggle, the timing and the system permission.
+/// Drives the Settings screen: the reminder toggle, the timing, the monthly summary toggle and
+/// the system permission.
 ///
 /// Each change is saved to the store right away, then the scheduler is refreshed (turning reminders
 /// on may show the system permission prompt), then the permission is read again.
@@ -85,11 +86,16 @@ public final class SettingsViewModel: Identifiable {
     public var isEnabled: Bool { preferences.isEnabled }
     /// The selected timing.
     public var timing: ReminderTiming { preferences.timing }
+    /// `true` when the monthly summary is on (independent of ``isEnabled``).
+    public var isMonthlySummaryEnabled: Bool { preferences.monthlySummaryEnabled }
     /// The timing row is shown only while reminders are on.
     public var showsTiming: Bool { preferences.isEnabled }
-    /// `true` when reminders are on but the system permission is denied: the screen explains
-    /// it and offers ``openSystemSettings()``.
-    public var showsPermissionDenied: Bool { preferences.isEnabled && authorization == .denied }
+    /// `true` when reminders or the monthly summary are on but the system permission is denied:
+    /// the screen explains it and offers ``openSystemSettings()``.
+    public var showsPermissionDenied: Bool {
+        // Hatırlatmalar kapalı olsa da açık aylık özet izne ihtiyaç duyar.
+        (preferences.isEnabled || preferences.monthlySummaryEnabled) && authorization == .denied
+    }
 
     /// `true` when a repository was given, so ``makeCardListModel()`` builds a Cards screen model.
     public var showsCards: Bool { repository != nil }
@@ -105,6 +111,15 @@ public final class SettingsViewModel: Identifiable {
     @discardableResult
     public func setEnabled(_ isEnabled: Bool) -> Task<Void, Never> {
         update { $0.isEnabled = isEnabled }
+    }
+
+    /// Turns the monthly summary on or off: saves at once, then refreshes the scheduler (turning it
+    /// off cancels the pending summary) and the permission.
+    ///
+    /// - Returns: The refresh; await its `value` to know it finished.
+    @discardableResult
+    public func setMonthlySummaryEnabled(_ isEnabled: Bool) -> Task<Void, Never> {
+        update { $0.monthlySummaryEnabled = isEnabled }
     }
 
     /// Selects the timing: saves at once, then refreshes the scheduler and the permission.

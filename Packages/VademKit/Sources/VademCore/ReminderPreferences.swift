@@ -19,20 +19,28 @@ public enum ReminderTiming: String, Sendable, Hashable, CaseIterable {
     }
 }
 
-/// The user's reminder settings: on or off, and when they fire.
+/// The user's reminder settings: payment reminders on or off and when they fire, and the
+/// monthly summary on or off.
+///
+/// The two switches are independent: the monthly summary is sent while payment reminders are
+/// off, and payment reminders are sent while the summary is off.
 public struct ReminderPreferences: Sendable, Hashable {
-    /// The settings used before the user changes anything: on, day before and on the day.
+    /// The settings used before the user changes anything: reminders on, day before and on the
+    /// day, monthly summary on.
     public static let `default` = ReminderPreferences()
 
-    /// `false` turns every payment reminder off.
+    /// `false` turns every payment reminder off (not the monthly summary).
     public var isEnabled: Bool
     /// When the reminders fire; kept while reminders are off.
     public var timing: ReminderTiming
+    /// `false` turns the monthly summary notification off (see ``PlannedMonthlySummary``).
+    public var monthlySummaryEnabled: Bool
 
     /// Creates preferences; the defaults are ``ReminderPreferences/default``.
-    public init(isEnabled: Bool = true, timing: ReminderTiming = .both) {
+    public init(isEnabled: Bool = true, timing: ReminderTiming = .both, monthlySummaryEnabled: Bool = true) {
         self.isEnabled = isEnabled
         self.timing = timing
+        self.monthlySummaryEnabled = monthlySummaryEnabled
     }
 }
 
