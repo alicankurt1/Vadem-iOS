@@ -42,7 +42,7 @@ struct ReminderSchedulerTests {
             return requestResult
         }
 
-        func replacePending(_ reminders: [PlannedReminder]) async throws {
+        func replacePending(_ reminders: [PlannedReminder], summary: PlannedMonthlySummary?) async throws {
             replaced.append(reminders)
             if throwsOnReplace { throw Failure() }
         }

@@ -86,6 +86,23 @@
         }
       }
     },
+    "%@ installments ended; you pay %@ less this month" : {
+      "comment" : "Monthly summary body: installment title, amount paid less",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ installments ended; you pay %2$@ less this month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ taksitleri bitti; bu ay %2$@ daha az ödeyeceksin"
+          }
+        }
+      }
+    },
     "%@, %@ TL" : {
       "comment" : "Spoken chart bar: month, amount",
       "localizations" : {
@@ -116,6 +133,67 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@, %@ TL, yüzde %lld"
+          }
+        }
+      }
+    },
+    "%lld installment plans ended; you pay %@ less this month" : {
+      "comment" : "Monthly summary body: number of ended installment plans, amount paid less",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@plans@ ended; you pay %2$@ less this month"
+          },
+          "substitutions" : {
+            "plans" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg installment plan"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg installment plans"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@plans@ bitti; bu ay %2$@ daha az ödeyeceksin"
+          },
+          "substitutions" : {
+            "plans" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit planı"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit planı"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2279,6 +2357,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aylık ödemeler"
+          }
+        }
+      }
+    },
+    "Monthly summary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monthly summary"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aylık özet"
           }
         }
       }
@@ -4453,6 +4547,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödemeleriniz yüklenemedi."
+          }
+        }
+      }
+    },
+    "Your payments fell %@ this month (%@ → %@)" : {
+      "comment" : "Monthly summary body: percentage, last month's total, this month's total",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your payments fell %1$@ this month (%2$@ → %3$@)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödemelerin %1$@ azaldı (%2$@ → %3$@)"
+          }
+        }
+      }
+    },
+    "Your payments rose %@ this month (%@ → %@)" : {
+      "comment" : "Monthly summary body: percentage, last month's total, this month's total",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your payments rose %1$@ this month (%2$@ → %3$@)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödemelerin %1$@ arttı (%2$@ → %3$@)"
           }
         }
       }

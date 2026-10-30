@@ -21,7 +21,15 @@ public protocol ReminderCenter {
     /// Asks the user for permission; returns `true` when it is granted.
     /// Throws when the request got no answer (e.g. the alert could not be shown); callers may ask again.
     func requestAuthorization() async throws -> Bool
-    /// Removes every pending request whose id starts with `"due-"` (see ``PlannedReminder/id``), then schedules
-    /// `reminders` (title, body, at `fireDate`). An empty array only clears them.
-    func replacePending(_ reminders: [PlannedReminder]) async throws
+    /// Removes every pending request whose id starts with `"due-"` (see ``PlannedReminder/id``) or
+    /// `"insight-"` (see ``PlannedMonthlySummary/id``), then schedules `reminders` and `summary`
+    /// (title, body, at `fireDate`). An empty array and `nil` only clear them.
+    func replacePending(_ reminders: [PlannedReminder], summary: PlannedMonthlySummary?) async throws
+}
+
+extension ReminderCenter {
+    /// Replaces the pending notifications with `reminders` and no monthly summary.
+    public func replacePending(_ reminders: [PlannedReminder]) async throws {
+        try await replacePending(reminders, summary: nil)
+    }
 }

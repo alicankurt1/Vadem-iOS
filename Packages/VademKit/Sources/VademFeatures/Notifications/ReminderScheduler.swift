@@ -1,16 +1,20 @@
 import Foundation
 import VademCore
 
-/// Keeps the pending reminders in step with the saved payments, using ``NotificationPlanner``.
+/// Keeps the pending reminders and the monthly summary in step with the saved payments, using
+/// ``NotificationPlanner``.
 ///
-/// ``refresh()`` first reads the ``ReminderPreferences``: when reminders are off it clears the
-/// pending reminders and never asks for permission. Otherwise it plans the timing's kinds and then:
-/// - nothing to plan: clears the pending reminders;
+/// ``refresh()`` first reads the ``ReminderPreferences``: when payment reminders and the monthly
+/// summary are both off it clears the pending notifications and never asks for permission.
+/// Otherwise it plans the timing's kinds (only while reminders are on) and the next monthly
+/// summary (only while it is on; it fills the slot ``NotificationPlanner/windowSize`` keeps
+/// spare), then:
+/// - nothing to plan: clears the pending notifications;
 /// - permission not asked yet: asks (only when there is something to send), schedules if granted;
 ///   after an answer it never asks again in this process, but a request that throws (no answer,
 ///   e.g. the scene was not active) is retried on the next refresh;
 /// - denied: does nothing and never asks again;
-/// - allowed: replaces the pending reminders with the plan.
+/// - allowed: replaces the pending notifications with the plan.
 ///
 /// Reminders are best effort: repository and center errors are ignored.
 @MainActor
@@ -64,38 +68,53 @@ public final class ReminderScheduler {
     private func refreshOnce() async {
         // Tercihler her turda okunur: ayar değişince bir sonraki yenileme hemen uyar.
         let settings = preferences.load()
-        guard settings.isEnabled else {
-            // Hatırlatmalar kapalı: bekleyenler temizlenir, izin hiç sorulmaz.
-            try? await center.replacePending([])
+        guard settings.isEnabled || settings.monthlySummaryEnabled else {
+            // Hatırlatmalar ve aylık özet kapalı: bekleyenler temizlenir, izin hiç sorulmaz.
+            try? await center.replacePending([], summary: nil)
             return
         }
 
         let reminders: [PlannedReminder]
+        let summary: PlannedMonthlySummary?
         do {
-            reminders = NotificationPlanner.plan(
-                now: now(),
+            let cards = try repository.cards()
+            let installments = try repository.installments()
+            let subscriptions = try repository.subscriptions()
+            let oneTimePayments = try repository.oneTimePayments()
+            let moment = now()
+            // İki anahtar bağımsızdır: kapalı olan taraf planlanmaz, açık olan yine kurulur.
+            reminders = settings.isEnabled ? NotificationPlanner.plan(
+                now: moment,
                 calendar: calendar,
-                cards: try repository.cards(),
-                installments: try repository.installments(),
-                subscriptions: try repository.subscriptions(),
-                oneTimePayments: try repository.oneTimePayments(),
+                cards: cards,
+                installments: installments,
+                subscriptions: subscriptions,
+                oneTimePayments: oneTimePayments,
                 kinds: settings.timing.kinds,
                 formatAmount: formatAmount
-            )
+            ) : []
+            summary = settings.monthlySummaryEnabled ? NotificationPlanner.planMonthlySummary(
+                now: moment,
+                calendar: calendar,
+                cards: cards,
+                installments: installments,
+                subscriptions: subscriptions,
+                oneTimePayments: oneTimePayments
+            ) : nil
         } catch {
-            // Veri okunamazsa bekleyen hatırlatmalara dokunulmaz.
+            // Veri okunamazsa bekleyen bildirimlere dokunulmaz.
             return
         }
 
-        // Planlanacak bir şey yoksa izin sorulmaz; eski hatırlatmalar temizlenir.
-        guard !reminders.isEmpty else {
-            try? await center.replacePending([])
+        // Planlanacak bir şey yoksa izin sorulmaz; eski bildirimler temizlenir.
+        guard !reminders.isEmpty || summary != nil else {
+            try? await center.replacePending([], summary: nil)
             return
         }
 
         switch await center.authorizationStatus() {
         case .allowed:
-            try? await center.replacePending(reminders)
+            try? await center.replacePending(reminders, summary: summary)
         case .denied:
             // Kullanıcı reddetti: ısrar edilmez.
             return
@@ -112,7 +131,7 @@ public final class ReminderScheduler {
             // Bayrak ancak cevaptan sonra konur; cevap ne olursa olsun bu oturumda tekrar sorulmaz.
             hasRequestedAuthorization = true
             if granted {
-                try? await center.replacePending(reminders)
+                try? await center.replacePending(reminders, summary: summary)
             }
         }
     }

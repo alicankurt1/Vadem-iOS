@@ -8,8 +8,9 @@ import UIKit
 /// ``ReminderCenter`` backed by `UNUserNotificationCenter`; the only place that imports `UserNotifications`.
 @MainActor
 public final class SystemReminderCenter: ReminderCenter {
-    // Planlayıcının her hatırlatma id'sinin öneki (PlannedReminder.id).
-    private static let idPrefix = "due-"
+    // Uygulamanın bekleyen bildirim id önekleri: hatırlatmalar (PlannedReminder.id) ve
+    // aylık özet (PlannedMonthlySummary.id).
+    private static let idPrefixes = ["due-", "insight-"]
 
     private let center: UNUserNotificationCenter
     private let calendar: Calendar
@@ -46,26 +47,24 @@ public final class SystemReminderCenter: ReminderCenter {
     /// Thrown by ``requestAuthorization()`` when the app is not active, so no alert could be shown.
     public struct SceneNotActiveError: Error {}
 
-    public func replacePending(_ reminders: [PlannedReminder]) async throws {
-        // Yalnızca uygulamanın "due-" hatırlatmaları silinir; başka bekleyen istek varsa korunur.
+    public func replacePending(_ reminders: [PlannedReminder], summary: PlannedMonthlySummary?) async throws {
+        // Yalnızca uygulamanın "due-" ve "insight-" bildirimleri silinir; başka bekleyen istek varsa korunur.
         let pending = await center.pendingNotificationRequests()
-        let staleIDs = pending.map(\.identifier).filter { $0.hasPrefix(Self.idPrefix) }
+        let staleIDs = pending.map(\.identifier).filter { id in Self.idPrefixes.contains { id.hasPrefix($0) } }
         center.removePendingNotificationRequests(withIdentifiers: staleIDs)
 
+        // Metin cihaz dilinde, katalogdan kurulur (VademCore'un İngilizce metni kullanılmaz).
+        var requests = reminders.map { reminder in
+            request(id: reminder.id, title: ReminderText.title(for: reminder),
+                    body: ReminderText.body(for: reminder), fireDate: reminder.fireDate)
+        }
+        if let summary {
+            requests.append(request(id: summary.id, title: ReminderText.title(for: summary),
+                                    body: ReminderText.body(for: summary), fireDate: summary.fireDate))
+        }
+
         var firstError: (any Error)?
-        for reminder in reminders {
-            let content = UNMutableNotificationContent()
-            // Metin cihaz dilinde, katalogdan kurulur (VademCore'un İngilizce metni kullanılmaz).
-            content.title = ReminderText.title(for: reminder)
-            content.body = ReminderText.body(for: reminder)
-            content.sound = .default
-            // Takvim tetikleyicisi yerel saatle çalar (ör. 09:00), tekrarlamaz. Bileşenler enjekte edilen
-            // takvimden gelir ama tetikleyicide açık saat dilimi yoktur: cihazın o anki diliminde çalar.
-            let components = calendar.dateComponents(
-                [.year, .month, .day, .hour, .minute], from: reminder.fireDate
-            )
-            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-            let request = UNNotificationRequest(identifier: reminder.id, content: content, trigger: trigger)
+        for request in requests {
             do {
                 try await center.add(request)
             } catch {
@@ -74,5 +73,17 @@ public final class SystemReminderCenter: ReminderCenter {
             }
         }
         if let firstError { throw firstError }
+    }
+
+    private func request(id: String, title: String, body: String, fireDate: Date) -> UNNotificationRequest {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        // Takvim tetikleyicisi yerel saatle çalar (ör. 09:00), tekrarlamaz. Bileşenler enjekte edilen
+        // takvimden gelir ama tetikleyicide açık saat dilimi yoktur: cihazın o anki diliminde çalar.
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        return UNNotificationRequest(identifier: id, content: content, trigger: trigger)
     }
 }
