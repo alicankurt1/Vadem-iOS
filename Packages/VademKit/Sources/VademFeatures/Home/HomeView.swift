@@ -36,8 +36,6 @@ public struct HomeView: View {
     private let onDataChanged: (() -> Void)?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.self) private var environment
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // Takvim düğmesinin kaydırma hedefi.
@@ -127,10 +125,8 @@ public struct HomeView: View {
             }
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            // Galeri gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
-            .toolbarColorScheme(colorScheme, for: .navigationBar)
-            .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            // Sekme kökü: çubuk kaydırma kenarında saydam, içerik altından geçince sistem malzemesi.
+            .tabRootNavigationBar()
             #endif
             // Form kapanınca (kaydedilse de iptal edilse de) veri yeniden yüklenir; değişiklik hemen görünür.
             .sheet(item: $addCardModel, onDismiss: reloadAfterForm) { addCardModel in

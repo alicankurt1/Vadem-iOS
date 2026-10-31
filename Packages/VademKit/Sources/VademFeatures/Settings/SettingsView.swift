@@ -30,8 +30,6 @@ public struct SettingsView: View {
     @State private var isChoosingTiming = false
     @State private var isShowingPrivacyPolicy: Bool
 
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.self) private var environment
     @Environment(\.scenePhase) private var scenePhase
 
     /// Creates the screen for `model`.
@@ -112,10 +110,8 @@ public struct SettingsView: View {
         .navigationTitle(Text("Settings", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-        // Formlar gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
-        .toolbarColorScheme(colorScheme, for: .navigationBar)
-        .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        // Sekme kökü: çubuk kaydırma kenarında saydam, içerik altından geçince sistem malzemesi.
+        .tabRootNavigationBar()
         #endif
         .task { await model.loadAuthorization() }
         // Ayarlar uygulamasından dönünce izin değişmiş olabilir.
