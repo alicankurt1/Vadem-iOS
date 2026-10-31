@@ -1226,7 +1226,7 @@ final class UICheckTests: XCTestCase {
 
     @MainActor
     func testGalleryTitlesAndGlass() throws {
-        // #211: serif başlık + eyebrow ("Titles") ve cam yüzeyler ("Glass") kendi parçalarında; ayrı test, 3 dk sınırı için.
+        // #211: başlık + eyebrow ("Titles") ve cam yüzeyler ("Glass") kendi parçalarında; ayrı test, 3 dk sınırı için.
         try capture(
             screen: "gallery",
             launchArguments: ["-ui-gallery"],
