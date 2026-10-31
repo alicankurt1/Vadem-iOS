@@ -9,7 +9,7 @@ import VademCore
 /// Plain list on `vademBackground` with `vademSurface` rows, no continuous animations, so it is idle
 /// under `-ui-static-motion`; text wraps freely up to AX5.
 ///
-/// Identifiers: `inbox.header` (serif title), `inbox.list` (the list), `inbox.entry.<index>` (entries,
+/// Identifiers: `inbox.header` (display title), `inbox.list` (the list), `inbox.entry.<index>` (entries,
 /// from 0, newest first), `inbox.entry.<index>.delete` (swipe action), `inbox.empty` and `inbox.error`.
 ///
 /// Debug launch arguments (sample data, in memory; reminders are never scheduled, so the permission
@@ -108,7 +108,7 @@ public struct InboxView: View {
         .accessibilityIdentifier("inbox.list")
     }
 
-    // Serif ekran başlığı; AX5'te alt satıra sarılır.
+    // Ekran başlığı; AX5'te alt satıra sarılır.
     private var header: some View {
         DisplayTitle(String(localized: "Your notifications", bundle: .module), identifier: "inbox.header")
     }

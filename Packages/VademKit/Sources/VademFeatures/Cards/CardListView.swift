@@ -71,7 +71,7 @@ public struct CardListView: View {
         onDataChanged?()
     }
 
-    // Serif ekran başlığı: "Kartların tek bakışta", vurgu "Kartların" sözcüğünde.
+    // Ekran başlığı: "Kartların tek bakışta", vurgu "Kartların" sözcüğünde.
     private var header: some View {
         let accent = String(localized: "cards", bundle: .module, comment: "Accented word of the Cards display title (Your cards at a glance)")
         return DisplayHeader(

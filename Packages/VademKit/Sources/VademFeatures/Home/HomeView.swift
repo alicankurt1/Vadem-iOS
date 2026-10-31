@@ -308,7 +308,7 @@ public struct HomeView: View {
         .accessibilityIdentifier("home.add")
     }
 
-    // Serif ekran başlığı: "Bu ay" etiketi ve vurgulu tutarla "₺4.825,50 ödüyorsun".
+    // Ekran başlığı: "Bu ay" etiketi ve vurgulu tutarla "₺4.825,50 ödüyorsun".
     // VoiceOver tutarı "₺" yerine okunabilir biçimde, tek başlık olarak okur.
     private var header: some View {
         let amount = AmountText.format(model.total)

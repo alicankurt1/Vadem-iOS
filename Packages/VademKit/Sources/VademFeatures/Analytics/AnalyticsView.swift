@@ -73,7 +73,7 @@ public struct AnalyticsView: View {
         .accessibilityIdentifier("analytics.screen")
     }
 
-    // Serif ekran başlığı: "Önümüzdeki 12 ay", vurgu ay sayısında.
+    // Ekran başlığı: "Önümüzdeki 12 ay", vurgu ay sayısında.
     private var header: some View {
         let accent = String(localized: "12 months", bundle: .module, comment: "Accented part of the Analytics display title")
         return DisplayHeader(
