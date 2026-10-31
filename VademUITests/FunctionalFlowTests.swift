@@ -364,6 +364,24 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
     }
 
+    /// #230: Home'da ekran başlığı yok; ay şeridi panelin üstünde, panel başlığı "You pay this month" ve tutarı okunur biçimde söyler.
+    @MainActor
+    func testHomeHasNoDisplayHeaderAndHeroCarriesTitle() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let total = element("home.total", in: app)
+        XCTAssertTrue(total.waitForExistence(timeout: 10), "home.total not shown")
+        XCTAssertFalse(element("home.header", in: app).exists, "Home must not show the display header any more")
+        XCTAssertTrue(total.label.contains("You pay this month"), "hero label must carry the title, got: \(total.label)")
+        XCTAssertFalse(total.label.contains("₺"), "hero label must read the amount in spoken form, got: \(total.label)")
+        XCTAssertTrue(total.label.contains("Due so far"), "hero label must keep the progress, got: \(total.label)")
+        // Ay şeridi panelin üstünde; ekleme ve takvim düğmeleri durur.
+        let previous = app.buttons["home.previousMonth"]
+        XCTAssertTrue(previous.exists, "month bar missing")
+        XCTAssertLessThan(previous.frame.minY, total.frame.minY, "month bar must be above the hero card")
+        XCTAssertTrue(element("home.add", in: app).exists, "Add button missing")
+        XCTAssertTrue(element("home.showCalendar", in: app).exists, "Calendar button missing")
+    }
+
     /// #211: dört sekmenin başlığı görünür; VoiceOver başlığı vurgu sözcüğünde bölmeden tek öğe okur.
     @MainActor
     func testTabHeadersShowAsSingleElements() throws {
