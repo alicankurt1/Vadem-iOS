@@ -66,6 +66,7 @@ final class UICheckTests: XCTestCase {
     @MainActor
     func testHomeScreen() throws {
         // Ana ekran sabit örnek veriyle açılır (bugün: 12 Ekim 2026); toplam, kart alt toplamları ve liste ayrı parçalarda.
+        executionTimeAllowance = Self.homeTimeAllowance
         try capture(
             screen: "home",
             launchArguments: ["-ui-sample-data"],
@@ -254,6 +255,7 @@ final class UICheckTests: XCTestCase {
 
     @MainActor
     func testHomeScreenTurkish() throws {
+        executionTimeAllowance = Self.homeTimeAllowance
         try capture(
             screen: "home-tr",
             launchArguments: ["-ui-sample-data"] + Self.turkish,
@@ -1304,6 +1306,11 @@ final class UICheckTests: XCTestCase {
     /// erişilebilirlik denetimi zaman aşımına uğrar (#33).
     static let commonLaunchArguments = ["-ui-static-motion"]
 
+    /// Home'un beş parçası açık varyantta her biri iki kez denetlenir (kontrast bulgusu her parçada çıkıyor, tekrar
+    /// ölçülüyor); test tek başına 110–155 sn sürüyor ve yük altında script'in 180 sn sınırını aşıyordu.
+    /// Yalnızca bu testlere 5 dk tanınır; diğer testlerde takılmayı yakalayan 180 sn sınırı aynen kalır.
+    static let homeTimeAllowance: TimeInterval = 300
+
     /// Ekranın görüntüsü alınacak bir bölümü. Uzun ekranlar birden fazla bölümle yakalanır.
     struct Section {
         let name: String
@@ -1457,22 +1464,26 @@ final class UICheckTests: XCTestCase {
                 // Her sorun ayrı bir test hatası olur. Denetimin kendisi hata verirse (ör. zaman aşımı)
                 // raporlanır ve döngü devam eder; önceden bu durumda kalan varyantlar hiç yakalanmıyordu.
                 guard Self.auditsRun(for: variant) else { continue }
+                let part = section.name.isEmpty ? "top" : section.name
                 do {
-                    let findings = try timed("audit:\(section.name.isEmpty ? "top" : section.name)") { try Self.audit(app) }
+                    let findings = try timed("audit:\(part)") { try Self.audit(app) }
                     // Apple'ın kontrast ölçümü gradyan ve yarı saydam zeminlerde koşudan koşuya değişiyor (#59):
                     // renkleri sağlam öğeler bile bazen geçemiyor. Bu yüzden kontrast bulguları hata değil not
                     // olur; token çiftlerinin oranını `TokenContrastTests`, kart yüzlerini `CardContrastTests`
                     // hesapla doğrular. Bulgu durulduktan sonra bir kez daha ölçülür: iki denemede de çıkan
-                    // `[a11y-contrast]`, yalnızca birinde çıkan `[a11y-flaky]` olur.
+                    // `[a11y-contrast]`, yalnızca birinde çıkan `[a11y-flaky]` olur. Bu ikinci ölçüm ayrı süre satırı
+                    // alır (`contrast-retry`): ölçülmediği için Home'un 3 dk sınırına neden dayandığı görünmüyordu.
                     var retried: Set<String> = []
                     if findings.contains(where: \.isContrast) {
-                        _ = Self.settledScreenshot(of: app)
-                        retried = Set(try Self.audit(app).filter(\.isContrast).map(\.key))
+                        retried = try timed("contrast-retry:\(part)") {
+                            _ = Self.settledScreenshot(of: app)
+                            return Set(try Self.audit(app).filter(\.isContrast).map(\.key))
+                        }
                     }
                     // Elementsiz kontrast bulgusu (`SwiftUI.AccessibilityNode`) bir çerçeve vermez. Durum çubuğunun
                     // altına kayan içerik varsa bulgu oradan gelir; o içeriğin etiketleri nota yazılır.
                     let underStatusBar = findings.contains { $0.isContrast && !$0.hasElement }
-                        ? Self.labelsUnderStatusBar(in: app) : []
+                        ? timed("status-bar-labels:\(part)") { Self.labelsUnderStatusBar(in: app) } : []
                     // Sistem alert'inin etiketleri (başlık, mesaj) uygulamanın yazı tipine bağlı değil: denetim bunları
                     // "Dynamic Type kısmen desteklenmiyor" diye işaretliyor ama düzeltilemez. Alert açıkken, alert
                     // çerçevesindeki (ya da elementsiz) Dynamic Type bulguları hata değil not olur.

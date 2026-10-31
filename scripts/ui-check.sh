@@ -13,7 +13,8 @@
 #                     halves a targeted run. The AX5 text variant runs in the light pass.
 #   UI_CHECK_DARK_AUDIT  1 = also run the accessibility audit in the dark pass (default: skipped, saves ~4 min;
 #                     screenshots and the appearance check still run)
-#   UI_CHECK_TEST_TIMEOUT  per-test time allowance in seconds (default: 180)
+#   UI_CHECK_TEST_TIMEOUT  per-test time allowance in seconds (default: 180); the Home captures set their own
+#                     longer allowance (UICheckTests.homeTimeAllowance) because every part is audited twice
 #
 # Output: .build/ui-check/latest/
 #   screenshots/<screen>__<variant>.png
