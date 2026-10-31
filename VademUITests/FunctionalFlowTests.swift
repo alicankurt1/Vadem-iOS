@@ -364,6 +364,24 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
     }
 
+    /// #230: Home'da ekran başlığı yok; ay şeridi panelin üstünde, panel başlığı "You pay this month" ve tutarı okunur biçimde söyler.
+    @MainActor
+    func testHomeHasNoDisplayHeaderAndHeroCarriesTitle() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let total = element("home.total", in: app)
+        XCTAssertTrue(total.waitForExistence(timeout: 10), "home.total not shown")
+        XCTAssertFalse(element("home.header", in: app).exists, "Home must not show the display header any more")
+        XCTAssertTrue(total.label.contains("You pay this month"), "hero label must carry the title, got: \(total.label)")
+        XCTAssertFalse(total.label.contains("₺"), "hero label must read the amount in spoken form, got: \(total.label)")
+        XCTAssertTrue(total.label.contains("Due so far"), "hero label must keep the progress, got: \(total.label)")
+        // Ay şeridi panelin üstünde; ekleme ve takvim düğmeleri durur.
+        let previous = app.buttons["home.previousMonth"]
+        XCTAssertTrue(previous.exists, "month bar missing")
+        XCTAssertLessThan(previous.frame.minY, total.frame.minY, "month bar must be above the hero card")
+        XCTAssertTrue(element("home.add", in: app).exists, "Add button missing")
+        XCTAssertTrue(element("home.showCalendar", in: app).exists, "Calendar button missing")
+    }
+
     /// #211: dört sekmenin başlığı görünür; VoiceOver başlığı vurgu sözcüğünde bölmeden tek öğe okur.
     @MainActor
     func testTabHeadersShowAsSingleElements() throws {
@@ -371,7 +389,7 @@ final class FunctionalFlowTests: XCTestCase {
 
         // (sekme, başlık kimliği, başlığın tam metninde geçmesi gereken parçalar)
         let headers: [(tab: String, id: String, fragments: [String])] = [
-            ("tab.home", "home.header", ["You pay"]),
+            ("tab.home", "home.total", ["You pay"]),
             ("tab.analytics", "analytics.header", ["Your next", "12 months"]),
             ("tab.cards", "cards.header", ["Your", "cards", "at a glance"]),
             ("tab.settings", "settings.header", ["Make it", "yours"]),
@@ -380,7 +398,8 @@ final class FunctionalFlowTests: XCTestCase {
             let tab = app.buttons[header.tab]
             XCTAssertTrue(tab.waitForExistence(timeout: 10), "\(header.tab) not found")
             tab.tap()
-            let title = app.staticTexts.matching(identifier: header.id)
+            // Home'da ekran başlığı yok; panel özeti (home.total) birleşik öğe olduğundan her türde aranır.
+            let title = app.descendants(matching: .any).matching(identifier: header.id)
             XCTAssertTrue(title.firstMatch.waitForExistence(timeout: 10), "\(header.id) not shown")
             // Tek öğe: vurgu sözcüğü ayrı bir öğe olmamalı.
             XCTAssertEqual(title.count, 1, "\(header.id) must be exactly one element (not split by the accent word)")
@@ -1090,11 +1109,11 @@ final class FunctionalFlowTests: XCTestCase {
     @MainActor
     func testFastTabSwitchingWithMotionEndsOnLastTappedTab() throws {
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"], animated: true)
-        XCTAssertTrue(element("home.header", in: app).waitForExistence(timeout: 10), "Home must be the first tab")
+        XCTAssertTrue(element("home.total", in: app).waitForExistence(timeout: 10), "Home must be the first tab")
 
         // (sekme, içerik kimliği): her sekmenin kendine özgü başlığı.
         let tabs: [(tab: String, content: String)] = [
-            ("tab.home", "home.header"),
+            ("tab.home", "home.total"),
             ("tab.analytics", "analytics.header"),
             ("tab.cards", "cards.header"),
             ("tab.settings", "settings.header"),

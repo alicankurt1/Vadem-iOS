@@ -104,3 +104,34 @@ struct HeroPanelCaptionPrefixTests {
         #expect(!label.contains("Paid"))
     }
 }
+
+/// #230: Home panel başlığı "You pay this month" olur; özet tutarı okunabilir biçimde söyler.
+@Suite("Home hero title (#230)")
+struct HomeHeroTitleTests {
+    @Test("Summary starts with the new title and has no lira symbol")
+    func summaryWithNewTitle() {
+        let label = HeroPanel<EmptyView>.accessibilitySummary(
+            title: "You pay this month", paid: Money(Decimal(string: "1200")!), total: Money(Decimal(string: "4825.50")!),
+            captionPrefix: "Due so far")
+        #expect(label == "You pay this month, 4.825,50 Türk lirası, Due so far 1.200,00 Türk lirası of 4.825,50 Türk lirası")
+        #expect(!label.contains("₺"))
+    }
+
+    // Katalogda yeni anahtar iki dilde var, eski "Due this month" kalmadı.
+    @Test("Catalog has the new hero title in en and tr, and no stale key")
+    func catalogEntries() throws {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Sources/VademFeatures/Resources/Localizable.xcstrings")
+        let json = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+        let strings = try #require(json["strings"] as? [String: Any])
+        let entry = try #require(strings["You pay this month"] as? [String: Any])
+        let locs = try #require(entry["localizations"] as? [String: Any])
+        func value(_ lang: String) -> String? {
+            ((locs[lang] as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String
+        }
+        #expect(value("en") == "You pay this month")
+        #expect(value("tr") == "Bu ay ödeyeceğin")
+        #expect(strings["Due this month"] == nil)
+    }
+}

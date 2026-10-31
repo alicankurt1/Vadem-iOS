@@ -4,9 +4,9 @@ import VademCore
 /// The Home screen ("This month" tab of the ``AppTabShell``): how much is due in the selected month,
 /// per card, and when.
 ///
-/// Shown inside the shell's `NavigationStack` (the "Vadem" title is in its bar). A ``DisplayHeader``
-/// (`home.header`, "You pay ₺…") sits above the month bar. Below the month
-/// a ``HeroPanel`` shows the total and how much of it is due so far, with an "Add" button
+/// Shown inside the shell's `NavigationStack` (the "Vadem" title is in its bar). The month bar
+/// (`home.previousMonth` / `home.nextMonth`) comes first; below it a ``HeroPanel`` (`home.total`,
+/// "You pay this month") shows the total and how much of it is due so far, with an "Add" button
 /// (`home.add`, shown when `onAdd` is given) that calls `onAdd` (the shell opens the ``AddFlowSheet``)
 /// and a "Calendar" pill (`home.showCalendar`) that scrolls to the month calendar.
 /// Tapping a payment row (`home.row.<index>`) opens its form in edit mode (a one-time payment opens the
@@ -228,9 +228,7 @@ public struct HomeView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // İlk görünüşte kademeli giriş: önce başlık ve ay şeridi, sonra panel, sonra liste.
-                    header
-                        .motionEntry(order: .header)
+                    // İlk görünüşte kademeli giriş: önce ay şeridi, sonra panel, sonra liste.
                     monthBar
                         .motionEntry(order: .header)
                     // Hata durumunda da görünür (toplam sıfır): ekleme düğmesi her zaman erişilebilir.
@@ -270,10 +268,11 @@ public struct HomeView: View {
         content
     }
 
-    // Ayın toplamı ve vadesi gelen kısmı; altında ekleme ve takvim düğmeleri.
+    // Ayın toplamı ("Bu ay ödeyeceğin") ve vadesi gelen kısmı; altında ekleme ve takvim düğmeleri.
+    // VoiceOver özeti tutarı "₺" yerine okunabilir biçimde okur (HeroPanel.accessibilitySummary).
     private func hero(_ proxy: ScrollViewProxy) -> some View {
         HeroPanel(
-            title: String(localized: "Due this month", bundle: .module),
+            title: String(localized: "You pay this month", bundle: .module),
             total: model.total, paid: model.dueSoFar,
             captionPrefix: String(localized: "Due so far", bundle: .module), summaryIdentifier: "home.total"
         ) {
@@ -306,22 +305,6 @@ public struct HomeView: View {
         .buttonStyle(.heroPill)
         .accessibilityLabel(Text("Add payment", bundle: .module))
         .accessibilityIdentifier("home.add")
-    }
-
-    // Ekran başlığı: "Bu ay" etiketi ve vurgulu tutarla "₺4.825,50 ödüyorsun".
-    // VoiceOver tutarı "₺" yerine okunabilir biçimde, tek başlık olarak okur.
-    private var header: some View {
-        let amount = AmountText.format(model.total)
-        let spokenAmount = AmountText.spokenLabel(model.total)
-        return DisplayHeader(
-            eyebrow: AppTab.home.title,
-            title: String(localized: "You pay \(amount)", bundle: .module, comment: "Home display title; the amount is accented"),
-            accent: amount,
-            accessibilityLabel: String(
-                localized: "You pay \(spokenAmount)", bundle: .module, comment: "Home display title; the amount is accented"
-            ),
-            identifier: "home.header"
-        )
     }
 
     // Ay başlığı ve önceki/sonraki ay düğmeleri.
