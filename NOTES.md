@@ -579,3 +579,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** #214'te reviewer atlama anahtar kelimelerinin "BORCELIK" gibi satıcı adlarını da elediğini buldu; kısa/belirsiz anahtarlar artık tam kelime eşleşiyor, iki haneli yıl için `date == nil` belgelendi ve test edildi. #232'de capture, Home UI testinin 1 dakikalık sınırı aştığını yakaladı (her elemanı indeksle sorguluyordu); tek `snapshot()` ile 11–16 sn'ye indi.
 - **Ders 1:** `safeAreaInset` bir `NavigationStack`'in dışında, `TabView` sayfasında verilirse SwiftUI bunu kaydırma içeriğine iletmez; kök neden buydu. Çözüm içerik seviyesinde değil, navigasyon denetleyicisi seviyesinde.
 - **Ders 2:** Metin ayrıştırıcıda "tahmin etme" kuralı (işaret ya da tutar yoksa aday yok) yanlış pozitifleri azaltır; anahtar kelimeleri kök eşleşmesi yerine tam kelime eşleşmesiyle başlatmak daha güvenli. UI testlerinde çok sayıda eleman sorgusu yerine tek `snapshot()` kullan.
+
+### Koşu #233 — Sekme geçişinde yanıp sönme (Faz 21)
+
+- **Ne yapıldı:** PR #236 (23 dk, 3 verify, 1 beklenen başarısız, 0 düzeltme turu). Eski "solma → değiştir → belirme" dizisi kaldırıldı; yeni sekme seçimle aynı güncellemede görünüyor, 10 pt kayma ve 0.9→1 opaklıkla 0.22 sn oturuyor (`keyframeAnimator`). Saf değerler `Motion` içinde ve birim testli.
+- **Kapı neyi yakaladı:** İlk verify başarısızdı çünkü testler kaldırılan API'ye bakıyordu; test yazarı çalışınca düzeldi (beklenen). Reviewer 2 minor, 1 nit buldu, hepsi kabul edildi.
+- **Ders:** Fonksiyonel UI testleri `-ui-static-motion` ile koştuğu için animasyonlu yol uçtan uca denenmiyor; bu boşluk ayrı bir harness PR'ına bırakıldı. Animasyon düzeltmesinde "boş kare yok" kuralı saf bir değer olarak (`TabSwitchState`) birim teste dökülebilir.
