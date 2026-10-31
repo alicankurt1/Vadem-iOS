@@ -5,7 +5,8 @@ import XCTest
 // onlar `UICheckTests`te. `scripts/ui-functional.sh` ile koşulur.
 //
 // `-ui-sample-data` bellek içi depo açar: gerçek veriye dokunulmaz, her test temiz başlar.
-// `-ui-static-motion` sürekli animasyonları durdurur; uygulama hızla boşa düşer.
+// `-ui-static-motion` sürekli animasyonları durdurur; uygulama hızla boşa düşer. Animasyonlu yolu
+// sınayan testler `animated: true` ile açar (argüman gönderilmez); diğer testler değişmez.
 final class FunctionalFlowTests: XCTestCase {
 
     override func setUpWithError() throws {
@@ -13,9 +14,11 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
-    private func launchHome(extraArguments: [String] = []) -> XCUIApplication {
+    private func launchHome(extraArguments: [String] = [], animated: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-ui-static-motion", "-ui-sample-data"] + extraArguments
+        // Animasyonlu açılışta hareket uygulamanın kendi kuralına kalır (simülatörde Reduce Motion kapalı).
+        let motionArguments = animated ? [] : ["-ui-static-motion"]
+        app.launchArguments += motionArguments + ["-ui-sample-data"] + extraArguments
         app.launch()
         return app
     }
@@ -1079,6 +1082,48 @@ final class FunctionalFlowTests: XCTestCase {
         try completeInstallmentFlow(in: app, amount: "1200")
         app.buttons["tab.home"].tap()
         XCTAssertTrue(scrollToInstallmentRow(in: app), "payment added with + not shown on This month")
+    }
+
+    /// #233: hareket açıkken (animasyonlu geçiş yolu) sekmelere art arda hızlıca dokunulur; boş kare kalmaz,
+    /// son dokunulan sekmenin içeriği görünür ve dokunulabilir, öncekilerin içeriği gizlidir.
+    @MainActor
+    func testFastTabSwitchingWithMotionEndsOnLastTappedTab() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"], animated: true)
+        XCTAssertTrue(element("home.header", in: app).waitForExistence(timeout: 10), "Home must be the first tab")
+
+        // (sekme, içerik kimliği): her sekmenin kendine özgü başlığı.
+        let tabs: [(tab: String, content: String)] = [
+            ("tab.home", "home.header"),
+            ("tab.analytics", "analytics.header"),
+            ("tab.cards", "cards.header"),
+            ("tab.settings", "settings.header"),
+        ]
+        let buttons = tabs.map { app.buttons[$0.tab] }
+        for (button, tab) in zip(buttons, tabs) {
+            XCTAssertTrue(button.waitForExistence(timeout: 10), "\(tab.tab) not found")
+        }
+
+        // İki tur: ileri (Home→…→Settings) ve geri (…→Analytics); arada bekleme yok, geçişler birbirini keser.
+        let rounds: [[Int]] = [[1, 2, 3], [2, 0, 3, 1]]
+        for round in rounds {
+            for index in round {
+                buttons[index].tap()
+            }
+            let last = tabs[round.last!]
+            let content = element(last.content, in: app)
+            XCTAssertTrue(content.waitForExistence(timeout: 5), "\(last.content) must show after fast taps ending on \(last.tab)")
+            XCTAssertTrue(content.isHittable, "\(last.content) must be hittable (no blank or covered state)")
+            for other in tabs where other.content != last.content {
+                XCTAssertFalse(element(other.content, in: app).exists, "\(other.content) must be hidden on \(last.tab)")
+            }
+        }
+
+        // Geçiş oturur, yarım kaymada takılı kalmaz: başlık ekranın içinde ve bir saniye sonra yerinde durur.
+        let header = element("analytics.header", in: app)
+        let settled = header.frame
+        Thread.sleep(forTimeInterval: 1)
+        XCTAssertEqual(header.frame, settled, "Analytics header must stay put once the switch has settled")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(settled), "Analytics header must be fully on screen")
     }
 
     /// #208: her sekmenin kendi NavigationStack'i var; sekme değişince itilmiş ekran korunur ve çubuk görünür kalır.
