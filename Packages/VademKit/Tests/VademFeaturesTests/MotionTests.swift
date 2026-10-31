@@ -39,37 +39,56 @@ struct MotionTransitionTests {
         #expect(Motion.animation(Motion.quick, reduceMotion: false, staticMotionRequested: false) == Motion.quick)
     }
 
-    // MARK: - Tab switch phases
+    // MARK: - Tab switch
 
-    @Test("Visible phase is the settled look")
-    func visiblePhase() {
-        let phase = Motion.TabSwitchPhase.visible
-        #expect(phase.opacity == 1)
-        #expect(phase.blurRadius == 0)
-        #expect(phase.scale == 1)
+    @Test("Settled look has no offset and is fully opaque")
+    func settledLook() {
+        #expect(Motion.TabSwitchState.settled.offsetX == 0)
+        #expect(Motion.TabSwitchState.settled.opacity == 1)
     }
 
-    @Test("Leaving phase fades out with blur and slight scale-down")
-    func leavingPhase() {
-        let phase = Motion.TabSwitchPhase.leaving
-        #expect(phase.opacity == 0)
-        #expect(phase.blurRadius > 0)
-        #expect(phase.scale < 1 && phase.scale > 0.9)
+    @Test("Same tab is settled", arguments: AppTab.allCases)
+    func sameTabSettled(tab: AppTab) {
+        #expect(Motion.tabSwitchStart(from: tab, to: tab) == .settled)
     }
 
-    @Test("Entering phase is invisible without blur or scale so only opacity animates in")
-    func enteringPhase() {
-        let phase = Motion.TabSwitchPhase.entering
-        #expect(phase.opacity == 0)
-        #expect(phase.blurRadius == 0)
-        #expect(phase.scale == 1)
+    // Boş kare olmaz: başlangıç görünümü hiçbir geçişte görünmez olmaz.
+    @Test("Start look never drops the content to invisible", arguments: AppTab.allCases, AppTab.allCases)
+    func neverBlank(from: AppTab, to: AppTab) {
+        let start = Motion.tabSwitchStart(from: from, to: to)
+        #expect(start.opacity > 0.5)
+        #expect(start.opacity <= 1)
     }
 
-    @Test("Tab fade-out is no slower than fade-in and both are short")
-    func tabDurations() {
-        #expect(Motion.tabOutDuration > 0)
-        #expect(Motion.tabInDuration >= Motion.tabOutDuration)
-        #expect(Motion.tabOutDuration + Motion.tabInDuration < 0.6)
+    @Test("Later tab comes from the trailing side, earlier from the leading side", arguments: [
+        (AppTab.home, AppTab.analytics, 1.0),
+        (AppTab.home, AppTab.settings, 1.0),
+        (AppTab.analytics, AppTab.cards, 1.0),
+        (AppTab.cards, AppTab.settings, 1.0),
+        (AppTab.analytics, AppTab.home, -1.0),
+        (AppTab.settings, AppTab.home, -1.0),
+        (AppTab.settings, AppTab.cards, -1.0),
+        (AppTab.cards, AppTab.analytics, -1.0),
+    ])
+    func direction(from: AppTab, to: AppTab, sign: Double) {
+        let start = Motion.tabSwitchStart(from: from, to: to)
+        #expect(start.offsetX * sign > 0)
+        #expect(abs(start.offsetX) == Motion.tabSwitchOffset)
+    }
+
+    @Test("Opposite switches mirror each other", arguments: AppTab.allCases, AppTab.allCases)
+    func mirrored(a: AppTab, b: AppTab) {
+        let forward = Motion.tabSwitchStart(from: a, to: b)
+        let back = Motion.tabSwitchStart(from: b, to: a)
+        #expect(forward.offsetX == -back.offsetX)
+        #expect(forward.opacity == back.opacity)
+    }
+
+    @Test("Offset is subtle and duration is short (about 0.2 to 0.3 s)")
+    func tabSwitchTuning() {
+        #expect(Motion.tabSwitchOffset > 0 && Motion.tabSwitchOffset <= 24)
+        #expect(Motion.tabSwitchDuration >= 0.2)
+        #expect(Motion.tabSwitchDuration <= 0.3)
     }
 
     // MARK: - Stagger
