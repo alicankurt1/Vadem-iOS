@@ -585,3 +585,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** PR #236 (23 dk, 3 verify, 1 beklenen başarısız, 0 düzeltme turu). Eski "solma → değiştir → belirme" dizisi kaldırıldı; yeni sekme seçimle aynı güncellemede görünüyor, 10 pt kayma ve 0.9→1 opaklıkla 0.22 sn oturuyor (`keyframeAnimator`). Saf değerler `Motion` içinde ve birim testli.
 - **Kapı neyi yakaladı:** İlk verify başarısızdı çünkü testler kaldırılan API'ye bakıyordu; test yazarı çalışınca düzeldi (beklenen). Reviewer 2 minor, 1 nit buldu, hepsi kabul edildi.
 - **Ders:** Fonksiyonel UI testleri `-ui-static-motion` ile koştuğu için animasyonlu yol uçtan uca denenmiyor; bu boşluk ayrı bir harness PR'ına bırakıldı. Animasyon düzeltmesinde "boş kare yok" kuralı saf bir değer olarak (`TabSwitchState`) birim teste dökülebilir.
+
+### Koşu #228 ve harness #238 — Başlıklarda SF yazı tipi (Faz 21)
+
+- **Ne yapıldı:** PR #239 (50 dk, 3 verify, 1 beklenen başarısız, 0 düzeltme turu). `DisplayTitle.font` serif yerine `Font.system(.largeTitle, weight: .semibold)` oldu; vurgulu ifade sadece rengini koruyor. PR #238 ise animasyonlu sekme geçişini (`-ui-static-motion` olmadan) fonksiyonel UI testine ekledi ve #233'ün bıraktığı boşluğu kapattı.
+- **Kapı neyi yakaladı:** İlk verify, testler yeni yazı tipine güncellenmeden önce beklendiği gibi başarısız oldu. Reviewer 1 minor, 2 nit buldu (hepsi kabul). Hata yakalayan test yok.
+- **Ders:** İki "altyapı" sorunu çıktı ve ikisi de koddan değildi: aynı simülatörü başka bir oturum kullanınca 21 test "signal kill" ile düştü, ve bir galeri testi ilk adımdan önce 3 dakikayı aştı. İkisi de yeniden çalıştırmada geçti. Paralel oturumlar ayrı simülatör (örn. `UI_CHECK_DEVICE="iPhone Air"`) kullanmalı.
+- **Ders:** Zayıf eşitsizlik testleri ("serif değil") tek başına az şey kanıtlar; yazı tipini tam sabitleyen bir test (`fontIsTextStyleBased`) asıl güvenceyi verir.
