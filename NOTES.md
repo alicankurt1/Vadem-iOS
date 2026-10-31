@@ -592,3 +592,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** İlk verify, testler yeni yazı tipine güncellenmeden önce beklendiği gibi başarısız oldu. Reviewer 1 minor, 2 nit buldu (hepsi kabul). Hata yakalayan test yok.
 - **Ders:** İki "altyapı" sorunu çıktı ve ikisi de koddan değildi: aynı simülatörü başka bir oturum kullanınca 21 test "signal kill" ile düştü, ve bir galeri testi ilk adımdan önce 3 dakikayı aştı. İkisi de yeniden çalıştırmada geçti. Paralel oturumlar ayrı simülatör (örn. `UI_CHECK_DEVICE="iPhone Air"`) kullanmalı.
 - **Ders:** Zayıf eşitsizlik testleri ("serif değil") tek başına az şey kanıtlar; yazı tipini tam sabitleyen bir test (`fontIsTextStyleBased`) asıl güvenceyi verir.
+
+### Koşu #231 ve harness #241, #242 — Ödemeler her zaman "Kartlara göre"nin üstünde (Faz 21)
+
+- **Ne yapıldı:** PR #243 (38 dk, 3 verify, 0 başarısız, 0 düzeltme turu). `HomeView`'daki `selectedDay` dalı kaldırıldı; ödemeler bölümü her zaman "By card"dan önce. Fonksiyonel test üç durumu (gün yok, gün seçili, seçim kalktı) tek testte kontrol ediyor.
+- **Kapı neyi yakaladı:** Reviewer 1 nit buldu (sıra sadece simülatör testleriyle denetleniyor, kabul). `testHomeScreen` UI capture'ı bir kez 3 dk sınırını aştı; hedefli yeniden koşuda geçti (flaky).
+- **Harness:** PR #241 ve #242 aynı kök nedeni kapattı: paralel oturumlar aynı simülatörü kullanınca bir tam koşuda 44 testten 20'si `signal kill` ile düşmüştü, aynı ağaç boş simülatörde 44/44 geçti. `ui-functional.sh` artık koşu başına, `ui-check.sh` varyant başına `simctl create` ile kendi cihazını açıp siliyor; paylaşılan cihaza dokunulmuyor (`simctl clone` kaynağın kapalı olmasını istediği için bırakıldı).
+- **Ders:** Paylaşılan durum (tek simülatör) flake üretir; her koşu kendi kaynağını yaratıp `trap` ile temizlerse paralel oturumlar birbirini bozmaz. #242, #241'in PR açıklamasındaki "follow-up" notundan doğdu: bulunan benzer sorun ayrı harness PR'ına gider.
