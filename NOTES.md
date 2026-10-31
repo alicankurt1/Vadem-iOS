@@ -599,3 +599,9 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Reviewer 1 nit buldu (sıra sadece simülatör testleriyle denetleniyor, kabul). `testHomeScreen` UI capture'ı bir kez 3 dk sınırını aştı; hedefli yeniden koşuda geçti (flaky).
 - **Harness:** PR #241 ve #242 aynı kök nedeni kapattı: paralel oturumlar aynı simülatörü kullanınca bir tam koşuda 44 testten 20'si `signal kill` ile düşmüştü, aynı ağaç boş simülatörde 44/44 geçti. `ui-functional.sh` artık koşu başına, `ui-check.sh` varyant başına `simctl create` ile kendi cihazını açıp siliyor; paylaşılan cihaza dokunulmuyor (`simctl clone` kaynağın kapalı olmasını istediği için bırakıldı).
 - **Ders:** Paylaşılan durum (tek simülatör) flake üretir; her koşu kendi kaynağını yaratıp `trap` ile temizlerse paralel oturumlar birbirini bozmaz. #242, #241'in PR açıklamasındaki "follow-up" notundan doğdu: bulunan benzer sorun ayrı harness PR'ına gider.
+
+### Koşu #230 — Home başlığı kaldırıldı, hero kartı başlık oldu (Faz 21)
+
+- **Ne yapıldı:** PR #245 (32 dk, 2 verify, 0 başarısız, 0 düzeltme turu). Home'daki "This month" üst yazısı ve "You pay ₺X" başlığı kaldırıldı; hero kartının başlığı "You pay this month" / "Bu ay ödeyeceğin" oldu ve toplam kartta gösteriliyor. Ay çubuğu kartın üstüne taşındı. Yeniden tasarım geri bildirimi (#228–#233) serisinin parçası.
+- **Kapı neyi yakaladı:** Reviewer 1 minor, 2 nit buldu. Hata yakalayan test yok.
+- **Ders:** `testHomeScreen` capture'ı hem #231 hem #230 koşusunda 3 dk sınırını aştı (AX5 varyantı), tek başına yeniden koşuda geçti. Tekrarlayan bir flake: Home ekranı kapsamlı olduğundan ilk adımdan önce zaman aşımı riski taşıyor; üçüncü kez olursa ayrı bir harness konusu olarak ele alınmalı.
