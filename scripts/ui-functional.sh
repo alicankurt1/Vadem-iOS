@@ -6,6 +6,9 @@
 #   UI_CHECK_DEVICE   simulator name (default: "iPhone 17")
 #   UI_FUNCTIONAL_ONLY  test methods, comma separated (e.g. "testAddInstallmentFromHomeShowsPaymentOnHome"); default: all
 #
+# Each run uses its own throw-away simulator of the same model and iOS version (deleted at the end),
+# so parallel runs from other sessions or worktrees never share a device.
+#
 # Output: .build/ui-functional/ (build.log, test.log, result.xcresult).
 # Last line is "UI-FUNCTIONAL: PASS" or "UI-FUNCTIONAL: FAIL".
 
@@ -26,7 +29,8 @@ fail() {
   exit 1
 }
 
-UDID=$(xcrun simctl list devices available -j | python3 -c '
+# Adı verilen simülatörün modeli ve en yeni iOS sürümü: "<deviceTypeIdentifier> <runtime>".
+BASE=$(xcrun simctl list devices available -j | python3 -c '
 import json, sys
 name = sys.argv[1]
 found = []
@@ -34,12 +38,22 @@ for runtime, devices in json.load(sys.stdin)["devices"].items():
     if "iOS" not in runtime:
         continue
     version = tuple(int(p) for p in runtime.rsplit("iOS-", 1)[-1].split("-") if p.isdigit())
-    found += [(version, d["udid"]) for d in devices if d["name"] == name]
-print(max(found)[1] if found else "")
+    found += [(version, d["deviceTypeIdentifier"], runtime) for d in devices if d["name"] == name]
+print(" ".join(max(found)[1:]) if found else "")
 ' "$DEVICE")
-[ -n "$UDID" ] || fail "no available simulator named '$DEVICE'"
+[ -n "$BASE" ] || fail "no available simulator named '$DEVICE'"
 
-echo "▶ simulator '$DEVICE' ($UDID)"
+# Ortak simülatör kullanılmaz ve kapatılmaz: aynı anda koşan başka bir oturumun testleri onu kullanıyor
+# olabilir (ortak cihazda testler "signal kill" ile düşüyordu). Aynı model ve sürümde yeni bir cihaz kurulur,
+# iş bitince (hata ya da kesinti dahil) silinir.
+UDID=$(xcrun simctl create "ui-functional-$$" ${BASE% *} ${BASE#* }) || fail "could not create simulator for '$DEVICE'"
+cleanup() {
+  xcrun simctl shutdown "$UDID" >/dev/null 2>&1
+  xcrun simctl delete "$UDID" >/dev/null 2>&1
+}
+trap cleanup EXIT
+
+echo "▶ simulator '$DEVICE' (own copy $UDID)"
 xcrun simctl boot "$UDID" >/dev/null 2>&1
 xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || fail "simulator did not boot"
 
