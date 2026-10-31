@@ -1127,4 +1127,106 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(bell.waitForExistence(timeout: 5), "Home must be visible after leaving the inbox")
         XCTAssertEqual(bell.value as? String, "0 unread", "badge must be cleared after opening the inbox")
     }
+
+    // MARK: - Alt çubuk payı (#232)
+
+    /// Yüzen çubuğun (sekme düğmeleri ve ＋) en üst kenarı.
+    @MainActor
+    private func barTop(in app: XCUIApplication) -> CGFloat {
+        let ids = ["tab.home", "tab.analytics", "tab.cards", "tab.settings", "tab.add"]
+        let tops = ids.map { app.buttons[$0] }.filter { $0.exists }.map { $0.frame.minY }
+        return tops.min() ?? .greatestFiniteMagnitude
+    }
+
+    /// Ekrandaki kaydırılabilir kapsayıcı (ScrollView, List ya da Form).
+    @MainActor
+    private func scrollContainer(in app: XCUIApplication) -> XCUIElement {
+        let candidates = [app.scrollViews.firstMatch, app.collectionViews.firstMatch, app.tables.firstMatch]
+        return candidates.first { $0.exists } ?? app.scrollViews.firstMatch
+    }
+
+    /// Kapsayıcıdaki, ekranda görünen metin ve düğmelerin en alttakinin alt kenarı.
+    @MainActor
+    private func lowestContentEdge(of container: XCUIElement, in app: XCUIApplication) -> (edge: CGFloat, element: XCUIElement?) {
+        let screenHeight = app.windows.firstMatch.frame.height
+        let tabLabels = Set(["tab.home", "tab.analytics", "tab.cards", "tab.settings", "tab.add"].map { app.buttons[$0].label })
+        let items = container.staticTexts.allElementsBoundByIndex + container.buttons.allElementsBoundByIndex
+        var best: (CGFloat, XCUIElement?) = (0, nil)
+        for item in items where item.exists && !tabLabels.contains(item.label) {
+            let frame = item.frame
+            guard frame.height > 0, frame.minY < screenHeight, frame.maxY > best.0 else { continue }
+            best = (frame.maxY, item)
+        }
+        return best
+    }
+
+    /// Kaydırma bitene kadar (en alttaki içerik kenarı değişmeyene kadar, sınırlı) yukarı kaydırır; son öğeyi çubukla karşılaştırır.
+    @MainActor
+    private func assertEndOfScrollClearsBar(in app: XCUIApplication, screen: String, file: StaticString = #filePath, line: UInt = #line) {
+        let container = scrollContainer(in: app)
+        XCTAssertTrue(container.waitForExistence(timeout: 10), "\(screen): scroll container not found", file: file, line: line)
+
+        var previous: CGFloat = -1
+        var stable = 0
+        for _ in 0..<15 {
+            container.swipeUp(velocity: .fast)
+            let current = lowestContentEdge(of: container, in: app).edge
+            // İki ardışık kaydırma aynı sonucu verirse uçtayız.
+            stable = abs(current - previous) < 0.5 ? stable + 1 : 0
+            previous = current
+            if stable >= 2 { break }
+        }
+        XCTAssertGreaterThanOrEqual(stable, 2, "\(screen): scroll never settled", file: file, line: line)
+
+        let top = barTop(in: app)
+        let (edge, last) = lowestContentEdge(of: container, in: app)
+        XCTAssertNotNil(last, "\(screen): no content found", file: file, line: line)
+        XCTAssertLessThanOrEqual(edge, top, "\(screen): last content (\(edge)) must end above the floating bar (\(top))", file: file, line: line)
+        if let last {
+            XCTAssertTrue(last.isHittable, "\(screen): last element must be hittable at the end of the scroll", file: file, line: line)
+        }
+    }
+
+    @MainActor
+    func testHomeLastContentStaysAboveFloatingBarAtScrollEnd() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        XCTAssertTrue(app.buttons["tab.home"].waitForExistence(timeout: 10), "tab bar not found")
+        assertEndOfScrollClearsBar(in: app, screen: "Home")
+    }
+
+    @MainActor
+    func testSettingsLastContentStaysAboveFloatingBarAtScrollEnd() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let settings = app.buttons["tab.settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 10), "settings tab not found")
+        settings.tap()
+        XCTAssertTrue(app.staticTexts["settings.version"].waitForExistence(timeout: 5), "Settings not shown")
+        assertEndOfScrollClearsBar(in: app, screen: "Settings")
+        // Sürüm metni Ayarlar'ın son öğesi: tam görünür ve çubuğun üstünde olmalı.
+        let version = app.staticTexts["settings.version"]
+        XCTAssertLessThanOrEqual(version.frame.maxY, barTop(in: app), "version text must clear the floating bar")
+    }
+
+    @MainActor
+    func testCardsLastContentStaysAboveFloatingBarAtScrollEnd() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let cards = app.buttons["tab.cards"]
+        XCTAssertTrue(cards.waitForExistence(timeout: 10), "cards tab not found")
+        cards.tap()
+        XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 5), "Cards not shown")
+        assertEndOfScrollClearsBar(in: app, screen: "Cards")
+    }
+
+    @MainActor
+    func testPrivacyPolicyPushedFromSettingsEndsAboveFloatingBar() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let settings = app.buttons["tab.settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 10), "settings tab not found")
+        settings.tap()
+        let privacy = element("settings.privacy", in: app)
+        XCTAssertTrue(privacy.waitForExistence(timeout: 5), "privacy row not found")
+        privacy.tap()
+        XCTAssertTrue(element("privacy.policy.intro", in: app).waitForExistence(timeout: 5), "privacy policy not pushed")
+        assertEndOfScrollClearsBar(in: app, screen: "Privacy policy")
+    }
 }
