@@ -73,8 +73,8 @@ final class UICheckTests: XCTestCase {
                 .top,
                 .scrolled(to: "home.upcoming", named: "upcoming"),
                 .scrolled(to: "home.calendar", named: "calendar"),
-                .scrolled(to: "home.cards", named: "cards"),
                 .scrolled(to: "home.list", named: "list"),
+                .scrolled(to: "home.cards", named: "cards"),
             ]
         ) { app, variant in
             XCTAssertTrue(
@@ -123,7 +123,7 @@ final class UICheckTests: XCTestCase {
     @MainActor
     func testHomeSelectedDay() throws {
         // Seçili gün (#91, #204): örnek veri 12 Ekim 2026'da Ekim ayında açılır; 15 Ekim (Shopping kartı vadesi)
-        // bu ayda ödemesi olan bir gündür. Seçili günün listesi "By card" başlığından önce gelir.
+        // bu ayda ödemesi olan bir gündür. Ödemeler listesi (#231) her zaman "By card" başlığından önce gelir.
         try capture(
             screen: "home-selected-day",
             launchArguments: ["-ui-sample-data"],
@@ -261,8 +261,8 @@ final class UICheckTests: XCTestCase {
                 .top,
                 .scrolled(to: "home.upcoming", named: "upcoming"),
                 .scrolled(to: "home.calendar", named: "calendar"),
-                .scrolled(to: "home.cards", named: "cards"),
                 .scrolled(to: "home.list", named: "list"),
+                .scrolled(to: "home.cards", named: "cards"),
             ]
         ) { app, variant in
             XCTAssertTrue(
