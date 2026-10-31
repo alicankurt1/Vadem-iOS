@@ -1145,32 +1145,39 @@ final class FunctionalFlowTests: XCTestCase {
         return candidates.first { $0.exists } ?? app.scrollViews.firstMatch
     }
 
-    /// Kapsayıcıdaki, ekranda görünen metin ve düğmelerin en alttakinin alt kenarı.
+    /// Kapsayıcının tek bir anlık görüntüsünü bellekte gezer (öğe öğe sorgu yok, hızlı); ekranda görünen
+    /// metin ve düğmelerin en alttakinin alt kenarını ve kimliğini/etiketini döndürür.
     @MainActor
-    private func lowestContentEdge(of container: XCUIElement, in app: XCUIApplication) -> (edge: CGFloat, element: XCUIElement?) {
+    private func lowestContentEdge(of container: XCUIElement, in app: XCUIApplication) throws -> (edge: CGFloat, identifier: String, label: String)? {
         let screenHeight = app.windows.firstMatch.frame.height
-        let tabLabels = Set(["tab.home", "tab.analytics", "tab.cards", "tab.settings", "tab.add"].map { app.buttons[$0].label })
-        let items = container.staticTexts.allElementsBoundByIndex + container.buttons.allElementsBoundByIndex
-        var best: (CGFloat, XCUIElement?) = (0, nil)
-        for item in items where item.exists && !tabLabels.contains(item.label) {
-            let frame = item.frame
-            guard frame.height > 0, frame.minY < screenHeight, frame.maxY > best.0 else { continue }
-            best = (frame.maxY, item)
+        let snapshot = try container.snapshot()
+        var bestEdge: CGFloat = 0
+        var best: (edge: CGFloat, identifier: String, label: String)?
+        func walk(_ node: XCUIElementSnapshot) {
+            let isContent = node.elementType == .staticText || node.elementType == .button
+            let frame = node.frame
+            let visible = frame.height > 0 && frame.minY < screenHeight
+            if isContent && visible && !node.identifier.hasPrefix("tab.") && frame.maxY > bestEdge {
+                bestEdge = frame.maxY
+                best = (frame.maxY, node.identifier, node.label)
+            }
+            for child in node.children { walk(child) }
         }
+        walk(snapshot)
         return best
     }
 
     /// Kaydırma bitene kadar (en alttaki içerik kenarı değişmeyene kadar, sınırlı) yukarı kaydırır; son öğeyi çubukla karşılaştırır.
     @MainActor
-    private func assertEndOfScrollClearsBar(in app: XCUIApplication, screen: String, file: StaticString = #filePath, line: UInt = #line) {
+    private func assertEndOfScrollClearsBar(in app: XCUIApplication, screen: String, file: StaticString = #filePath, line: UInt = #line) throws {
         let container = scrollContainer(in: app)
         XCTAssertTrue(container.waitForExistence(timeout: 10), "\(screen): scroll container not found", file: file, line: line)
 
         var previous: CGFloat = -1
         var stable = 0
-        for _ in 0..<15 {
+        for _ in 0..<12 {
             container.swipeUp(velocity: .fast)
-            let current = lowestContentEdge(of: container, in: app).edge
+            let current = try lowestContentEdge(of: container, in: app)?.edge ?? 0
             // İki ardışık kaydırma aynı sonucu verirse uçtayız.
             stable = abs(current - previous) < 0.5 ? stable + 1 : 0
             previous = current
@@ -1179,11 +1186,13 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(stable, 2, "\(screen): scroll never settled", file: file, line: line)
 
         let top = barTop(in: app)
-        let (edge, last) = lowestContentEdge(of: container, in: app)
-        XCTAssertNotNil(last, "\(screen): no content found", file: file, line: line)
-        XCTAssertLessThanOrEqual(edge, top, "\(screen): last content (\(edge)) must end above the floating bar (\(top))", file: file, line: line)
-        if let last {
-            XCTAssertTrue(last.isHittable, "\(screen): last element must be hittable at the end of the scroll", file: file, line: line)
+        let last = try XCTUnwrap(lowestContentEdge(of: container, in: app), "\(screen): no content found", file: file, line: line)
+        // Çubukla son satır arasında küçük bir boşluk olmalı (barGap 12 pt; ölçüm payı için 4 pt aranır).
+        XCTAssertLessThanOrEqual(last.edge + 4, top, "\(screen): last content (\(last.edge)) must end with a gap above the floating bar (\(top))", file: file, line: line)
+        // Tek sorgu: son öğe fiziksel olarak dokunulabilir olmalı.
+        let lastElement = last.identifier.isEmpty ? app.staticTexts[last.label] : element(last.identifier, in: app)
+        if lastElement.exists {
+            XCTAssertTrue(lastElement.isHittable, "\(screen): last element must be hittable at the end of the scroll", file: file, line: line)
         }
     }
 
@@ -1191,7 +1200,7 @@ final class FunctionalFlowTests: XCTestCase {
     func testHomeLastContentStaysAboveFloatingBarAtScrollEnd() throws {
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
         XCTAssertTrue(app.buttons["tab.home"].waitForExistence(timeout: 10), "tab bar not found")
-        assertEndOfScrollClearsBar(in: app, screen: "Home")
+        try assertEndOfScrollClearsBar(in: app, screen: "Home")
     }
 
     @MainActor
@@ -1201,10 +1210,10 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(settings.waitForExistence(timeout: 10), "settings tab not found")
         settings.tap()
         XCTAssertTrue(app.staticTexts["settings.version"].waitForExistence(timeout: 5), "Settings not shown")
-        assertEndOfScrollClearsBar(in: app, screen: "Settings")
+        try assertEndOfScrollClearsBar(in: app, screen: "Settings")
         // Sürüm metni Ayarlar'ın son öğesi: tam görünür ve çubuğun üstünde olmalı.
         let version = app.staticTexts["settings.version"]
-        XCTAssertLessThanOrEqual(version.frame.maxY, barTop(in: app), "version text must clear the floating bar")
+        XCTAssertLessThanOrEqual(version.frame.maxY + 4, barTop(in: app), "version text must clear the floating bar")
     }
 
     @MainActor
@@ -1214,7 +1223,17 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(cards.waitForExistence(timeout: 10), "cards tab not found")
         cards.tap()
         XCTAssertTrue(element("cards.list", in: app).waitForExistence(timeout: 5), "Cards not shown")
-        assertEndOfScrollClearsBar(in: app, screen: "Cards")
+        try assertEndOfScrollClearsBar(in: app, screen: "Cards")
+    }
+
+    @MainActor
+    func testAnalyticsLastContentStaysAboveFloatingBarAtScrollEnd() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let analytics = app.buttons["tab.analytics"]
+        XCTAssertTrue(analytics.waitForExistence(timeout: 10), "analytics tab not found")
+        analytics.tap()
+        XCTAssertTrue(element("analytics.donut", in: app).waitForExistence(timeout: 5), "Analytics not shown")
+        try assertEndOfScrollClearsBar(in: app, screen: "Analytics")
     }
 
     @MainActor
@@ -1227,6 +1246,6 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(privacy.waitForExistence(timeout: 5), "privacy row not found")
         privacy.tap()
         XCTAssertTrue(element("privacy.policy.intro", in: app).waitForExistence(timeout: 5), "privacy policy not pushed")
-        assertEndOfScrollClearsBar(in: app, screen: "Privacy policy")
+        try assertEndOfScrollClearsBar(in: app, screen: "Privacy policy")
     }
 }
