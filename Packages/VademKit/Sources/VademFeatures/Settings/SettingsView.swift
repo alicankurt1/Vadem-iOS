@@ -126,7 +126,7 @@ public struct SettingsView: View {
         }
     }
 
-    // Serif ekran başlığı: "Sana özel", vurgu son sözcükte.
+    // Ekran başlığı: "Sana özel", vurgu son sözcükte.
     private var header: some View {
         let accent = String(localized: "yours", bundle: .module, comment: "Accented word of the Settings display title (Make it yours)")
         return DisplayHeader(
