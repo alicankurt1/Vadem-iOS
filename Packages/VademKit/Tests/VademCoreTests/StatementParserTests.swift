@@ -178,7 +178,6 @@ struct StatementParserTests {
         let got = StatementParser.parse(lines: lines)
         #expect(got.count == 3)
         #expect(got[0].merchant == "ORNEK GIYIM")
-        #expect(got.count == 3)
         #expect(got[0].installmentAmount == Self.dec("1200.50"))
         #expect(got[0].currentInstallment == 2 && got[0].totalInstallments == 4)
         #expect(got[1].merchant == "ORNEK MOBILYA")
@@ -217,6 +216,11 @@ struct StatementParserTests {
         "Hesap Kesim Tarihi 15.10.2026 1/2 500,00",
         "Ödenecek Tutar 1/2 ₺500,00",
         "Ekstre Borcu 1/2 500,00",
+        // Çekimli özet ve ücret satırları
+        "Dönem Borcu 1/2 2.000,00",
+        "Toplam Borcunuz 1/2 2.000,00",
+        "Kart Ücreti 1/2 50,00 TL",
+        "Hesap Bakiyesi 1/2 100,00",
     ]
 
     @Test("Ignores totals, interest, fees, minimum payment and single purchases", arguments: ignoredLines)
@@ -280,5 +284,34 @@ struct StatementParserTests {
         let b = StatementParser.parse(lines: lines)
         #expect(a.map(\.merchant) == b.map(\.merchant))
         #expect(a.map(\.installmentAmount) == b.map(\.installmentAmount))
+        #expect(a.map(\.currentInstallment) == b.map(\.currentInstallment))
+        #expect(a.map(\.totalInstallments) == b.map(\.totalInstallments))
+        #expect(a.map(\.date) == b.map(\.date))
+    }
+
+    // MARK: - Atlama anahtar kelimesiyle başlayan firma adları
+
+    static let keywordPrefixedMerchants: [LineCase] = [
+        LineCase(line: "BORCELIK 2/3 150,00",
+                 expected: Expected(merchant: "BORCELIK", amount: dec("150.00"), current: 2, total: 3, date: nil)),
+        LineCase(line: "DONEMSEL 1/2 80,00",
+                 expected: Expected(merchant: "DONEMSEL", amount: dec("80.00"), current: 1, total: 2, date: nil)),
+        LineCase(line: "UCRETSIZ KARGO 3/6 99,90",
+                 expected: Expected(merchant: "UCRETSIZ KARGO", amount: dec("99.90"), current: 3, total: 6, date: nil)),
+        LineCase(line: "EKSTRELI 4/9 200,00 TL",
+                 expected: Expected(merchant: "EKSTRELI", amount: dec("200.00"), current: 4, total: 9, date: nil)),
+    ]
+
+    @Test("Merchant names that merely start with a skip keyword stay candidates", arguments: keywordPrefixedMerchants)
+    func keywordPrefixedMerchant(_ c: LineCase) {
+        check(StatementParser.parse(lines: [c.line]), [c.expected])
+    }
+
+    // MARK: - İki haneli yıl
+
+    @Test("A two-digit-year date is not read as a marker and leaves the date empty")
+    func twoDigitYearDate() {
+        let got = StatementParser.parse(lines: ["12.10.26 ORNEK MARKET 3/6 500,00"])
+        check(got, [Expected(merchant: "ORNEK MARKET", amount: Self.dec("500.00"), current: 3, total: 6, date: nil)])
     }
 }
