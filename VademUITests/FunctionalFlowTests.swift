@@ -1128,6 +1128,39 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertEqual(bell.value as? String, "0 unread", "badge must be cleared after opening the inbox")
     }
 
+    // MARK: - Akıcı sekme geçişi (#233)
+
+    /// #233: tüm sekmelere art arda hızlıca dokunulur; son dokunulan sekme içeriğiyle görünür kalır.
+    @MainActor
+    func testRapidTabSwitchingEndsOnLastTabWithContentVisible() throws {
+        let app = launchHome()
+        for id in ["tab.home", "tab.analytics", "tab.cards", "tab.settings"] {
+            XCTAssertTrue(app.buttons[id].waitForExistence(timeout: 10), "\(id) not found")
+        }
+
+        // Bekleme olmadan hızlı geçişler; iki tur.
+        for _ in 0..<2 {
+            app.buttons["tab.analytics"].tap()
+            app.buttons["tab.cards"].tap()
+            app.buttons["tab.settings"].tap()
+            app.buttons["tab.home"].tap()
+        }
+        app.buttons["tab.analytics"].tap()
+        app.buttons["tab.cards"].tap()
+        app.buttons["tab.settings"].tap()
+
+        // Son sekme Settings: içeriği görünür, diğerleri gizli.
+        XCTAssertTrue(app.switches["settings.reminders"].waitForExistence(timeout: 10), "Settings content must be visible after rapid switching")
+        XCTAssertFalse(element("cards.list", in: app).exists, "Cards must be hidden after ending on Settings")
+        XCTAssertFalse(element("analytics.screen", in: app).exists, "Analytics must be hidden after ending on Settings")
+
+        // Başka bir sırayla bitiş: Home son.
+        app.buttons["tab.cards"].tap()
+        app.buttons["tab.home"].tap()
+        XCTAssertTrue(app.staticTexts["home.month"].waitForExistence(timeout: 10), "Home content must be visible after ending on Home")
+        XCTAssertFalse(app.switches["settings.reminders"].waitForExistence(timeout: 1), "Settings must be hidden after ending on Home")
+    }
+
     // MARK: - Alt çubuk payı (#232)
 
     /// Yüzen çubuğun (sekme düğmeleri ve ＋) en üst kenarı.
