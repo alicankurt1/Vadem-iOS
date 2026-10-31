@@ -16,8 +16,10 @@ import UIKit
 /// (counted once); sheets are not affected. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
 /// form closes, Home, Analytics and Cards reload. The selected tab is published as
 /// `EnvironmentValues.selectedAppTab`. Each tab's root screen sits on an ``AmbientBackground`` tinted
-/// with the selected tab's ``AppTab/ambientTint``; switching tabs cross-fades the tint and plays the shared ``Motion`` tab
-/// transition (off under Reduce Motion and `-ui-static-motion`).
+/// with the selected tab's ``AppTab/ambientTint``; switching tabs cross-fades the tint. The new tab is shown at once (no
+/// blank frame) and settles in with a short slide from the side of the tab plus a slight fade
+/// (``Motion/tabSwitchStart(from:to:)``); fast taps restart it and end on the last tab. The ``FloatingTabBar`` is not
+/// part of the effect. Under Reduce Motion and `-ui-static-motion` the switch is instant.
 ///
 /// In debug builds ``AppTab/launchTab(in:)`` picks the first tab. ``AddInstallmentView/launchArgument``,
 /// ``AddCardView/launchArgument`` and ``AddSubscriptionView/launchArgument`` open their add forms
@@ -33,14 +35,14 @@ public struct AppTabShell: View {
     @State private var cardListModel: CardListViewModel
     @State private var settingsModel: SettingsViewModel
     @State private var selection: AppTab
-    // TabView'de gösterilen sekme; geçiş animasyonunda eski sekme sönünce `selection`a eşitlenir.
+    // TabView'de gösterilen sekme; `selection` değişince animasyonsuz ve hemen eşitlenir (boş kare olmaz).
     @State private var displayedTab: AppTab
-    // Sekme geçişinin anlık görünümü (sönme, bulanıklık, ölçek).
-    @State private var tabPhase: Motion.TabSwitchPhase = .visible
-    // Her yeni sekme geçişinde artar; yalnızca en son geçişin tamamlanma işi ve Task'ı uygulanır.
-    @State private var tabSwitchGeneration = 0
+    // Yeni sekmenin yerine oturmaya başladığı görünüm (kayma yönü ve saydamlık).
+    @State private var tabSwitchStart = Motion.TabSwitchState.settled
+    // Her animasyonlu geçişte artar ve oturma animasyonunu baştan başlatır.
+    @State private var tabSwitchCount = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // Ortam arka planının rengi; seçimden bir adım sonra değişir, yeni sekme eski renkten geçişle açılır.
+    // Ortam arka planının rengi; seçimle birlikte değişir, geçişi AmbientBackground kendisi yumuşatır.
     @State private var ambientTab: AppTab
     // Yüzen çubuğun ölçülen yüksekliği (alt dolgusu ve ＋ düğmesi dahil); sekme içeriği bu kadar
     // ve `barGap` kadar alttan boşluk bırakır.
@@ -153,9 +155,11 @@ public struct AppTabShell: View {
                 SettingsView(model: settingsModel)
             }
         }
-        // Sekme geçişi: eski içerik bulanıklaşıp küçülerek söner, yenisi belirir (Motion'dan).
-        .tabSwitchEffect(tabPhase)
-        .onChange(of: selection) { _, newTab in switchTab(to: newTab) }
+        // Sekme geçişi: yeni içerik hemen gösterilir, sekmenin yönünden hafifçe kayıp yerine oturur.
+        .tabSwitchEffect(from: tabSwitchStart, trigger: tabSwitchCount)
+        // Kayma ve hafif saydamlık sırasında kenarda pencere rengi değil düz zemin görünür.
+        .background { Color.vademBackground.ignoresSafeArea() }
+        .onChange(of: selection) { oldTab, newTab in switchTab(from: oldTab, to: newTab) }
         // Bildirimden gelen kutusu istendi: This month seçilir, Home gelen kutusunu iter.
         .onChange(of: model.inboxRequestCount) { _, _ in selection = .home }
         // Çubuk içeriğin üstünde yüzer; klavye açılınca yerinde kalır (klavyenin altında).
@@ -165,8 +169,6 @@ public struct AppTabShell: View {
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .environment(\.selectedAppTab, selection)
-        // Geçiş animasyonunu AmbientBackground kendisi seçer (Reduce Motion'da yok).
-        .onChange(of: selection) { _, tab in ambientTab = tab }
         // Form kapanınca (kaydedilse de iptal edilse de) tüm sekmeler yeniden yüklenir.
         .sheet(item: $addModel, onDismiss: reloadAll) { addModel in
             AddInstallmentView(model: addModel)
@@ -238,41 +240,24 @@ public struct AppTabShell: View {
         .tag(tab)
     }
 
-    // Hareket kapalıyken (Reduce Motion, -ui-static-motion) sekme anında değişir. Açıkken önce eski
-    // sekme söner, sonra yeni sekme yerine geçip belirir. Art arda dokunuşlarda (A→B→C) son seçim kazanır:
-    // - Sönme sürerken (.leaving) yeni geçiş başlatılmaz; süren sönme bitince zaten en son `selection`
-    //   gösterilir. Aynı değere ikinci bir withAnimation tamamlanmayı hemen tetikler, bu yüzden atlanır.
-    // - Her yeni geçiş sayacı artırır; eski geçişlerin tamamlanma işi ve belirme Task'ı sayaç tutmazsa
-    //   hiçbir şey yapmaz. Böylece değiştirme ve .entering yalnızca bir kez uygulanır (titreme olmaz).
-    // - Belirme sırasında (.entering veya .visible'a giderken) dokunulursa yeni sönme oradan başlar.
-    private func switchTab(to newTab: AppTab) {
-        guard Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested) else {
-            // Süren animasyonlu geçiş varsa geçersiz kılınır.
-            tabSwitchGeneration += 1
+    // Yeni sekme aynı güncellemede gösterilir; eski ve yeni arasında boş kare yoktur. Hareket açıksa yeni
+    // sekme yönüne göre başlangıç görünümünden yerine oturur. Art arda dokunuşlarda (A→B→C) her geçiş
+    // animasyonu baştan başlatır; sonuç hep son seçilen sekmedir, bekleyen tamamlanma işi yoktur.
+    // Hareket kapalıyken (Reduce Motion, -ui-static-motion) sayaç artmaz: geçiş anlıktır.
+    private func switchTab(from oldTab: AppTab, to newTab: AppTab) {
+        let animated = Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested)
+        // Çubuğun hap animasyonu bu işleme taşınmasın: sekme içeriği animasyonsuz değişir.
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
             displayedTab = newTab
-            tabPhase = .visible
-            return
-        }
-        guard tabPhase != .leaving else { return }
-        tabSwitchGeneration += 1
-        let generation = tabSwitchGeneration
-        withAnimation(Motion.tabOut) {
-            tabPhase = .leaving
-        } completion: {
-            guard generation == tabSwitchGeneration else { return }
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            withTransaction(transaction) {
-                displayedTab = selection
-                tabPhase = .entering
-            }
-            // Bir sonraki turda: yeni sekme önce görünmez çizilir, sonra yalnızca saydamlıkla belirir.
-            // Bu arada yeni bir geçiş başladıysa sayaç değişmiştir; dokunulmaz.
-            Task { @MainActor in
-                guard generation == tabSwitchGeneration else { return }
-                withAnimation(Motion.tabIn) { tabPhase = .visible }
+            if animated {
+                tabSwitchStart = Motion.tabSwitchStart(from: oldTab, to: newTab)
+                tabSwitchCount += 1
             }
         }
+        // Renk geçişini AmbientBackground kendisi seçer (Reduce Motion'da yok).
+        ambientTab = newTab
     }
 
     private func openAddSheet() {

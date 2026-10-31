@@ -40,39 +40,42 @@ public enum Motion {
 
     // MARK: - Sekme geçişi
 
-    /// The look of the tab content during a tab switch.
-    public enum TabSwitchPhase: Equatable, Sendable {
-        /// Settled: the content is fully shown.
-        case visible
-        /// The outgoing tab fades out with a slight blur and scale.
-        case leaving
-        /// The incoming tab, just swapped in, before it fades in.
-        case entering
+    /// The look of the tab content during a tab switch: a small horizontal offset and a partial fade.
+    public struct TabSwitchState: Equatable, Sendable {
+        /// Horizontal offset (points) of the content; positive is toward the trailing side.
+        public var offsetX: Double
+        /// Opacity of the content.
+        public var opacity: Double
 
-        /// Opacity of the content in this phase.
-        public var opacity: Double {
-            self == .visible ? 1 : 0
+        /// Creates a look with `offsetX` points of offset and `opacity`.
+        public init(offsetX: Double, opacity: Double) {
+            self.offsetX = offsetX
+            self.opacity = opacity
         }
 
-        /// Blur radius (points) of the content in this phase.
-        public var blurRadius: Double {
-            self == .leaving ? 6 : 0
-        }
-
-        /// Scale of the content in this phase.
-        public var scale: Double {
-            self == .leaving ? 0.97 : 1
-        }
+        /// The settled look: no offset, fully opaque.
+        public static let settled = TabSwitchState(offsetX: 0, opacity: 1)
     }
 
-    /// Fade-out of the outgoing tab.
-    public static let tabOut = Animation.easeIn(duration: tabOutDuration)
-    /// Fade-in of the incoming tab.
-    public static let tabIn = Animation.easeOut(duration: tabInDuration)
-    /// Seconds the outgoing tab takes to fade out.
-    public static let tabOutDuration: Double = 0.12
-    /// Seconds the incoming tab takes to fade in.
-    public static let tabInDuration: Double = 0.2
+    /// Points the incoming tab starts away from its place.
+    public static let tabSwitchOffset: Double = 10
+    /// Opacity the incoming tab starts at; high, so the background never shows through as a flash.
+    public static let tabSwitchStartOpacity: Double = 0.9
+    /// Seconds the incoming tab takes to settle.
+    public static let tabSwitchDuration: Double = 0.22
+
+    /// Where the incoming tab starts when switching `from` → `to`: a later tab (in ``AppTab/allCases`` order)
+    /// comes from the trailing side, an earlier one from the leading side; the same tab is ``TabSwitchState/settled``.
+    ///
+    /// The content is swapped at once and settles from this look to ``TabSwitchState/settled`` in
+    /// ``tabSwitchDuration`` seconds, so no frame is ever blank.
+    public static func tabSwitchStart(from: AppTab, to: AppTab) -> TabSwitchState {
+        let order = AppTab.allCases
+        guard let fromIndex = order.firstIndex(of: from), let toIndex = order.firstIndex(of: to),
+              fromIndex != toIndex else { return .settled }
+        let direction: Double = toIndex > fromIndex ? 1 : -1
+        return TabSwitchState(offsetX: direction * tabSwitchOffset, opacity: tabSwitchStartOpacity)
+    }
 
     // MARK: - Kademeli giriş
 
@@ -194,19 +197,33 @@ private struct MotionEntryScopeModifier: ViewModifier {
     }
 }
 
-/// Applies the tab-switch look of `phase` (``Motion/TabSwitchPhase``) to the tab content.
+/// Settles the tab content from `start` to ``Motion/TabSwitchState/settled`` each time `trigger` changes.
 @MainActor
 private struct TabSwitchModifier: ViewModifier {
-    let phase: Motion.TabSwitchPhase
+    let start: Motion.TabSwitchState
+    let trigger: Int
 
     func body(content: Content) -> some View {
-        // Efektler `if` ile eklenip kaldırılmaz: dal değişimi TabView'in kimliğini değiştirir ve
-        // sekmelerin yığınları ile kaydırma konumları sıfırlanır. Yerleşik durumda (.visible) değerler
-        // birim değerlerdir (saydamlık 1, bulanıklık 0, ölçek 1), yani görüntüye etkileri yoktur.
-        content
-            .opacity(phase.opacity)
-            .blur(radius: phase.blurRadius)
-            .scaleEffect(phase.scale)
+        // Efekt `if` ile eklenip kaldırılmaz: dal değişimi TabView'in kimliğini değiştirir ve sekmelerin
+        // yığınları ile kaydırma konumları sıfırlanır. Yerleşik durumda kayma 0, saydamlık 1'dir (etkisiz).
+        let start = start
+        return content
+            .keyframeAnimator(initialValue: Motion.TabSwitchState.settled, trigger: trigger) { content, state in
+                content
+                    .opacity(state.opacity)
+                    .offset(x: state.offsetX)
+            } keyframes: { _ in
+                // Her tetiklemede başlangıca atlanır ve oradan yerine oturulur; art arda dokunuşlarda
+                // animasyon baştan başlar, son seçilen sekmede biter.
+                KeyframeTrack(\.offsetX) {
+                    MoveKeyframe(start.offsetX)
+                    LinearKeyframe(0, duration: Motion.tabSwitchDuration, timingCurve: .easeOut)
+                }
+                KeyframeTrack(\.opacity) {
+                    MoveKeyframe(start.opacity)
+                    LinearKeyframe(1, duration: Motion.tabSwitchDuration, timingCurve: .easeOut)
+                }
+            }
     }
 }
 
@@ -226,8 +243,12 @@ public extension View {
         modifier(MotionEntryScopeModifier())
     }
 
-    /// Draws this tab content as in `phase` of a tab switch (fade, blur and scale).
-    func tabSwitchEffect(_ phase: Motion.TabSwitchPhase) -> some View {
-        modifier(TabSwitchModifier(phase: phase))
+    /// Plays the tab-switch settle each time `trigger` changes: from `start` to ``Motion/TabSwitchState/settled``
+    /// in ``Motion/tabSwitchDuration`` seconds (ease out). A new `trigger` restarts it from its new `start`.
+    ///
+    /// The effect is always applied (never added or removed), so the view's identity is kept; at rest it has no effect.
+    /// Leave `trigger` unchanged under Reduce Motion or `-ui-static-motion` for an instant switch.
+    func tabSwitchEffect(from start: Motion.TabSwitchState, trigger: Int) -> some View {
+        modifier(TabSwitchModifier(start: start, trigger: trigger))
     }
 }
