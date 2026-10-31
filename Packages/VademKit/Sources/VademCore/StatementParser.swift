@@ -13,10 +13,14 @@ import Foundation
 ///   purchase total first and the installment amount in the last column). A negative (credit) or zero
 ///   amount means no candidate. Inside amounts the letter `O` is read as `0` (OCR noise).
 /// - **Date**: `12.10.2026` or `12/10/2026`; optional. Dates are never read as markers.
+///   A two-digit year (`12.10.26`) is still recognized as a date (so it is not read as a marker),
+///   but the century is not guessed: the candidate's `date` is `nil`.
 /// - **Merchant**: what is left after removing the date, marker, amounts, currency and noise words;
 ///   it must contain a letter.
 /// - **Skipped lines**: totals, interest and fees (faiz, ücret, KKDF, BSMV, gecikme), minimum payment
-///   and statement summary lines, even when they contain something like `1/2`.
+///   and statement summary lines, even when they contain something like `1/2`. Short or ambiguous keys
+///   (toplam, ücret, borç, dönem, ekstre, bakiye, ...) match whole words and their common inflections only,
+///   so merchant names that merely start with them (e.g. `BORCELIK`, `UCRETSIZ`) are kept.
 /// - **Broken lines**: a line with a marker but no amount takes its amount from the next line when that
 ///   line is only an amount; the next line is then consumed.
 ///
@@ -224,13 +228,22 @@ private struct Patterns {
 // MARK: - Katlama ve gürültü
 
 private enum Folding {
-    // Kelime başıyla eşleşen anahtarlar: toplam, faiz, ücret, KKDF, BSMV, gecikme, asgari, özet satırları.
-    private static let ignoredPrefixes = [
-        "toplam", "asgari", "faiz", "ucret", "kkdf", "bsmv", "gecikme", "bakiye", "borc", "ekstre", "donem",
+    // Kökü belirsiz olmayan anahtarlar: kelime başıyla eşleşir ("faizi", "gecikmeli" de yakalanır).
+    private static let ignoredStems = ["faiz", "gecikme", "kkdf", "bsmv"]
+    // "faizsiz taksit" gerçek bir taksit satırıdır; faiz satırı sayılmaz.
+    private static let allowedStems = ["faizsiz"]
+    // Kısa ya da firma adına gömülebilen anahtarlar (BORCELIK, DONEMSEL, UCRETSIZ, EKSTRELI) yalnızca
+    // tam kelime olarak eşleşir; ekstrelerde geçen çekimli halleri de listede.
+    private static let ignoredWords: Set<String> = [
+        "toplam", "toplami", "toplamlar", "toplamlari",
+        "asgari",
+        "ucret", "ucreti", "ucretler", "ucretleri",
+        "bakiye", "bakiyesi", "bakiyeniz",
+        "borc", "borcu", "borcunuz", "borclar", "borclari",
+        "ekstre", "ekstresi", "ekstrenin", "ekstreniz",
+        "donem", "donemi", "donemin", "donemki",
         "odenecek",
     ]
-    // "faizsiz taksit" gerçek bir taksit satırıdır; faiz satırı sayılmaz.
-    private static let allowedWords: Set<String> = ["faizsiz"]
     private static let ignoredPhrases = ["son odeme", "hesap kesim"]
     // Firma adından atılan dolgu kelimeleri.
     private static let noiseWords: Set<String> = [
@@ -269,7 +282,9 @@ private enum Folding {
     static func isIgnored(_ folded: String) -> Bool {
         if ignoredPhrases.contains(where: { folded.contains($0) }) { return true }
         return words(in: folded).contains { word in
-            !allowedWords.contains(word) && ignoredPrefixes.contains(where: word.hasPrefix)
+            if ignoredWords.contains(word) { return true }
+            guard !allowedStems.contains(where: word.hasPrefix) else { return false }
+            return ignoredStems.contains(where: word.hasPrefix)
         }
     }
 

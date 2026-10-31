@@ -3,6 +3,7 @@ import Foundation
 /// A calendar day printed on a statement (day, month, year), with no time or time zone.
 ///
 /// Only real Gregorian dates exist: `31.04.2026` or `29.02.2025` cannot be created.
+/// ``StatementParser`` makes one only from a four-digit year; a two-digit year (`12.10.26`) gives no date.
 public struct StatementDate: Sendable, Hashable {
     /// The Gregorian year, in ``YearMonth/supportedYears``.
     public let year: Int
@@ -45,6 +46,10 @@ public struct StatementDate: Sendable, Hashable {
 ///
 /// Every field is a `var` so the review screen can correct OCR mistakes before saving.
 /// ``id`` only tells candidates apart in a list; it carries no meaning.
+///
+/// - Note: The synthesized `==` and `hash(into:)` include ``id``, which is random for every parsed
+///   candidate. Two parses of the same text are therefore never equal; compare the other fields
+///   (merchant, amount, installments, date) when checking parse results.
 public struct InstallmentCandidate: Sendable, Hashable, Identifiable {
     /// A unique id for list identity; a new one is made for every candidate.
     public var id: UUID
