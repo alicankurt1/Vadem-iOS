@@ -370,14 +370,9 @@ public struct HomeView: View {
                 .accessibilityIdentifier("home.empty")
         case .loaded:
             if !model.hasCards { addCardPrompt }
-            // Gün seçiliyken o günün ödemeleri takvimin hemen altında, kart toplamlarından önce gelir.
-            if model.selectedDay != nil {
-                paymentsSection
-                if !model.cardSubtotals.isEmpty { subtotalsSection }
-            } else {
-                if !model.cardSubtotals.isEmpty { subtotalsSection }
-                paymentsSection
-            }
+            // Ödemeler ana içerik: gün seçili olsun ya da olmasın kart toplamlarından önce gelir.
+            paymentsSection
+            if !model.cardSubtotals.isEmpty { subtotalsSection }
         }
     }
 

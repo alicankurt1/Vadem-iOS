@@ -297,9 +297,10 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     /// #204: örnek veride 15 Ekim'de ödeme vardır (Shopping kartı vadesi). Gün seçilince o günün satırı
-    /// "By card" başlığının üstünde olur; seçim kalkınca özgün sıra (kartlar listeden önce) döner.
+    /// "By card" başlığının üstünde olur. #231: ödemeler listesi seçim olsa da olmasa da her zaman "By card"
+    /// başlığının üstündedir.
     @MainActor
-    func testSelectedDayPaymentsShowAboveByCardAndDeselectRestoresOrder() throws {
+    func testPaymentsListStaysAboveByCardWithAndWithoutSelectedDay() throws {
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
 
         let day = element("home.calendar.day.15", in: app)
@@ -313,12 +314,12 @@ final class FunctionalFlowTests: XCTestCase {
         let cards = element("home.cards", in: app)
         let firstRow = element("home.row.0", in: app)
 
-        // Seçim yokken: kartlar listeden önce.
+        // Seçim yokken: ödemeler listesi kartlardan önce.
         XCTAssertTrue(cards.waitForExistence(timeout: 5), "'By card' header not found")
         XCTAssertTrue(element("home.list", in: app).exists, "payments header not found")
         XCTAssertLessThan(
-            cards.frame.minY, element("home.list", in: app).frame.minY,
-            "without a selected day 'By card' must stay above the payments list"
+            element("home.list", in: app).frame.minY, cards.frame.minY,
+            "without a selected day the payments list must be above 'By card'"
         )
 
         day.tap()
@@ -342,8 +343,8 @@ final class FunctionalFlowTests: XCTestCase {
         day.tap()
         XCTAssertTrue(element("home.list", in: app).waitForExistence(timeout: 5), "payments header not found after deselect")
         XCTAssertLessThan(
-            cards.frame.minY, element("home.list", in: app).frame.minY,
-            "after deselecting the day 'By card' must be above the payments list again"
+            element("home.list", in: app).frame.minY, cards.frame.minY,
+            "after deselecting the day the payments list must still be above 'By card'"
         )
     }
 
