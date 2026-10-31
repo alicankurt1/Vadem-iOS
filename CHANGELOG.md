@@ -67,6 +67,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Home no longer shows the large header ("This month" eyebrow and "You pay ..."). The hero card is now titled "You pay this month" ("Bu ay ödeyeceğin") with the month total, and the month bar sits above the card (#230, PR #245)
+- On the four tab roots (Home, Analytics, Cards, Settings) the navigation bar no longer uses a solid color: it is transparent at rest so the tab's ambient background shows through, and uses the system bar material (iOS 26 scroll-edge blur) once content scrolls under it. Pushed screens and sheets keep their solid bars. Not verified on iOS 18 (#229, PR #247)
 
 ### Fixed
 
@@ -91,3 +92,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A functional UI test now runs the animated tab switch: `launchHome(animated: true)` launches without `-ui-static-motion`, and `testFastTabSwitchingWithMotionEndsOnLastTappedTab` taps through the tabs without waits and checks that the last tapped tab's header stays on screen. This covers the gap left by the tab switch fix (#233) (PR #238)
 - `scripts/ui-functional.sh` creates its own simulator for each run (`simctl create`, same model and newest iOS runtime as `UI_CHECK_DEVICE`) and deletes it on exit, so parallel sessions no longer drive the same device. This fixed a run where 20 of 44 tests failed with `signal kill` (PR #241)
 - `scripts/ui-check.sh` creates a new simulator for each variant (light-default, light-AX5, dark-default) instead of shutting down and cloning the shared device, which could kill another session's run. The shared device is only the build destination (PR #242)
+- Home capture tests (`testHomeScreen` and related) get a 300 s time allowance instead of 180 s, and the contrast re-check time is reported in `timing.txt`; this fixes the recurring `testHomeScreen` timeout seen in #229 to #231 (PR #248)

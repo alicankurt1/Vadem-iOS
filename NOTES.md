@@ -605,3 +605,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** PR #245 (32 dk, 2 verify, 0 başarısız, 0 düzeltme turu). Home'daki "This month" üst yazısı ve "You pay ₺X" başlığı kaldırıldı; hero kartının başlığı "You pay this month" / "Bu ay ödeyeceğin" oldu ve toplam kartta gösteriliyor. Ay çubuğu kartın üstüne taşındı. Yeniden tasarım geri bildirimi (#228–#233) serisinin parçası.
 - **Kapı neyi yakaladı:** Reviewer 1 minor, 2 nit buldu. Hata yakalayan test yok.
 - **Ders:** `testHomeScreen` capture'ı hem #231 hem #230 koşusunda 3 dk sınırını aştı (AX5 varyantı), tek başına yeniden koşuda geçti. Tekrarlayan bir flake: Home ekranı kapsamlı olduğundan ilk adımdan önce zaman aşımı riski taşıyor; üçüncü kez olursa ayrı bir harness konusu olarak ele alınmalı.
+
+### Koşu #229 ve harness #248 — Tab kök ekranlarında şeffaf navigation bar (Faz 21)
+
+- **Ne yapıldı:** PR #247 (37 dk, 2 verify, 0 başarısız, 0 düzeltme turu). Ortak `tabRootNavigationBar()` modifier'ı bar arka planını `.automatic` bırakıyor; Home, Analytics, Cards ve Settings kökleri düz renkli bar yerine ortam arka planını gösteriyor. Bu PR ile #228-#233 tasarım geri bildirim turu bitti.
+- **Kapı neyi yakaladı:** Reviewer 2 minor, 2 nit buldu (kaynak metin testi çizilen barı değil çağrı yerini denetliyor; görsel değişikliği UI capture kanıtlıyor). Hata yakalayan test yok. Okunabilirlik iOS 26 kenar bulanıklığına dayanıyor, iOS 18'de doğrulanmadı.
+- **Harness:** `testHomeScreen` zaman aşımı #229, #230, #231 koşularında tekrarlandı; üçüncü kez olunca PR #248 Home capture testlerinin süresini 180 sn'den 300 sn'ye çıkardı ve kontrast yeniden ölçüm süresini `timing.txt`'ye yazdırdı.
+- **Ders:** Tekrarlayan flake'i "yeniden koş, geçti" diye geçmek yerine sayıp eşiğe ulaşınca kök nedene (süre payı, ölçülmeyen yeniden ölçüm süresi) ayrı harness PR'ı açmak daha doğru.
