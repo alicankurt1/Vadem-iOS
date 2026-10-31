@@ -1,13 +1,19 @@
 import SwiftUI
 import VademCore
+#if os(iOS)
+import UIKit
+#endif
 
 /// The app's tab shell: This month (``HomeView``), ``AnalyticsView``, ``CardListView`` and
 /// ``SettingsView``, switched with the ``FloatingTabBar`` floating over the content.
 ///
 /// Every tab has its own `NavigationStack` in a `TabView` whose system tab bar is hidden: tabs stay
 /// alive while not shown (scroll positions and pushed screens survive tab switches), and only the
-/// selected tab is in the view and accessibility hierarchy. Content scrolls under the bar; a bottom
-/// inset as tall as the bar keeps the last row reachable. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
+/// selected tab is in the view and accessibility hierarchy. Content scrolls under the bar; at the end
+/// of a screen the last row stops ``barGap`` points above the bar (and its ＋ button). The space is
+/// reserved as extra bottom safe area on each tab's navigation controller, so it applies to the root
+/// and every pushed screen, `ScrollView`s and `List`s/`Form`s alike, on top of the home indicator
+/// (counted once); sheets are not affected. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
 /// form closes, Home, Analytics and Cards reload. The selected tab is published as
 /// `EnvironmentValues.selectedAppTab`. Each tab's root screen sits on an ``AmbientBackground`` tinted
 /// with the selected tab's ``AppTab/ambientTint``; switching tabs cross-fades the tint and plays the shared ``Motion`` tab
@@ -36,8 +42,13 @@ public struct AppTabShell: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Ortam arka planının rengi; seçimden bir adım sonra değişir, yeni sekme eski renkten geçişle açılır.
     @State private var ambientTab: AppTab
-    // Yüzen çubuğun ölçülen yüksekliği; sekme içeriği bu kadar alttan boşluk bırakır.
+    // Yüzen çubuğun ölçülen yüksekliği (alt dolgusu ve ＋ düğmesi dahil); sekme içeriği bu kadar
+    // ve `barGap` kadar alttan boşluk bırakır.
     @State private var barHeight: CGFloat = 0
+
+    /// Extra space between the end of a tab's content and the top of the ``FloatingTabBar``, in points.
+    public static let barGap: CGFloat = 12
+
     // "Ekle" sayfası açık mı.
     @State private var isAddSheetPresented: Bool
     // Ekle sayfasında seçilen tür; sayfa kapanınca o türün formu açılır.
@@ -206,16 +217,19 @@ public struct AppTabShell: View {
                 #if os(iOS)
                 // Kök ekranda da gizlenir: yığın içi tercih sistem çubuğunu geri getirmesin.
                 .toolbar(.hidden, for: .tabBar)
+                // Çubuk payı yığının UINavigationController'ına alt güvenli alan olarak eklenir.
+                // NavigationStack'in dışına konan safeAreaInset TabView sayfasında kaydırma içeriğine
+                // ulaşmıyordu (son satırlar çubuğun altında kalıyordu). UIKit güvenli alanı ise kök ve
+                // itilen tüm ekranlara (ScrollView, List, Form) iner; sayfalar (sheet) etkilenmez.
+                // Çubuk ana ekran çizgisinin üstünde durur, pay da o güvenli alana eklenir: çizgi bir kez
+                // sayılır. İçerik kaydırılırken yine çubuğun altından geçer; yalnızca bitiş konumu değişir.
+                .background {
+                    NavigationBottomInset(bottom: barHeight + Self.barGap)
+                        .frame(width: 0, height: 0)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
                 #endif
-        }
-        // Çubuğun yüksekliği kadar alt boşluk. Çubuk alt güvenli alanın (ana ekran çizgisi) üstünde
-        // durur ve bu boşluk da güvenli alana eklenir; çizgi payı iki kez sayılmaz, son satır çubuğun
-        // tam üstünde biter, içerik çubuğun altından geçer.
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear
-                .frame(height: barHeight)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
         }
         #if os(iOS)
         // Sistem sekme çubuğu hiç görünmez; itilen ekranlarda da.
@@ -285,6 +299,53 @@ public struct AppTabShell: View {
         cardListModel.refresh()
     }
 }
+
+#if os(iOS)
+/// Adds `bottom` points of extra bottom safe area to the `UINavigationController` it is placed in,
+/// so the root screen and every pushed screen end their content above the floating tab bar.
+@MainActor
+private struct NavigationBottomInset: UIViewControllerRepresentable {
+    let bottom: CGFloat
+
+    func makeUIViewController(context: Context) -> Controller {
+        Controller()
+    }
+
+    func updateUIViewController(_ controller: Controller, context: Context) {
+        controller.bottom = bottom
+    }
+
+    // Görünmez yardımcı denetleyici; yalnızca bağlı olduğu gezinme denetleyicisinin güvenli alanını ayarlar.
+    final class Controller: UIViewController {
+        var bottom: CGFloat = 0 {
+            didSet { apply() }
+        }
+
+        override func loadView() {
+            let view = UIView()
+            view.isUserInteractionEnabled = false
+            view.isAccessibilityElement = false
+            self.view = view
+        }
+
+        override func didMove(toParent parent: UIViewController?) {
+            super.didMove(toParent: parent)
+            apply()
+        }
+
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            apply()
+        }
+
+        // Değer değişmediyse dokunulmaz: gereksiz yerleşim turu olmaz.
+        private func apply() {
+            guard let navigationController, navigationController.additionalSafeAreaInsets.bottom != bottom else { return }
+            navigationController.additionalSafeAreaInsets.bottom = bottom
+        }
+    }
+}
+#endif
 
 #if DEBUG
 #Preview {
