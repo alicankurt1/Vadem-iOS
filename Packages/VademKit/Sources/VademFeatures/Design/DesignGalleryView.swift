@@ -10,8 +10,6 @@ public struct DesignGalleryView: View {
     @State private var animatedAmount = Money(Decimal(123_456) / 100)
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.self) private var environment
 
     public init() {}
 
@@ -180,11 +178,8 @@ public struct DesignGalleryView: View {
             .navigationTitle(Text("Design gallery", bundle: .module))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            // iOS 26 çubuğu altından geçen koyu kartlara uyum sağlamasın: renk şeması ve arka plan
-            // ekranın şemasına sabitlenir (açıkta açık zemin + mürekkep başlık, koyuda koyu token'lar).
-            .toolbarColorScheme(colorScheme, for: .navigationBar)
-            .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            // Gerçek sekme kökleriyle aynı çubuk: kaydırma kenarında saydam, altından içerik geçince sistem malzemesi.
+            .tabRootNavigationBar()
             #endif
         }
     }

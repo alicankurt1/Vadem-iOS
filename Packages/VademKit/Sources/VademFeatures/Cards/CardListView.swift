@@ -23,8 +23,6 @@ public struct CardListView: View {
     @State private var formModel: AddCardViewModel?
     private let onDataChanged: (() -> Void)?
 
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.self) private var environment
 
     /// Creates the screen for `model`; `onDataChanged` runs after a card form closes (e.g. to reload other tabs).
     public init(model: CardListViewModel, onDataChanged: (() -> Void)? = nil) {
@@ -50,10 +48,8 @@ public struct CardListView: View {
         .navigationTitle(Text("Cards", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-        // Ayarlar gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
-        .toolbarColorScheme(colorScheme, for: .navigationBar)
-        .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        // Sekme kökü: çubuk kaydırma kenarında saydam, içerik altından geçince sistem malzemesi.
+        .tabRootNavigationBar()
         #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) { addButton }

@@ -36,8 +36,6 @@ public struct AnalyticsView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.self) private var environment
     // Sütunlar ilk görünüşte sıfırdan dolar; hareket kapalıyken baştan tam çizilir.
     @State private var barsHaveAppeared = false
 
@@ -63,10 +61,8 @@ public struct AnalyticsView: View {
         .navigationTitle(Text("Analytics", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-        // Home gibi: çubuk ekranın renk şemasına ve arka planına sabitlenir.
-        .toolbarColorScheme(colorScheme, for: .navigationBar)
-        .toolbarBackground(Color(Color.vademBackground.resolve(in: environment)), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        // Sekme kökü: çubuk kaydırma kenarında saydam, içerik altından geçince sistem malzemesi.
+        .tabRootNavigationBar()
         #endif
         // Ekran her açıldığında (ve form kapanınca Home'dan) veri yenilenir.
         .onAppear { model.reload() }
