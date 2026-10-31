@@ -46,8 +46,9 @@ fail() {
   exit 1
 }
 
-# Simülatörü adından bul (en yeni iOS sürümü) ve aç.
-UDID=$(xcrun simctl list devices available -j | python3 -c '
+# Simülatörü adından bul (en yeni iOS sürümü): "<udid> <deviceTypeIdentifier> <runtime>".
+# Ortak cihaz yalnızca derleme hedefidir; açılmaz, kapatılmaz (başka bir oturum onda test koşuyor olabilir).
+BASE=$(xcrun simctl list devices available -j | python3 -c '
 import json, sys
 name = sys.argv[1]
 found = []
@@ -55,10 +56,11 @@ for runtime, devices in json.load(sys.stdin)["devices"].items():
     if "iOS" not in runtime:
         continue
     version = tuple(int(p) for p in runtime.rsplit("iOS-", 1)[-1].split("-") if p.isdigit())
-    found += [(version, d["udid"]) for d in devices if d["name"] == name]
-print(max(found)[1] if found else "")
+    found += [(version, d["udid"], d["deviceTypeIdentifier"], runtime) for d in devices if d["name"] == name]
+print(" ".join(max(found)[1:]) if found else "")
 ' "$DEVICE")
-[ -n "$UDID" ] || fail "no available simulator named '$DEVICE'"
+[ -n "$BASE" ] || fail "no available simulator named '$DEVICE'"
+read -r UDID DEVICE_TYPE RUNTIME <<<"$BASE"
 
 echo "▶ simulator '$DEVICE' ($UDID)"
 
@@ -105,8 +107,8 @@ for appearance in $APPEARANCES; do
   esac
 done
 
-# Kopyalar yalnızca kapalı bir simülatörden alınır.
-xcrun simctl shutdown "$UDID" >/dev/null 2>&1
+# Her varyantın cihazı aynı model ve sürümde yeni kurulur (clone kaynağı kapatmayı gerektirirdi ve
+# ortak cihazda koşan başka bir testi öldürürdü); iş bitince silinir.
 CLONES=()
 cleanup() {
   for clone in "${CLONES[@]:-}"; do
@@ -138,7 +140,7 @@ run_job() {
 PIDS=()
 for job in "${JOBS[@]}"; do
   variant="${job%%:*}"; appearance="${job##*:}"
-  clone=$(xcrun simctl clone "$UDID" "ui-check-$variant-$$") || fail "could not clone simulator for $variant"
+  clone=$(xcrun simctl create "ui-check-$variant-$$" "$DEVICE_TYPE" "$RUNTIME") || fail "could not create simulator for $variant"
   CLONES+=("$clone")
   echo "▶ ui-tests ($variant${UI_CHECK_ONLY:+, only: $UI_CHECK_ONLY}) on $clone"
   run_job "$variant" "$appearance" "$clone" &
