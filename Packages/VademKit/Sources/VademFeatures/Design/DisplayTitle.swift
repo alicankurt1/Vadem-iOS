@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A large editorial title in the system serif (New York) with one accented phrase in italic
-/// `vademBrand`, e.g. "You pay *₺4.825,50*".
+/// A large title in the system font (SF) with one accented phrase in `vademBrand`,
+/// e.g. "You pay *₺4.825,50*".
 ///
 /// The whole title is one `Text`, so VoiceOver reads it as a single header (never split at the
 /// accent). It wraps freely and grows with Dynamic Type up to AX5 (no line limit, no fixed height).
@@ -12,7 +12,7 @@ public struct DisplayTitle: View {
     private let spokenLabel: String?
     private let identifier: String?
 
-    /// Creates a title; the first occurrence of `accent` in `title` is drawn italic in the accent text color.
+    /// Creates a title; the first occurrence of `accent` in `title` is drawn in the accent text color.
     ///
     /// `accessibilityLabel` replaces what VoiceOver reads (e.g. a spoken amount instead of "₺");
     /// `identifier` becomes the title's accessibility identifier.
@@ -36,8 +36,8 @@ public struct DisplayTitle: View {
             .modifier(OptionalIdentifier(identifier: identifier))
     }
 
-    // Sistem serif yazısı (New York); metin stiliyle Dynamic Type'a göre büyür.
-    static let font = Font.system(.largeTitle, design: .serif, weight: .semibold)
+    // Sistem yazısı (SF, varsayılan tasarım); metin stiliyle Dynamic Type'a göre büyür.
+    static let font = Font.system(.largeTitle, weight: .semibold)
 
     /// The range of `accent` in `title` (its first occurrence), or `nil` when it is empty or missing.
     nonisolated static func accentRange(in title: String, accent: String?) -> Range<String.Index>? {
@@ -46,12 +46,11 @@ public struct DisplayTitle: View {
     }
 
     // Tek bir AttributedString: vurgu yalnızca biçim, öğe sınırı değil.
-    // Vurgu rengi metin için güvenli `vademBrand` (vademAccent yalnızca dolgu rengidir).
+    // Vurgu yalnızca renktir (italik yok); metin için güvenli `vademBrand` (vademAccent yalnızca dolgu rengidir).
     static func styled(_ title: String, accent: String?) -> AttributedString {
         var attributed = AttributedString(title)
         guard let accent, accentRange(in: title, accent: accent) != nil,
               let range = attributed.range(of: accent) else { return attributed }
-        attributed[range].font = font.italic()
         attributed[range].foregroundColor = Color.vademBrand
         return attributed
     }

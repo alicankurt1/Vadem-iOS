@@ -2,7 +2,7 @@ import SwiftUI
 import Testing
 @testable import VademFeatures
 
-/// Serif başlık ve eyebrow bileşenlerinin biçimi (#211): tek vurgulu sözcük, vurgu yoksa düz metin,
+/// Sistem yazılı (SF) başlık ve eyebrow bileşenlerinin biçimi (#211, #228): tek vurgulu sözcük, vurgu yoksa düz metin,
 /// başlığın tek parça kalması (VoiceOver tek başlık okur).
 @Suite("Display title styling")
 @MainActor
@@ -55,14 +55,15 @@ struct DisplayTitleTests {
         #expect(plain == rest)
     }
 
-    @Test("Accent run is italic serif in the brand text color, the rest is untouched")
+    @Test("Accent run keeps only the brand color: no font override, so no italic or serif")
     func accentRunAttributes() throws {
         let styled = DisplayTitle.styled("Make it yours", accent: "yours")
         let runs = Array(styled.runs)
         #expect(runs.count == 2)
         #expect(runs[0].foregroundColor == nil && runs[0].font == nil)
         #expect(runs[1].foregroundColor == Color.vademBrand)
-        #expect(runs[1].font == DisplayTitle.font.italic())
+        // Vurgu yalnızca renktir: yazı tipi geçersiz kılınmaz (italik/serif yok).
+        #expect(runs[1].font == nil)
     }
 
     @Test("Accent in the middle gives three runs")
@@ -87,9 +88,15 @@ struct DisplayTitleTests {
         #expect(DisplayTitle.accentRange(in: "Plain title", accent: accent) == nil)
     }
 
-    @Test("Title font is not a fixed size (scales with Dynamic Type)")
+    @Test("Title font is the system default design largeTitle (scales with Dynamic Type)")
     func fontIsTextStyleBased() {
-        #expect(DisplayTitle.font == Font.system(.largeTitle, design: .serif, weight: .semibold))
+        #expect(DisplayTitle.font == Font.system(.largeTitle, weight: .semibold))
+    }
+
+    @Test("Title font is neither serif nor italic")
+    func fontIsNotSerif() {
+        #expect(DisplayTitle.font != Font.system(.largeTitle, design: .serif, weight: .semibold))
+        #expect(DisplayTitle.font != Font.system(.largeTitle, weight: .semibold).italic())
     }
 }
 

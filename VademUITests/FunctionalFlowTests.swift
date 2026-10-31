@@ -363,7 +363,7 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(saved.label.contains("No card"), "row must show no card, got: \(saved.label)")
     }
 
-    /// #211: dört sekmenin serif başlığı görünür; VoiceOver başlığı vurgu sözcüğünde bölmeden tek öğe okur.
+    /// #211: dört sekmenin başlığı görünür; VoiceOver başlığı vurgu sözcüğünde bölmeden tek öğe okur.
     @MainActor
     func testTabHeadersShowAsSingleElements() throws {
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
