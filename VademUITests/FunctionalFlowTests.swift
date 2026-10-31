@@ -371,7 +371,7 @@ final class FunctionalFlowTests: XCTestCase {
 
         // (sekme, başlık kimliği, başlığın tam metninde geçmesi gereken parçalar)
         let headers: [(tab: String, id: String, fragments: [String])] = [
-            ("tab.home", "home.header", ["You pay"]),
+            ("tab.home", "home.total", ["You pay"]),
             ("tab.analytics", "analytics.header", ["Your next", "12 months"]),
             ("tab.cards", "cards.header", ["Your", "cards", "at a glance"]),
             ("tab.settings", "settings.header", ["Make it", "yours"]),
@@ -380,7 +380,8 @@ final class FunctionalFlowTests: XCTestCase {
             let tab = app.buttons[header.tab]
             XCTAssertTrue(tab.waitForExistence(timeout: 10), "\(header.tab) not found")
             tab.tap()
-            let title = app.staticTexts.matching(identifier: header.id)
+            // Home'da ekran başlığı yok; panel özeti (home.total) birleşik öğe olduğundan her türde aranır.
+            let title = app.descendants(matching: .any).matching(identifier: header.id)
             XCTAssertTrue(title.firstMatch.waitForExistence(timeout: 10), "\(header.id) not shown")
             // Tek öğe: vurgu sözcüğü ayrı bir öğe olmamalı.
             XCTAssertEqual(title.count, 1, "\(header.id) must be exactly one element (not split by the accent word)")
@@ -1090,11 +1091,11 @@ final class FunctionalFlowTests: XCTestCase {
     @MainActor
     func testFastTabSwitchingWithMotionEndsOnLastTappedTab() throws {
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"], animated: true)
-        XCTAssertTrue(element("home.header", in: app).waitForExistence(timeout: 10), "Home must be the first tab")
+        XCTAssertTrue(element("home.total", in: app).waitForExistence(timeout: 10), "Home must be the first tab")
 
         // (sekme, içerik kimliği): her sekmenin kendine özgü başlığı.
         let tabs: [(tab: String, content: String)] = [
-            ("tab.home", "home.header"),
+            ("tab.home", "home.total"),
             ("tab.analytics", "analytics.header"),
             ("tab.cards", "cards.header"),
             ("tab.settings", "settings.header"),

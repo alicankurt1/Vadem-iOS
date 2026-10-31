@@ -1654,22 +1654,6 @@
         }
       }
     },
-    "Due this month" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Due this month"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bu ay ödenecek"
-          }
-        }
-      }
-    },
     "Edit card" : {
       "localizations" : {
         "en" : {
@@ -4598,6 +4582,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%2$@ döneminde %1$@ ödüyorsunuz."
+          }
+        }
+      }
+    },
+    "You pay this month" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You pay this month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ay ödeyeceğin"
           }
         }
       }
