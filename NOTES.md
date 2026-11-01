@@ -626,3 +626,22 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Reviewer 5 minor, 2 nit buldu (kart değişince tekrar seçimi/rozet senkron değildi, yükleme hatasında kaydet açık kalıyordu, çok kısa başlıklar "benzer" sayılıyordu). Ekran görüntüsü incelemesi major bir sorun buldu: örnek veride LAPTOP adayı ₺400, örnek Laptop ise ₺4.000/ay idi; yani "Olası tekrar" rozeti çıkmıyor, buton "4 taksit ekle" diyordu. Birim ve fonksiyonel testler bunu görmedi.
 - **Ders:** Örnek veri (sample data) ile test verisi birbirinden bağımsız kayabilir; testler kendi fixture'ını kontrol ettiği için uyuşmazlığı göremez. Düzeltme örnek veriyi hizalamak ve rozet/seçimi uygulamada doğrulayan yeni bir fonksiyonel UI testi (`testStatementReviewSampleDuplicateShowsBadgeAndStartsUnselected`) eklemekti.
 - **Ders:** Birden çok kaydı tek seferde yazan akışta ortada hata olursa geri alma (rollback) ve kaydetmeden önce doğrulama gerekir; yükleme başarısızsa tekrar tespiti sessizce kapanacağından kaydet düğmesi de kapatıldı.
+
+### Koşu #255 — Sakin sekme geçişi
+
+- **Ne yapıldı:** PR #260. Sekme geçişi yana kayma yerine opaklık + hafif blur ile çapraz geçişe çevrildi (0,25 sn); arka plan rengi aynı süreyle senkron. Kademeli satır girişi yalnızca açılış sekmesinde çalışıyor.
+- **Kapı neyi yakaladı:** Reviewer: fonksiyonel test yalnızca başlığı kontrol ediyordu, satırların yerleştiğini değil (düzeltildi). `.blur(radius: 0)` hâlde kalıyor; TabView kimliğini korumak için kabul edildi, cihazda bakılacak.
+- **Ders:** Hareketin "hissi" (akıcılık, blur maliyeti) birim test ve simülatör yakalamasıyla ölçülemez; gerçek cihazda elle bakmak açık kalan iş.
+
+### Koşu #256 — Ekstre toplamı ve gerçek ekstre formatı
+
+- **Ne yapıldı:** PR #262 (46 dk, 9 verify, 0 başarısız, 1 düzeltme turu). Ayrıştırıcı `AxN=T k.Taksit` satırlarını ve Türkçe ay adlı tarihleri okuyor; ekstre toplamı (asgari ödeme hariç) gözden geçirme ekranında, seçili ve kayıtlı taksitlerin bu ayki tutarı çıkarılarak tek seferlik ödeme olarak sunuluyor.
+- **Asıl ders:** Ayrıştırıcı daha önce yalnızca uydurma formatlarla test edilmişti ve gerçek bir ekstrede çalışmadı. Uydurma girdiyle yazılan test, gerçek biçimi bilmediği için yanlış güveni besliyor; gerçek satırları (kişisel veri olmadan) birebir test girdisi yapmak gerekiyor.
+- **Kapı neyi yakaladı:** Reviewer testlerde kart adı olarak gerçek bir banka adı kullanıldığını yakaladı; repo herkese açık olduğu için nötr bir adla değiştirildi. Ayrıca özet yalnızca ilk etiketli satırı deniyordu, ve toplamı kurulamayan ödeme seçili görünüyordu (ikisi de düzeltildi).
+- **Tasarım kararı:** Çift sayımı önlemek için ekstre toplamından seçili/olası tekrar satırlarının tutarı düşülüyor ve çıkarma ekranda gösteriliyor. `monthly × count` ile toplam arasında %1 tolerans gerekti; taksit başına ±1 kuruş kuralı issue'nun kendi örnek satırlarını eliyordu.
+
+### Koşu — Harness PR #261: AX5'te sürükleme başlangıcı
+
+- **Ne yapıldı:** #256'nın AX5 yakalaması `marker not reached after 3 attempts` ile düştü: alttaki Add butonu AX5'te üç satıra sarılıp sürükleme başlangıç noktasını (yüksekliğin %80'i) tüm genişlikte kapatıyordu.
+- **Çözüm:** Sol kenar yedeğinden sonra pencerenin ortasından üçüncü bir başlangıç noktası denenir; yukarı adımlar üst kenarı aşmaz.
+- **Ders:** Harness sorunu özellik dalında değil ayrı `harness/` PR'ında çözüldü ve önce birleştirildi; düzeltme, özellik ağacına uygulanarak (commit edilmeden) doğrulandı.
