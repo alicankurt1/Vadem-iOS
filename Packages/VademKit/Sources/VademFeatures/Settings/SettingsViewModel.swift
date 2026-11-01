@@ -113,6 +113,26 @@ public final class SettingsViewModel: Identifiable {
         update { $0.isEnabled = isEnabled }
     }
 
+    /// Turns payment reminders on and asks for the notification permission when it was never
+    /// asked, even with nothing to plan yet (``ReminderScheduler/requestAuthorization()``); used by
+    /// the walkthrough's "Turn on reminders".
+    ///
+    /// - Returns: The refresh; await its `value` to know it finished.
+    @discardableResult
+    public func turnOnReminders() -> Task<Void, Never> {
+        update(asksPermission: true) { $0.isEnabled = true }
+    }
+
+    /// A new walkthrough model whose reminder choice changes this model; `isReplay` is `true` for
+    /// Settings' "Show walkthrough again" (see ``OnboardingViewModel/isReplay``).
+    public func makeOnboardingModel(
+        defaults: UserDefaults = .standard,
+        isReplay: Bool = false,
+        onFinish: @escaping @MainActor () -> Void = {}
+    ) -> OnboardingViewModel {
+        OnboardingViewModel(defaults: defaults, reminders: self, isReplay: isReplay, onFinish: onFinish)
+    }
+
     /// Turns the monthly summary on or off: saves at once, then refreshes the scheduler (turning it
     /// off cancels the pending summary) and the permission.
     ///
@@ -151,13 +171,21 @@ public final class SettingsViewModel: Identifiable {
     }
 
     // Değişiklik önce kaydedilir (UI hemen güncellenir), yenileme ardından çalışır.
-    private func update(_ change: (inout ReminderPreferences) -> Void) -> Task<Void, Never> {
+    // `asksPermission`: planlanacak bir şey olmasa da izin sorulur (tanıtımdaki "Hatırlatmaları aç").
+    private func update(
+        asksPermission: Bool = false,
+        _ change: (inout ReminderPreferences) -> Void
+    ) -> Task<Void, Never> {
         var updated = preferences
         change(&updated)
         preferences = updated
         store.save(updated)
         return Task { [scheduler] in
-            await scheduler?.refresh()
+            if asksPermission {
+                await scheduler?.requestAuthorization()
+            } else {
+                await scheduler?.refresh()
+            }
             // Açınca izin penceresi çıkmış olabilir; durum yeniden okunur.
             await self.loadAuthorization()
         }

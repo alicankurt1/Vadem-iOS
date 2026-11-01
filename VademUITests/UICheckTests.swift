@@ -57,7 +57,8 @@ final class UICheckTests: XCTestCase {
 
     @MainActor
     func testRootScreen() throws {
-        try capture(screen: "root") { app, variant in
+        // Gerçek depo açılır; ilk açılış tanıtımı kök ekranı örtmesin diye atlanır (#258).
+        try capture(screen: "root", launchArguments: ["-ui-skip-onboarding"]) { app, variant in
             // Kök ekran açılışta görünür; gezinme gerekmez. Sürüm artık Home'da yok (#154).
             Self.assertNoVersionLabel(in: app, name: "root__\(variant.name)")
         }
@@ -530,6 +531,68 @@ final class UICheckTests: XCTestCase {
             launchArguments: ["-ui-sample-data", "-ui-assistant-unavailable", "-ui-assistant"],
             sections: [.top]
         )
+    }
+
+    @MainActor
+    func testOnboardingPage1() throws {
+        try capture(
+            screen: "onboarding-page1",
+            launchArguments: ["-ui-sample-data", "-ui-onboarding"],
+            sections: [.top]
+        ) { app, _ in
+            XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.1"].waitForExistence(timeout: 10), "walkthrough page 1 not found")
+        }
+    }
+
+    @MainActor
+    func testOnboardingPage2() throws {
+        // Sayfa 2: önceki sayfalara Devam ile gidilir (yeniden açılış yok).
+        try capture(
+            screen: "onboarding-page2",
+            launchArguments: ["-ui-sample-data", "-ui-onboarding"],
+            sections: [.top]
+        ) { app, _ in
+            for page in 2...2 {
+                let next = app.buttons["onboarding.continue"]
+                XCTAssertTrue(next.waitForExistence(timeout: 5), "Continue not found before page \(page)")
+                next.tap()
+                XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.\(page)"].waitForExistence(timeout: 5))
+            }
+        }
+    }
+
+    @MainActor
+    func testOnboardingPage3() throws {
+        // Sayfa 3: önceki sayfalara Devam ile gidilir (yeniden açılış yok).
+        try capture(
+            screen: "onboarding-page3",
+            launchArguments: ["-ui-sample-data", "-ui-onboarding"],
+            sections: [.top]
+        ) { app, _ in
+            for page in 2...3 {
+                let next = app.buttons["onboarding.continue"]
+                XCTAssertTrue(next.waitForExistence(timeout: 5), "Continue not found before page \(page)")
+                next.tap()
+                XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.\(page)"].waitForExistence(timeout: 5))
+            }
+        }
+    }
+
+    @MainActor
+    func testOnboardingPage4() throws {
+        // Sayfa 4: önceki sayfalara Devam ile gidilir (yeniden açılış yok).
+        try capture(
+            screen: "onboarding-page4",
+            launchArguments: ["-ui-sample-data", "-ui-onboarding"],
+            sections: [.top]
+        ) { app, _ in
+            for page in 2...4 {
+                let next = app.buttons["onboarding.continue"]
+                XCTAssertTrue(next.waitForExistence(timeout: 5), "Continue not found before page \(page)")
+                next.tap()
+                XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.\(page)"].waitForExistence(timeout: 5))
+            }
+        }
     }
 
     @MainActor

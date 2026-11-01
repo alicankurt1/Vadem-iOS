@@ -30,6 +30,10 @@ import UIKit
 /// ``OneTimeFlowStep/launchArgument`` and ``AddFlowGalleryStep/launchArgument`` open those flows at a
 /// step (see ``HomeView/init(model:onAdd:onDataChanged:)`` for the edit forms, the assistant and the inbox).
 /// ``HomeViewModel/requestInbox()`` selects This month, where Home pushes the ``InboxView``.
+/// On first launch (``OnboardingDecision``) the ``OnboardingView`` covers the shell as a layer in
+/// the same hierarchy (not a full-screen cover); Skip or Get started fades it out. The decision reads
+/// the repository synchronously in `init` (so Home never flashes) and is taken once per process:
+/// a re-created shell neither reads the store again nor reopens or re-marks the walkthrough.
 @MainActor
 public struct AppTabShell: View {
     @State private var model: HomeViewModel
@@ -55,6 +59,10 @@ public struct AppTabShell: View {
     /// Extra space between the end of a tab's content and the top of the ``FloatingTabBar``, in points.
     public static let barGap: CGFloat = 12
 
+    // İlk açılış tanıtımı; nil iken kapalı. Kabuğun içinde katman olarak çizilir (tam ekran örtü değil),
+    // böylece açılış logosu geçişi üstte kalır ve her zamanki gibi solar.
+    @State private var onboardingModel: OnboardingViewModel?
+
     // "Ekle" sayfası açık mı.
     @State private var isAddSheetPresented: Bool
     // Ekle sayfasında seçilen tür; sayfa kapanınca o türün formu açılır.
@@ -77,7 +85,8 @@ public struct AppTabShell: View {
         _model = State(initialValue: model)
         _analyticsModel = State(initialValue: model.makeAnalyticsModel())
         _cardListModel = State(initialValue: model.makeCardListModel())
-        _settingsModel = State(initialValue: model.makeSettingsModel())
+        let settings = model.makeSettingsModel()
+        _settingsModel = State(initialValue: settings)
         var initialTab = AppTab.home
         var initialAddSheetPresented = false
         var initialAddModel: AddInstallmentViewModel?
@@ -134,6 +143,18 @@ public struct AppTabShell: View {
         _oneTimeFlowModel = State(initialValue: initialOneTimeFlowModel)
         #endif
         launchTab = initialTab
+        // Karar ilk karede verilir (veri depodan eşzamanlı okunur): Home bir an görünüp kaybolmaz.
+        // Süreç başına bir kez: kabuk yeniden kurulursa depo tekrar okunmaz, görüldü tekrar yazılmaz.
+        var initialOnboardingModel: OnboardingViewModel?
+        switch Self.takeLaunchOnboardingDecision(for: model) {
+        case .show:
+            // Ayarlar sekmesiyle aynı model: seçim Ayarlar'daki hatırlatma anahtarında görünür.
+            initialOnboardingModel = settings.makeOnboardingModel()
+        case .hideAndMarkSeen:
+            OnboardingViewModel.markSeen()
+        case .hide:
+            break
+        }
         _selection = State(initialValue: initialTab)
         _displayedTab = State(initialValue: initialTab)
         _ambientTab = State(initialValue: initialTab)
@@ -141,9 +162,55 @@ public struct AppTabShell: View {
         _addModel = State(initialValue: initialAddModel)
         _addCardModel = State(initialValue: initialAddCardModel)
         _addSubscriptionModel = State(initialValue: initialAddSubscriptionModel)
+        _onboardingModel = State(initialValue: initialOnboardingModel)
+    }
+
+    // Açılış kararı alındı mı; ana aktörde, süreç boyunca bir kez true olur.
+    // Bayrak süreç genelidir: aynı süreçte kurulan ikinci bir kabuk (ör. yeniden kurulum) `.hide` alır.
+    private static var hasTakenLaunchOnboardingDecision = false
+
+    // Açılış kararı yalnızca ilk çağrıda hesaplanır (yan etkiler dahil); sonraki çağrılar `.hide` döner.
+    private static func takeLaunchOnboardingDecision(for model: HomeViewModel) -> OnboardingDecision {
+        guard !hasTakenLaunchOnboardingDecision else { return .hide }
+        hasTakenLaunchOnboardingDecision = true
+        return onboardingDecision(for: model)
+    }
+
+    // Görüldü sürümü, veri olup olmadığı ve başlatma argümanları; depo okunamazsa tanıtım açılmaz.
+    private static func onboardingDecision(for model: HomeViewModel) -> OnboardingDecision {
+        let arguments = ProcessInfo.processInfo.arguments
+        let seenVersion = OnboardingViewModel.seenVersion()
+        guard let hasData = try? model.hasAnyData() else {
+            // Okuma hatasında yalnızca açık istek (UI testi) tanıtımı açar; görüldü kaydedilmez.
+            let decision = OnboardingDecision.decide(seenVersion: seenVersion, hasData: true, launchArguments: arguments)
+            return decision == .show ? .show : .hide
+        }
+        return OnboardingDecision.decide(seenVersion: seenVersion, hasData: hasData, launchArguments: arguments)
     }
 
     public var body: some View {
+        shell
+            // Tanıtım açıkken altındaki kabuk VoiceOver'da ve dokunuşta yok sayılır.
+            .accessibilityHidden(onboardingModel != nil)
+            .overlay {
+                if let onboardingModel {
+                    OnboardingView(model: onboardingModel)
+                        .transition(.opacity)
+                        .onChange(of: onboardingModel.isFinished) { _, isFinished in
+                            if isFinished { closeOnboarding() }
+                        }
+                }
+            }
+    }
+
+    // Tanıtım kapanır; hareket açıksa kısa bir solma ile (Reduce Motion ve -ui-static-motion'da anlık).
+    private func closeOnboarding() {
+        withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+            onboardingModel = nil
+        }
+    }
+
+    private var shell: some View {
         // Sistem TabView'i sekmeleri canlı tutar ve yalnızca seçili sekmeyi hiyerarşide (VoiceOver ve
         // UI testleri dahil) gösterir; sistem çubuğu gizli, yerine yüzen çubuk çizilir.
         TabView(selection: $displayedTab) {

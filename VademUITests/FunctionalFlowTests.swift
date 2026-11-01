@@ -554,6 +554,111 @@ final class FunctionalFlowTests: XCTestCase {
         )
     }
 
+    // MARK: İlk açılış tanıtımı (#258)
+
+    @MainActor
+    private func launchOnboarding() -> XCUIApplication {
+        let app = launchHome(extraArguments: ["-ui-onboarding"])
+        XCTAssertTrue(app.descendants(matching: .any)["onboarding"].waitForExistence(timeout: 10), "walkthrough must open")
+        XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.1"].waitForExistence(timeout: 5), "page 1 must show")
+        XCTAssertTrue(
+            app.descendants(matching: .any)["onboarding.pageIndicator"].waitForExistence(timeout: 5),
+            "page indicator must show"
+        )
+        return app
+    }
+
+    @MainActor
+    private func pageToLast(in app: XCUIApplication) {
+        for page in 2...4 {
+            let next = app.buttons["onboarding.continue"]
+            XCTAssertTrue(next.waitForExistence(timeout: 5), "Continue not found before page \(page)")
+            next.tap()
+            XCTAssertTrue(
+                app.descendants(matching: .any)["onboarding.page.\(page)"].waitForExistence(timeout: 5),
+                "page \(page) must show"
+            )
+        }
+    }
+
+    @MainActor
+    func testOnboardingSkipGoesToHome() throws {
+        let app = launchOnboarding()
+        let skip = app.buttons["onboarding.skip"]
+        XCTAssertTrue(skip.exists, "Skip must show on page 1")
+        skip.tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must show after Skip")
+        XCTAssertFalse(app.descendants(matching: .any)["onboarding"].waitForExistence(timeout: 2), "walkthrough must close")
+    }
+
+    @MainActor
+    func testOnboardingPagesThroughToGetStartedGoesToHome() throws {
+        let app = launchOnboarding()
+        pageToLast(in: app)
+        XCTAssertFalse(app.buttons["onboarding.skip"].exists, "Skip must not show on the last page")
+        XCTAssertTrue(app.buttons["onboarding.turnOnReminders"].exists, "Turn on reminders must show on the last page")
+        XCTAssertTrue(app.buttons["onboarding.notNow"].exists, "Not now must show on the last page")
+        let start = app.buttons["onboarding.getStarted"]
+        XCTAssertTrue(start.exists, "Get started must replace Continue on the last page")
+        start.tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must show after Get started")
+        XCTAssertFalse(app.descendants(matching: .any)["onboarding"].waitForExistence(timeout: 2), "walkthrough must close")
+    }
+
+    @MainActor
+    func testOnboardingNotNowKeepsRemindersOffAndDoesNotBlock() throws {
+        let app = launchOnboarding()
+        pageToLast(in: app)
+        app.buttons["onboarding.notNow"].tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["onboarding.reminderStatus"].waitForExistence(timeout: 5),
+            "a status line must replace the reminder buttons"
+        )
+        XCTAssertFalse(app.buttons["onboarding.turnOnReminders"].exists, "reminder buttons must go after a choice")
+        app.buttons["onboarding.getStarted"].tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 5), "Home must show after Get started")
+
+        // Hatırlatmalar Ayarlar'da kapalı kalır.
+        app.buttons["tab.settings"].tap()
+        let toggle = app.switches["settings.reminders"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "reminders toggle not found")
+        XCTAssertEqual(toggle.value as? String, "0", "Not now must leave reminders off")
+    }
+
+    @MainActor
+    func testSettingsShowWalkthroughAgainOpensAndSkipReturns() throws {
+        let app = launchHome()
+        XCTAssertFalse(app.descendants(matching: .any)["onboarding"].exists, "sample-data launches must skip the walkthrough")
+        let gear = app.buttons["tab.settings"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 10), "settings tab not found")
+        gear.tap()
+        let row = element("settings.showWalkthrough", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "Show walkthrough again row not found")
+        row.tap()
+        XCTAssertTrue(element("onboarding.page.1", in: app).waitForExistence(timeout: 5), "walkthrough must open")
+        app.buttons["onboarding.skip"].tap()
+        XCTAssertTrue(app.switches["settings.reminders"].waitForExistence(timeout: 5), "must return to Settings")
+        XCTAssertFalse(element("onboarding", in: app).exists, "walkthrough must close")
+    }
+
+    @MainActor
+    func testReplayWithRemindersOnShowsNoReminderButtonsAndKeepsThemOn() throws {
+        // Örnek veride hatırlatmalar açık başlar; yeniden gösterimde seçim sunulmaz ve kapatılmaz.
+        let app = launchHome()
+        app.buttons["tab.settings"].tap()
+        let row = element("settings.showWalkthrough", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "Show walkthrough again row not found")
+        row.tap()
+        pageToLast(in: app)
+        XCTAssertFalse(app.buttons["onboarding.notNow"].exists, "Not now must not show on a replay with reminders on")
+        XCTAssertFalse(app.buttons["onboarding.turnOnReminders"].exists, "Turn on reminders must not show")
+        XCTAssertTrue(element("onboarding.reminderStatus", in: app).exists, "status line must say reminders are on")
+        app.buttons["onboarding.getStarted"].tap()
+        let toggle = app.switches["settings.reminders"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "must return to Settings")
+        XCTAssertEqual(toggle.value as? String, "1", "replay must keep reminders on")
+    }
+
     @MainActor
     func testSettingsTogglesRemindersAndPicksTiming() throws {
         let app = launchHome()

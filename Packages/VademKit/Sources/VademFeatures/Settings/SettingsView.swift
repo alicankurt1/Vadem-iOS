@@ -13,6 +13,7 @@ import VademCore
 /// `settings.timing.options` with `settings.timing.option.<index>`, `settings.permissionDenied`
 /// (explanation), `settings.openSystemSettings` and `settings.version` (app version).
 /// Shown inside the shell's `NavigationStack`. A Privacy Policy row (`settings.privacy`) pushes the ``PrivacyPolicyView``.
+/// A "Show walkthrough again" row (`settings.showWalkthrough`) opens the ``OnboardingView`` full screen.
 @MainActor
 public struct SettingsView: View {
     /// The launch argument that opens the app on the Settings tab (UI check).
@@ -29,6 +30,8 @@ public struct SettingsView: View {
     @State private var model: SettingsViewModel
     @State private var isChoosingTiming = false
     @State private var isShowingPrivacyPolicy: Bool
+    // "Tanıtımı yeniden göster" ile açılan tanıtım; nil iken kapalı.
+    @State private var onboardingModel: OnboardingViewModel?
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -88,6 +91,8 @@ public struct SettingsView: View {
                 permissionDeniedCard
                     .motionEntry(order: .hero)
             }
+            walkthroughCard
+                .motionEntry(order: .list)
             privacyCard
                 .motionEntry(order: .list)
             versionCard
@@ -107,6 +112,15 @@ public struct SettingsView: View {
         .navigationDestination(isPresented: $isShowingPrivacyPolicy) {
             PrivacyPolicyView()
         }
+        #if os(iOS)
+        .fullScreenCover(item: $onboardingModel) { onboarding in
+            OnboardingView(model: onboarding)
+        }
+        #else
+        .sheet(item: $onboardingModel) { onboarding in
+            OnboardingView(model: onboarding)
+        }
+        #endif
         .navigationTitle(Text("Settings", bundle: .module))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -163,6 +177,32 @@ public struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("settings.openSystemSettings")
+        }
+    }
+
+    // Tanıtımı yeniden açan satır; Geç ya da Başla tanıtımı kapatır.
+    private var walkthroughCard: some View {
+        FormCard {
+            Button {
+                onboardingModel = model.makeOnboardingModel(isReplay: true) { onboardingModel = nil }
+            } label: {
+                HStack(spacing: 8) {
+                    Text("Show walkthrough again", bundle: .module)
+                        .font(.body)
+                        .foregroundStyle(Color.vademTextPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color.vademBrand)
+                        .accessibilityHidden(true)
+                }
+                .multilineTextAlignment(.leading)
+                .frame(minHeight: FormLayout.minRowHeight)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("Opens the walkthrough", bundle: .module))
+            .accessibilityIdentifier("settings.showWalkthrough")
         }
     }
 
