@@ -2,10 +2,12 @@ import Foundation
 import Observation
 import VademCore
 
-/// Reads a statement file through a ``StatementTextSource`` and finds its installments with ``VademCore/StatementParser``.
+/// Reads a statement file through a ``StatementTextSource`` and finds its installments and statement total
+/// with ``VademCore/StatementParser``.
 ///
 /// ``state`` goes `idle → reading → found / noText / noInstallments / failed`; a new file can be read from any
-/// state except `reading`. Found candidates are also handed to ``onCandidatesFound`` (the review step hooks in there).
+/// state except `reading`. A statement with a total and due date but no installment line is still found (with
+/// no candidates), so its total can be reviewed. Found candidates are also handed to ``onCandidatesFound``.
 @MainActor
 @Observable
 public final class StatementImportViewModel: Identifiable {
@@ -15,11 +17,12 @@ public final class StatementImportViewModel: Identifiable {
         case idle
         /// A file is being read.
         case reading
-        /// Installment lines were found, in statement order.
-        case found([InstallmentCandidate])
+        /// Installment lines (in statement order) or a statement summary were found; `candidates` may be empty
+        /// only when `summary` is not `nil`.
+        case found([InstallmentCandidate], summary: StatementSummary?)
         /// The file had no readable text.
         case noText
-        /// The file had text but no installment line.
+        /// The file had text but no installment line and no statement summary.
         case noInstallments
         /// The file could not be opened or read.
         case failed
@@ -28,7 +31,7 @@ public final class StatementImportViewModel: Identifiable {
     /// The current state.
     public private(set) var state: State = .idle
 
-    /// Called with the candidates whenever a read ends in ``State/found(_:)``; the hand-off to the review step.
+    /// Called with the candidates whenever a read ends in ``State/found(_:summary:)``.
     public var onCandidatesFound: (([InstallmentCandidate]) -> Void)?
 
     private let source: any StatementTextSource
@@ -86,18 +89,19 @@ public final class StatementImportViewModel: Identifiable {
         state = .failed
     }
 
-    /// Turns text lines into a result: parses them and sets ``state`` (no lines means no text).
+    /// Turns text lines into a result: parses them and sets ``state`` (no lines means no text, neither
+    /// installments nor a summary means no installments).
     public func show(lines: [String]) {
         guard lines.contains(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) else {
             state = .noText
             return
         }
-        let candidates = StatementParser.parse(lines: lines)
-        if candidates.isEmpty {
+        let result = StatementParser.parseStatement(lines: lines)
+        if result.candidates.isEmpty, result.summary == nil {
             state = .noInstallments
         } else {
-            state = .found(candidates)
-            onCandidatesFound?(candidates)
+            state = .found(result.candidates, summary: result.summary)
+            onCandidatesFound?(result.candidates)
         }
     }
 }

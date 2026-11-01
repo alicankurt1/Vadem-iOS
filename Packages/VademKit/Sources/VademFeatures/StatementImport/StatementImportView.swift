@@ -7,23 +7,26 @@ import VademCore
 /// (photo picker); the file is read on the device and the installments found are listed read-only.
 ///
 /// While reading, a progress indicator shows (a static symbol under Reduce Motion or `-ui-static-motion`);
-/// nothing readable, no installment and a failed read each get their own message. Nothing is saved here:
-/// with `onReview`, found installments get a "Review and add" button (``reviewIdentifier``) that hands them to
-/// the review step (``StatementReviewView``).
+/// nothing readable, no installment and a failed read each get their own message. A found statement total is
+/// shown with its due date (``summaryIdentifier``). Nothing is saved here: with `onReview`, a found result gets a
+/// "Review and add" button (``reviewIdentifier``) that hands the installments and the summary to the review step
+/// (``StatementReviewView``).
 /// Identifiers: `statementImport.back`, `statementImport.close`, `statementImport.title`,
 /// `statementImport.choosePDF`, `statementImport.chooseImage`, `statementImport.reading`,
 /// `statementImport.noText`, `statementImport.noInstallments`, `statementImport.failed`,
 /// `statementImport.results`, `statementImport.candidate.<index>` (0-based, statement order) and
-/// `statementImport.review`.
+/// `statementImport.summary` and `statementImport.review`.
 @MainActor
 public struct StatementImportView: View {
     /// The "Review and add" button shown with the found installments.
     public nonisolated static let reviewIdentifier = "statementImport.review"
+    /// The found statement total and due date.
+    public nonisolated static let summaryIdentifier = "statementImport.summary"
 
     @Bindable private var model: StatementImportViewModel
     private let onBack: () -> Void
     private let onClose: () -> Void
-    private let onReview: (([InstallmentCandidate]) -> Void)?
+    private let onReview: (([InstallmentCandidate], StatementSummary?) -> Void)?
 
     @State private var isPDFPickerPresented = false
     @State private var photoItem: PhotosPickerItem?
@@ -31,12 +34,12 @@ public struct StatementImportView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Creates the screen for `model`; `onBack` returns to the Add sheet's options, `onClose` closes the sheet
-    /// and `onReview` (if given) opens the review step with the found installments.
+    /// and `onReview` (if given) opens the review step with the found installments and statement summary.
     public init(
         model: StatementImportViewModel,
         onBack: @escaping () -> Void,
         onClose: @escaping () -> Void,
-        onReview: (([InstallmentCandidate]) -> Void)? = nil
+        onReview: (([InstallmentCandidate], StatementSummary?) -> Void)? = nil
     ) {
         self.model = model
         self.onBack = onBack
@@ -162,11 +165,16 @@ public struct StatementImportView: View {
                 Text("This file could not be opened. Try another PDF or image.", bundle: .module),
                 systemImage: "exclamationmark.triangle", identifier: "statementImport.failed"
             )
-        case .found(let candidates):
+        case .found(let candidates, let summary):
             // Bulunanlar salt okunur listelenir; kaydetmeden önce inceleme adımında onaylanır.
-            results(candidates)
+            if !candidates.isEmpty {
+                results(candidates)
+            }
+            if let summary {
+                summaryRow(summary)
+            }
             if let onReview {
-                reviewButton { onReview(candidates) }
+                reviewButton { onReview(candidates, summary) }
             }
         }
     }
@@ -245,6 +253,46 @@ public struct StatementImportView: View {
         )
     }
 
+    // Ekstre borcu ve son ödeme tarihi; VoiceOver tek öğe olarak okur.
+    private func summaryRow(_ summary: StatementSummary) -> some View {
+        let total = Money(summary.total)
+        let due = StatementImportView.dueDateText(summary.dueDate)
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 12))
+        return layout {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Statement total", bundle: .module)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Due \(due)", bundle: .module)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.vademTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            AmountText(total)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.vademTextPrimary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            Text("Statement total", bundle: .module) + Text(verbatim: ", ") + Text(AmountText.spokenLabel(total))
+                + Text(verbatim: ", ") + Text("Due \(due)", bundle: .module)
+        )
+        .accessibilityIdentifier(Self.summaryIdentifier)
+    }
+
+    /// `date` as `"2 November 2026"`-style text, in the app's language.
+    static func dueDateText(_ date: StatementDate) -> String {
+        "\(VademLocalization.dayTitle(day: date.day, of: date.yearMonth)) \(date.year)"
+    }
+
     // Birincil düğme: inceleme adımına geçer.
     private func reviewButton(_ action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -288,7 +336,7 @@ public struct StatementImportView: View {
 /// The debug launch states of the statement import screen: each launch argument opens the Add sheet
 /// on ``StatementImportView`` in that state, with a ``ScriptedStatementTextSource`` (no system picker needed).
 public enum StatementImportLaunchState: String, CaseIterable, Sendable {
-    /// `-ui-statement-import-found`: three sample installments listed.
+    /// `-ui-statement-import-found`: three sample installments and a statement total listed.
     case found
     /// `-ui-statement-import-no-installments`: text without installments.
     case noInstallments = "no-installments"
@@ -309,12 +357,15 @@ public enum StatementImportLaunchState: String, CaseIterable, Sendable {
         allCases.first { arguments.contains($0.launchArgument) }
     }
 
-    /// Synthetic statement lines with three installments and a total line the parser skips.
+    /// Synthetic statement lines with three installments, a statement total with its due date and a minimum
+    /// payment the parser never uses.
     public static let sampleLines = [
         "12.10.2026 ORNEK ELEKTRONIK 3/6 1.234,56 TL",
-        "15.10.2026 ORNEK GIYIM Taksit 2/4 450,00",
+        "15 Ekim 2026 ORNEK GIYIM 450,00x4=1.800,00 2.Taksit 0,90 450,00",
         "ORNEK MOBILYA 5. taksit / 12 2.500,00",
-        "DONEM BORCU TOPLAMI 4.184,56",
+        "Dönem Borcunuz 6.000,00 TL",
+        "Asgari Ödeme Tutarı 1.200,00 TL",
+        "Son Ödeme Tarihi 2 Kasım 2026",
     ]
 
     /// A model in this state; picking a file again reads ``sampleLines``.

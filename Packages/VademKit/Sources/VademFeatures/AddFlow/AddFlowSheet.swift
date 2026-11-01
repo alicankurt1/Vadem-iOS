@@ -15,7 +15,8 @@ import VademCore
 /// Each kind button reads its visible title and subtitle together (no custom label).
 /// With `makeStatementImport`, a fourth option "Import from statement" (``statementImportIdentifier``) opens the
 /// ``StatementImportView`` inside the sheet (back returns to the options). With `makeStatementReview` too, its
-/// "Review and add" opens the ``StatementReviewView`` (back returns to the import screen, Add closes the sheet).
+/// "Review and add" opens the ``StatementReviewView`` with the found installments and statement summary (back
+/// returns to the import screen, Add closes the sheet).
 /// Identifiers: `add.sheet.title`, `add.sheet.close`, `add.sheet.<kind>` (``AddFlowKind/accessibilityIdentifier``),
 /// `add.sheet.statementImport`.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
@@ -62,7 +63,8 @@ public struct AddFlowSheet: View {
     /// import screen has no review button.
     /// In debug builds, ``InstallmentFlowView/launchArgument`` starts with the installment flow running,
     /// a ``StatementImportLaunchState/launchArgument`` with the statement import screen in that state and
-    /// ``StatementReviewView/launchArgument`` with the review of ``StatementReviewView/sampleCandidates``.
+    /// ``StatementReviewView/launchArgument`` with the review of ``StatementReviewView/sampleCandidates`` and
+    /// ``StatementReviewView/sampleSummary``.
     public init(
         makeInstallmentFlow: (() -> InstallmentFlowViewModel)? = nil,
         makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)? = nil,
@@ -81,8 +83,10 @@ public struct AddFlowSheet: View {
         self.onSelect = onSelect
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains(StatementReviewView.launchArgument), let makeStatementReview {
-            // İnceleme ekranı örnek adaylarla doğrudan açılır; geri dönülünce seçenekler görünür.
-            _statementReview = State(initialValue: makeStatementReview(StatementReviewView.sampleCandidates))
+            // İnceleme ekranı örnek adaylar ve örnek ekstre borcuyla doğrudan açılır; geri dönülünce seçenekler görünür.
+            let review = makeStatementReview(StatementReviewView.sampleCandidates)
+            review.summary = StatementReviewView.sampleSummary
+            _statementReview = State(initialValue: review)
         }
         if let launchState = StatementImportLaunchState.state(in: ProcessInfo.processInfo.arguments),
            let makeStatementImport {
@@ -131,10 +135,12 @@ public struct AddFlowSheet: View {
                     onBack: { showChooser() },
                     onClose: { dismiss() },
                     onReview: makeStatementReview.map { make in
-                        { candidates in
+                        { candidates, summary in
                             withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
-                                // Her incelemede yeni model: önceki düzenlemeler taşınmaz.
-                                statementReview = make(candidates)
+                                // Her incelemede yeni model: önceki düzenlemeler taşınmaz; ekstre borcu da teklif edilir.
+                                let review = make(candidates)
+                                review.summary = summary
+                                statementReview = review
                             }
                         }
                     }
