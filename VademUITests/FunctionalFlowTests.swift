@@ -106,6 +106,39 @@ final class FunctionalFlowTests: XCTestCase {
     }
 
     @MainActor
+    func testAddSheetStatementImportOptionOpensImportScreenAndBackReturns() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Home add button not found")
+        add.tap()
+
+        // Dördüncü seçenek: ekstreden içe aktarma.
+        chooseInSheet("statementImport", in: app)
+        XCTAssertTrue(element("statementImport.title", in: app).waitForExistence(timeout: 5), "import screen did not open")
+        XCTAssertTrue(element("statementImport.choosePDF", in: app).exists, "Choose PDF not shown")
+        XCTAssertTrue(element("statementImport.chooseImage", in: app).exists, "Choose image not shown")
+
+        // Geri seçeneklere döner; seçenekler yine görünür.
+        app.buttons["statementImport.back"].tap()
+        XCTAssertTrue(element("add.sheet.statementImport", in: app).waitForExistence(timeout: 5), "back must return to the options")
+        XCTAssertTrue(element("add.sheet.installment", in: app).exists, "kind options must still be shown")
+
+        // Yeniden açılıp kapat Home'a döner.
+        chooseInSheet("statementImport", in: app)
+        XCTAssertTrue(app.buttons["statementImport.close"].waitForExistence(timeout: 5), "close button not found")
+        app.buttons["statementImport.close"].tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "Home must be visible after closing")
+    }
+
+    @MainActor
+    func testStatementImportFoundLaunchStateListsCandidates() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-statement-import-found"])
+        XCTAssertTrue(element("statementImport.results", in: app).waitForExistence(timeout: 10), "results not shown")
+        XCTAssertTrue(element("statementImport.candidate.0", in: app).exists, "first candidate not shown")
+        XCTAssertTrue(element("statementImport.candidate.2", in: app).exists, "third candidate not shown")
+    }
+
+    @MainActor
     func testAddFlowKeypadTypesAmountAndContinueNeedsPositiveAmount() throws {
         let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-add-flow-keypad"])
         let continueButton = app.buttons["flow.continue"]
