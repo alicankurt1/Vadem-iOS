@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The bottom sheet Home opens from Add: "What do you want to add?" and three large buttons,
+/// The bottom sheet Home opens from Add: "What do you want to add?" and three large kind buttons,
 /// Installment, Subscription and Payment (``AddFlowKind``).
 ///
 /// Picking a kind that ``AddFlowKind/opensExistingForm`` calls `onSelect`; the presenter closes
@@ -12,18 +12,24 @@ import SwiftUI
 /// The content scrolls and the sheet always opens at full height: with `presentationDetents`
 /// (medium or even large only) the accessibility audit reported every multi-word text as clipped.
 /// Each kind button reads its visible title and subtitle together (no custom label).
-/// Identifiers: `add.sheet.title`, `add.sheet.close`, `add.sheet.<kind>` (``AddFlowKind/accessibilityIdentifier``).
+/// With `makeStatementImport`, a fourth option "Import from statement" (``statementImportIdentifier``) opens the
+/// ``StatementImportView`` inside the sheet (back returns to the options).
+/// Identifiers: `add.sheet.title`, `add.sheet.close`, `add.sheet.<kind>` (``AddFlowKind/accessibilityIdentifier``),
+/// `add.sheet.statementImport`.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 @MainActor
 public struct AddFlowSheet: View {
     /// The launch argument that opens Home with this sheet already presented (UI check).
     public nonisolated static let launchArgument = "-ui-add-sheet"
+    /// The accessibility identifier of the "Import from statement" option.
+    public nonisolated static let statementImportIdentifier = "add.sheet.statementImport"
 
     private let onSelect: (AddFlowKind) -> Void
     private let makeInstallmentFlow: (() -> InstallmentFlowViewModel)?
     private let makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)?
     private let makeOneTimeFlow: (() -> OneTimeFlowViewModel)?
     private let makeAddCardModel: (() -> AddCardViewModel)?
+    private let makeStatementImport: (() -> StatementImportViewModel)?
     // Sayfada süren abonelik akışının modeli; Abonelik seçilince kurulur.
     @State private var subscriptionFlow: SubscriptionFlowViewModel?
     // Sayfanın içinde süren akış; nil iken üç düğme görünür.
@@ -32,9 +38,10 @@ public struct AddFlowSheet: View {
     @State private var installmentFlow: InstallmentFlowViewModel?
     // Süren tek seferlik ödeme akışının modeli; her seçimde yenisi kurulur.
     @State private var oneTimeFlow: OneTimeFlowViewModel?
+    // Ekstreden içe aktarma ekranının modeli; nil değilken sayfada o ekran görünür.
+    @State private var statementImport: StatementImportViewModel?
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Creates the sheet; `onSelect` gets the kinds that open an existing form and
@@ -44,20 +51,30 @@ public struct AddFlowSheet: View {
     /// Subscription goes to `onSelect` like a kind that opens an existing form.
     /// `makeOneTimeFlow` creates the model of the in-sheet one-time payment flow (Payment); without it
     /// Payment goes to `onSelect`.
-    /// In debug builds, ``InstallmentFlowView/launchArgument`` starts with the installment flow running.
+    /// `makeStatementImport` adds a fourth option, "Import from statement", that opens ``StatementImportView``
+    /// inside the sheet with a new model each time; without it the option is hidden.
+    /// In debug builds, ``InstallmentFlowView/launchArgument`` starts with the installment flow running and
+    /// a ``StatementImportLaunchState/launchArgument`` with the statement import screen in that state.
     public init(
         makeInstallmentFlow: (() -> InstallmentFlowViewModel)? = nil,
         makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)? = nil,
         makeAddCardModel: (() -> AddCardViewModel)? = nil,
         makeOneTimeFlow: (() -> OneTimeFlowViewModel)? = nil,
+        makeStatementImport: (() -> StatementImportViewModel)? = nil,
         onSelect: @escaping (AddFlowKind) -> Void
     ) {
         self.makeInstallmentFlow = makeInstallmentFlow
         self.makeSubscriptionFlow = makeSubscriptionFlow
         self.makeAddCardModel = makeAddCardModel
         self.makeOneTimeFlow = makeOneTimeFlow
+        self.makeStatementImport = makeStatementImport
         self.onSelect = onSelect
         #if DEBUG
+        if let launchState = StatementImportLaunchState.state(in: ProcessInfo.processInfo.arguments),
+           let makeStatementImport {
+            // Boş ekran gerçek kaynakla, sonuç durumları sahte kaynakla açılır.
+            _statementImport = State(initialValue: launchState == .idle ? makeStatementImport() : launchState.makeModel())
+        }
         if ProcessInfo.processInfo.arguments.contains(InstallmentFlowView.launchArgument), let makeInstallmentFlow {
             _installmentFlow = State(initialValue: makeInstallmentFlow())
             _inlineKind = State(initialValue: .installment)
@@ -87,6 +104,12 @@ public struct AddFlowSheet: View {
                         inlineKind = nil
                     }
                 }
+            } else if let statementImport {
+                StatementImportView(
+                    model: statementImport,
+                    onBack: { showChooser() },
+                    onClose: { dismiss() }
+                )
             } else {
                 chooser
             }
@@ -130,6 +153,7 @@ public struct AddFlowSheet: View {
             inlineKind = nil
             installmentFlow = nil
             oneTimeFlow = nil
+            statementImport = nil
         }
     }
 
@@ -165,6 +189,9 @@ public struct AddFlowSheet: View {
                     ForEach(AddFlowKind.allCases) { kind in
                         kindButton(kind)
                     }
+                    if let makeStatementImport {
+                        statementImportButton(makeStatementImport)
+                    }
                 }
                 // 20 pt yan boşluk: sol kenarda her zaman arka plan rengi kalır.
                 .padding(.horizontal, 20)
@@ -175,51 +202,91 @@ public struct AddFlowSheet: View {
 
     // Büyük düğme: simge, başlık ve altında kısa açıklama; VoiceOver ikisini birlikte okur.
     private func kindButton(_ kind: AddFlowKind) -> some View {
-        Button {
+        optionButton(
+            title: kind.title, subtitle: kind.subtitle, systemImage: kind.systemImage,
+            identifier: kind.accessibilityIdentifier
+        ) {
             select(kind)
-        } label: {
-            // Erişilebilir yazı boyutlarında simge metnin üstünde ve ok gizli: metin tüm genişliği
-            // alır, kelimeler ortadan bölünmez. AnyLayout metinlerin kimliğini korur.
-            let stacked = dynamicTypeSize.isAccessibilitySize
-            let layout = stacked
-                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-                : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
-            layout {
-                Image(systemName: kind.systemImage)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(Color.vademBrand)
-                    .frame(minWidth: 32, alignment: .leading)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(kind.title)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(Color.vademTextPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(kind.subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.vademTextSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .multilineTextAlignment(.leading)
-                if !stacked {
-                    Image(systemName: "chevron.right")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(Color.vademTextSecondary)
-                        .accessibilityHidden(true)
-                }
+        }
+    }
+
+    // Ekstreden içe aktarma: dördüncü seçenek, aynı görünümde.
+    private func statementImportButton(_ makeStatementImport: @escaping () -> StatementImportViewModel) -> some View {
+        optionButton(
+            title: String(localized: "Import from statement", bundle: .module),
+            subtitle: String(localized: "Find installments in a PDF or image", bundle: .module),
+            systemImage: "doc.text.viewfinder",
+            identifier: Self.statementImportIdentifier
+        ) {
+            withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+                // Her açılışta baştan: önceki sonuç taşınmaz.
+                statementImport = makeStatementImport()
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-            .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .contentShape(.rect)
+        }
+    }
+
+    private func optionButton(
+        title: String, subtitle: String, systemImage: String, identifier: String, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            AddFlowOptionLabel(title: title, subtitle: subtitle, systemImage: systemImage)
         }
         .buttonStyle(.plain)
         // Etiket görünen başlık + açıklamanın kendisi: özel etiket görünen metinden farklı olunca
         // denetim metni "kırpılmış" sayıyor.
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier(kind.accessibilityIdentifier)
+        .accessibilityIdentifier(identifier)
+    }
+}
+
+/// The look of a large Add sheet option: symbol, title and a short line under it, on a surface card.
+///
+/// At accessibility text sizes the symbol sits above the text and the chevron is hidden, so words never break.
+@MainActor
+struct AddFlowOptionLabel: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        // Erişilebilir yazı boyutlarında simge metnin üstünde ve ok gizli: metin tüm genişliği
+        // alır, kelimeler ortadan bölünmez. AnyLayout metinlerin kimliğini korur.
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+        layout {
+            Image(systemName: systemImage)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(Color.vademBrand)
+                .frame(minWidth: 32, alignment: .leading)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.vademTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .multilineTextAlignment(.leading)
+            if !stacked {
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.vademTextSecondary)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+        .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .contentShape(.rect)
     }
 }
 

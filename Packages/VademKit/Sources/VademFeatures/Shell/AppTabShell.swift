@@ -24,7 +24,8 @@ import UIKit
 /// In debug builds ``AppTab/launchTab(in:)`` picks the first tab. ``AddInstallmentView/launchArgument``,
 /// ``AddCardView/launchArgument`` and ``AddSubscriptionView/launchArgument`` open their add forms
 /// (all errors shown with their `errorsLaunchArgument`); ``AddFlowSheet/launchArgument`` and
-/// ``InstallmentFlowView/launchArgument`` open the Add sheet; ``SubscriptionFlowStep/launchArgument``,
+/// ``InstallmentFlowView/launchArgument`` open the Add sheet (``StatementImportLaunchState/launchArgument`` opens it
+/// on the statement import screen); ``SubscriptionFlowStep/launchArgument``,
 /// ``OneTimeFlowStep/launchArgument`` and ``AddFlowGalleryStep/launchArgument`` open those flows at a
 /// step (see ``HomeView/init(model:onAdd:onDataChanged:)`` for the edit forms, the assistant and the inbox).
 /// ``HomeViewModel/requestInbox()`` selects This month, where Home pushes the ``InboxView``.
@@ -105,7 +106,8 @@ public struct AppTabShell: View {
             }
             initialAddSubscriptionModel = addSubscriptionModel
         } else if arguments.contains(AddFlowSheet.launchArgument)
-                    || arguments.contains(InstallmentFlowView.launchArgument) {
+                    || arguments.contains(InstallmentFlowView.launchArgument)
+                    || StatementImportLaunchState.state(in: arguments) != nil {
             initialAddSheetPresented = true
         } else if let step = SubscriptionFlowStep.step(in: arguments) {
             // Kart adımında bir seçim görünsün diye ilk kart son kullanılan sayılır.
@@ -186,7 +188,9 @@ public struct AppTabShell: View {
                 makeInstallmentFlow: { model.makeInstallmentFlowModel() },
                 makeSubscriptionFlow: { model.makeSubscriptionFlowModel() },
                 makeAddCardModel: model.makeAddCardModel,
-                makeOneTimeFlow: { model.makeOneTimeFlowModel() }
+                makeOneTimeFlow: { model.makeOneTimeFlowModel() },
+                // Ekstre cihazda okunur; bulunan taksitler henüz kaydedilmez.
+                makeStatementImport: { StatementImportViewModel(source: OnDeviceStatementTextSource()) }
             ) { kind in
                 pendingAddKind = kind
                 isAddSheetPresented = false

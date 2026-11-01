@@ -487,6 +487,40 @@
         }
       }
     },
+    "A screenshot or photo of your statement" : {
+      "comment" : "Statement import: subtitle of Choose image",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A screenshot or photo of your statement"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstrenin ekran görüntüsü ya da fotoğrafı"
+          }
+        }
+      }
+    },
+    "A statement downloaded from your bank" : {
+      "comment" : "Statement import: subtitle of Choose PDF",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A statement downloaded from your bank"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bankandan indirdiğin ekstre"
+          }
+        }
+      }
+    },
     "Add" : {
       "localizations" : {
         "en" : {
@@ -1151,6 +1185,23 @@
         }
       }
     },
+    "Choose PDF" : {
+      "comment" : "Statement import button: opens the document picker",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose PDF"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF seç"
+          }
+        }
+      }
+    },
     "Choose a day from 1 to %lld." : {
       "localizations" : {
         "en" : {
@@ -1196,6 +1247,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld ile %lld arasında bir yenilenme günü seçin."
+          }
+        }
+      }
+    },
+    "Choose image" : {
+      "comment" : "Statement import button: opens the photo picker",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose image"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resim seç"
           }
         }
       }
@@ -1847,6 +1915,23 @@
         }
       }
     },
+    "Find installments in a PDF or image" : {
+      "comment" : "Add sheet option subtitle for statement import",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find installments in a PDF or image"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF ya da resimdeki taksitleri bul"
+          }
+        }
+      }
+    },
     "First charge month" : {
       "localizations" : {
         "en" : {
@@ -2076,6 +2161,23 @@
         }
       }
     },
+    "Import from statement" : {
+      "comment" : "Add sheet option and screen title: read installments from a statement file",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import from statement"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstreden aktar"
+          }
+        }
+      }
+    },
     "In %lld days" : {
       "comment" : "Due chip, 2 or more days ahead",
       "localizations" : {
@@ -2244,6 +2346,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taksitler bitti"
+          }
+        }
+      }
+    },
+    "Installments found" : {
+      "comment" : "Statement import: header of the found installments list",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installments found"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bulunan taksitler"
           }
         }
       }
@@ -2669,6 +2788,23 @@
         }
       }
     },
+    "No installments were found in this statement." : {
+      "comment" : "Statement import: text read but no installment line",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No installments were found in this statement."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ekstrede taksit bulunamadı."
+          }
+        }
+      }
+    },
     "No notifications yet" : {
       "localizations" : {
         "en" : {
@@ -2780,6 +2916,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu ay ödeme yok."
+          }
+        }
+      }
+    },
+    "Nothing readable was found in this file. Try a clearer image or another PDF." : {
+      "comment" : "Statement import: the file has no readable text",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing readable was found in this file. Try a clearer image or another PDF."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu dosyada okunabilir bir metin bulunamadı. Daha net bir resim ya da başka bir PDF dene."
           }
         }
       }
@@ -3230,6 +3383,23 @@
         }
       }
     },
+    "Pick your statement as a PDF or an image. It is read on this device; nothing is uploaded." : {
+      "comment" : "Statement import intro",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick your statement as a PDF or an image. It is read on this device; nothing is uploaded."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstreni PDF ya da resim olarak seç. Bu cihazda okunur; hiçbir yere yüklenmez."
+          }
+        }
+      }
+    },
     "Pills" : {
       "comment" : "Design gallery section",
       "localizations" : {
@@ -3292,6 +3462,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Soru"
+          }
+        }
+      }
+    },
+    "Reading the statement…" : {
+      "comment" : "Statement import progress",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the statement…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstre okunuyor…"
           }
         }
       }
@@ -4138,6 +4325,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu cihaz Apple Intelligence'ı desteklemiyor, bu yüzden asistan burada çalışamaz."
+          }
+        }
+      }
+    },
+    "This file could not be opened. Try another PDF or image." : {
+      "comment" : "Statement import: the file could not be opened",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This file could not be opened. Try another PDF or image."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu dosya açılamadı. Başka bir PDF ya da resim dene."
           }
         }
       }
