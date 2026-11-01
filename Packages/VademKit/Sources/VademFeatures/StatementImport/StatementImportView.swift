@@ -194,7 +194,7 @@ public struct StatementImportView: View {
         .accessibilityIdentifier("statementImport.results")
     }
 
-    // Satıcı, taksit sırası (3/6) ve taksit tutarı; VoiceOver hepsini tek öğe olarak okur.
+    // Satıcı, taksit sırası (3/6) ve taksit tutarı; VoiceOver hepsini tek öğe olarak, tam etiketle okur.
     private func candidateRow(_ candidate: InstallmentCandidate) -> some View {
         let stacked = dynamicTypeSize.isAccessibilitySize
         let layout = stacked
@@ -210,7 +210,6 @@ public struct StatementImportView: View {
                     .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(Color.vademTextSecondary)
-                    .accessibilityLabel(Text("installment \(candidate.currentInstallment) of \(candidate.totalInstallments)", bundle: .module))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             AmountText(Money(candidate.installmentAmount))
@@ -219,7 +218,14 @@ public struct StatementImportView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        // Satır tek öğe ve etiketi tam ("taksit 3/6"); görünen "3/6" metni ayrı, kısa etiketli öğe olmaz,
+        // böylece denetim onu kırpılmış metin sanmaz.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            Text(candidate.merchant) + Text(verbatim: ", ")
+                + Text("installment \(candidate.currentInstallment) of \(candidate.totalInstallments)", bundle: .module)
+                + Text(verbatim: ", ") + Text(AmountText.spokenLabel(Money(candidate.installmentAmount)))
+        )
     }
 
     // Ekle sayfasındaki seçeneklerle aynı görünüm: simge, başlık ve altında kısa açıklama.
@@ -243,6 +249,7 @@ public struct StatementImportView: View {
     }
 }
 
+#if DEBUG
 /// The debug launch states of the statement import screen: each launch argument opens the Add sheet
 /// on ``StatementImportView`` in that state, with a ``ScriptedStatementTextSource`` (no system picker needed).
 public enum StatementImportLaunchState: String, CaseIterable, Sendable {
@@ -289,3 +296,4 @@ public enum StatementImportLaunchState: String, CaseIterable, Sendable {
         return model
     }
 }
+#endif

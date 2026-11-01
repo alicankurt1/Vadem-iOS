@@ -24,12 +24,19 @@ public struct OnDeviceStatementTextSource: StatementTextSource {
 
     public func lines(from input: StatementInput) async throws -> [String] {
         // Vision ve PDFKit eşzamanlı ve yavaş: ana aktörün dışında, ayrı bir görevde çalışır.
-        let lines = try await Task.detached(priority: .userInitiated) {
+        let work = Task.detached(priority: .userInitiated) {
             switch input {
             case .pdf(let data): try Self.pdfLines(data)
             case .image(let data): try Self.imageLines(data)
             }
-        }.value
+        }
+        // Ayrık görev iptali kendiliğinden almaz: ekran kapanınca iptal ona iletilir,
+        // okuma sayfa aralarında ve OCR'dan önce durur.
+        let lines = try await withTaskCancellationHandler {
+            try await work.value
+        } onCancel: {
+            work.cancel()
+        }
         guard !lines.isEmpty else { throw StatementTextSourceError.nothingReadable }
         return lines
     }
@@ -42,6 +49,7 @@ public struct OnDeviceStatementTextSource: StatementTextSource {
         }
         var lines: [String] = []
         for index in 0..<document.pageCount {
+            try Task.checkCancellation()
             guard let page = document.page(at: index) else { continue }
             let pageLines = textLines(page.string ?? "")
             if !pageLines.isEmpty {
@@ -96,6 +104,7 @@ public struct OnDeviceStatementTextSource: StatementTextSource {
     // MARK: - OCR (PDF ve resim ortak)
 
     private static func recognizeLines(in image: CGImage, orientation: CGImagePropertyOrientation) throws -> [String] {
+        try Task.checkCancellation()
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         // Cihazın desteklemediği dil istenirse Vision hata verir; yalnızca desteklenenler istenir.
