@@ -66,7 +66,7 @@ struct OnboardingAnimationTests {
     // MARK: - Sayfa 1
 
     @Test("Monthly total counts up and stays at the end", arguments: [
-        (0, Decimal(2400)), (1, Decimal(3600)), (2, Decimal(4825.5)), (3, Decimal(4825.5)),
+        (0, Decimal(2400)), (1, Decimal(3600)), (2, Decimal(482_550) / 100), (3, Decimal(482_550) / 100),
     ])
     func monthlyTotal(stage: Int, expected: Decimal) {
         #expect(OnboardingAnimation.MonthlyTotal.total(at: stage) == Money(expected))
