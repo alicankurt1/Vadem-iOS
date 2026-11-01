@@ -16,10 +16,11 @@ import UIKit
 /// (counted once); sheets are not affected. The ＋ button opens the ``AddFlowSheet`` from every tab; when a
 /// form closes, Home, Analytics and Cards reload. The selected tab is published as
 /// `EnvironmentValues.selectedAppTab`. Each tab's root screen sits on an ``AmbientBackground`` tinted
-/// with the selected tab's ``AppTab/ambientTint``; switching tabs cross-fades the tint. The new tab is shown at once (no
-/// blank frame) and settles in with a short slide from the side of the tab plus a slight fade
-/// (``Motion/tabSwitchStart(from:to:)``); fast taps restart it and end on the last tab. The ``FloatingTabBar`` is not
-/// part of the effect. Under Reduce Motion and `-ui-static-motion` the switch is instant.
+/// with the selected tab's ``AppTab/ambientTint``. The new tab is shown at once (no blank frame) and settles in with
+/// one calm cross-fade: a slight fade and a very slight blur, no movement (``Motion/tabSwitchStart(from:to:)``);
+/// the tint cross-fades in sync (``Motion/ambientTint``). Fast taps restart it and end on the last tab. The staggered
+/// entry plays only on the tab shown at launch (``Motion/entryPlays(tab:launchTab:)``); other tabs appear settled.
+/// The ``FloatingTabBar`` is not part of the effect. Under Reduce Motion and `-ui-static-motion` the switch is instant.
 ///
 /// In debug builds ``AppTab/launchTab(in:)`` picks the first tab. ``AddInstallmentView/launchArgument``,
 /// ``AddCardView/launchArgument`` and ``AddSubscriptionView/launchArgument`` open their add forms
@@ -38,10 +39,12 @@ public struct AppTabShell: View {
     @State private var selection: AppTab
     // TabView'de gösterilen sekme; `selection` değişince animasyonsuz ve hemen eşitlenir (boş kare olmaz).
     @State private var displayedTab: AppTab
-    // Yeni sekmenin yerine oturmaya başladığı görünüm (kayma yönü ve saydamlık).
+    // Yeni sekmenin yerine oturmaya başladığı görünüm (saydamlık ve hafif bulanıklık).
     @State private var tabSwitchStart = Motion.TabSwitchState.settled
     // Her animasyonlu geçişte artar ve oturma animasyonunu baştan başlatır.
     @State private var tabSwitchCount = 0
+    // Açılışta gösterilen sekme; kademeli giriş yalnızca bu sekmede oynar.
+    private let launchTab: AppTab
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Ortam arka planının rengi; seçimle birlikte değişir, geçişi AmbientBackground kendisi yumuşatır.
     @State private var ambientTab: AppTab
@@ -130,6 +133,7 @@ public struct AppTabShell: View {
         _subscriptionFlowModel = State(initialValue: initialSubscriptionFlowModel)
         _oneTimeFlowModel = State(initialValue: initialOneTimeFlowModel)
         #endif
+        launchTab = initialTab
         _selection = State(initialValue: initialTab)
         _displayedTab = State(initialValue: initialTab)
         _ambientTab = State(initialValue: initialTab)
@@ -158,9 +162,9 @@ public struct AppTabShell: View {
                 SettingsView(model: settingsModel)
             }
         }
-        // Sekme geçişi: yeni içerik hemen gösterilir, sekmenin yönünden hafifçe kayıp yerine oturur.
+        // Sekme geçişi: yeni içerik hemen gösterilir, kaymadan hafif bir saydamlık ve bulanıklıkla belirir.
         .tabSwitchEffect(from: tabSwitchStart, trigger: tabSwitchCount)
-        // Kayma ve hafif saydamlık sırasında kenarda pencere rengi değil düz zemin görünür.
+        // Saydamlık ve bulanıklık sırasında kenarda pencere rengi değil düz zemin görünür.
         .background { Color.vademBackground.ignoresSafeArea() }
         .onChange(of: selection) { oldTab, newTab in switchTab(from: oldTab, to: newTab) }
         // Bildirimden gelen kutusu istendi: This month seçilir, Home gelen kutusunu iter.
@@ -243,11 +247,13 @@ public struct AppTabShell: View {
         // Sistem sekme çubuğu hiç görünmez; itilen ekranlarda da.
         .toolbar(.hidden, for: .tabBar)
         #endif
+        // Kademeli giriş yalnızca açılıştaki sekmede; diğerleri ilk görünüşlerinde hemen yerinde görünür.
+        .environment(\.motionEntryEnabled, Motion.entryPlays(tab: tab, launchTab: launchTab))
         .tag(tab)
     }
 
     // Yeni sekme aynı güncellemede gösterilir; eski ve yeni arasında boş kare yoktur. Hareket açıksa yeni
-    // sekme yönüne göre başlangıç görünümünden yerine oturur. Art arda dokunuşlarda (A→B→C) her geçiş
+    // sekme hafif saydam ve bulanık başlangıç görünümünden yerine oturur (yön yok, kayma yok). Art arda dokunuşlarda (A→B→C) her geçiş
     // animasyonu baştan başlatır; sonuç hep son seçilen sekmedir, bekleyen tamamlanma işi yoktur.
     // Hareket kapalıyken (Reduce Motion, -ui-static-motion) sayaç artmaz: geçiş anlıktır.
     private func switchTab(from oldTab: AppTab, to newTab: AppTab) {
@@ -262,7 +268,7 @@ public struct AppTabShell: View {
                 tabSwitchCount += 1
             }
         }
-        // Renk geçişini AmbientBackground kendisi seçer (Reduce Motion'da yok).
+        // Renk geçişini AmbientBackground kendisi yapar; süre ve eğri içerikle aynı (Reduce Motion'da yok).
         ambientTab = newTab
     }
 

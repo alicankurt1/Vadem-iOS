@@ -1179,6 +1179,35 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(app.windows.firstMatch.frame.contains(settled), "Analytics header must be fully on screen")
     }
 
+    /// #255: hareket açıkken ilk kez açılan sekme içeriğini hemen gösterir (satır satır giriş yok, boş kare yok).
+    @MainActor
+    func testFirstVisitedTabShowsContentImmediatelyWithMotion() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"], animated: true)
+        XCTAssertTrue(element("home.total", in: app).waitForExistence(timeout: 10), "Home must be the first tab")
+
+        let tabs: [(tab: String, content: String, row: String)] = [
+            ("tab.analytics", "analytics.header", "analytics.summary"),
+            ("tab.cards", "cards.header", "cards.row.0"),
+            ("tab.settings", "settings.header", "settings.reminders"),
+        ]
+        for (tab, content, rowID) in tabs {
+            app.buttons[tab].tap()
+            // Geçiş süresi (~0.25 s) içinde içerik var ve dokunulabilir olmalı.
+            let header = element(content, in: app)
+            XCTAssertTrue(header.waitForExistence(timeout: 1), "\(content) must show right after the first switch to \(tab)")
+            XCTAssertTrue(header.isHittable, "\(content) must be hittable right after switching to \(tab)")
+
+            // Başlığın altındaki satır da hemen görünür ve dokunulabilir olmalı (kademeli giriş oynamamalı).
+            let row = element(rowID, in: app)
+            XCTAssertTrue(row.waitForExistence(timeout: 1), "\(rowID) must show right after the first switch to \(tab)")
+            XCTAssertTrue(row.isHittable, "\(rowID) must be hittable right after switching to \(tab)")
+            // Son konumunda olmalı: yarım saniye sonra çerçeve değişmemeli.
+            let before = row.frame
+            Thread.sleep(forTimeInterval: 0.5)
+            XCTAssertEqual(row.frame, before, "\(rowID) must already be at its final frame after switching to \(tab)")
+        }
+    }
+
     /// #208: her sekmenin kendi NavigationStack'i var; sekme değişince itilmiş ekran korunur ve çubuk görünür kalır.
     @MainActor
     func testTabKeepsPushedScreenWhenSwitchingTabs() throws {

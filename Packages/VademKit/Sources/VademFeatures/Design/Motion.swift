@@ -15,8 +15,9 @@ public enum Motion {
     public static let meshDriftPeriod: Double = 14
     /// Seconds for one full cycle of the ambient background drift (slower than the cards).
     public static let ambientDriftPeriod: Double = 28
-    /// Cross-fade between two tab tints of the ambient background.
-    public static let ambientTint = Animation.easeInOut(duration: 0.6)
+    /// Cross-fade between two tab tints of the ambient background: same duration and curve as the
+    /// tab switch (``tabSwitchDuration``, ease out), so the tint changes in sync with the content.
+    public static let ambientTint = Animation.easeOut(duration: tabSwitchDuration)
 
     /// The launch argument the UI check passes to stop continuous animations.
     public static let staticMotionArgument = "-ui-static-motion"
@@ -40,41 +41,38 @@ public enum Motion {
 
     // MARK: - Sekme geçişi
 
-    /// The look of the tab content during a tab switch: a small horizontal offset and a partial fade.
+    /// The look of the tab content during a tab switch: a partial fade with a very slight blur, no movement.
     public struct TabSwitchState: Equatable, Sendable {
-        /// Horizontal offset (points) of the content; positive is toward the trailing side.
-        public var offsetX: Double
         /// Opacity of the content.
         public var opacity: Double
+        /// Blur radius (points) of the content.
+        public var blur: Double
 
-        /// Creates a look with `offsetX` points of offset and `opacity`.
-        public init(offsetX: Double, opacity: Double) {
-            self.offsetX = offsetX
+        /// Creates a look with `opacity` and `blur` points of blur.
+        public init(opacity: Double, blur: Double) {
             self.opacity = opacity
+            self.blur = blur
         }
 
-        /// The settled look: no offset, fully opaque.
-        public static let settled = TabSwitchState(offsetX: 0, opacity: 1)
+        /// The settled look: fully opaque, no blur.
+        public static let settled = TabSwitchState(opacity: 1, blur: 0)
     }
 
-    /// Points the incoming tab starts away from its place.
-    public static let tabSwitchOffset: Double = 10
     /// Opacity the incoming tab starts at; high, so the background never shows through as a flash.
-    public static let tabSwitchStartOpacity: Double = 0.9
-    /// Seconds the incoming tab takes to settle.
-    public static let tabSwitchDuration: Double = 0.22
+    public static let tabSwitchStartOpacity: Double = 0.85
+    /// Blur radius (points) the incoming tab starts at; very slight, so the content stays readable.
+    public static let tabSwitchStartBlur: Double = 2
+    /// Seconds the incoming tab takes to settle (ease out).
+    public static let tabSwitchDuration: Double = 0.25
 
-    /// Where the incoming tab starts when switching `from` → `to`: a later tab (in ``AppTab/allCases`` order)
-    /// comes from the trailing side, an earlier one from the leading side; the same tab is ``TabSwitchState/settled``.
+    /// Where the incoming tab starts when switching `from` → `to`: the same calm cross-fade look for every
+    /// pair of different tabs (no direction, no movement); the same tab is ``TabSwitchState/settled``.
     ///
     /// The content is swapped at once and settles from this look to ``TabSwitchState/settled`` in
     /// ``tabSwitchDuration`` seconds, so no frame is ever blank.
     public static func tabSwitchStart(from: AppTab, to: AppTab) -> TabSwitchState {
-        let order = AppTab.allCases
-        guard let fromIndex = order.firstIndex(of: from), let toIndex = order.firstIndex(of: to),
-              fromIndex != toIndex else { return .settled }
-        let direction: Double = toIndex > fromIndex ? 1 : -1
-        return TabSwitchState(offsetX: direction * tabSwitchOffset, opacity: tabSwitchStartOpacity)
+        guard from != to else { return .settled }
+        return TabSwitchState(opacity: tabSwitchStartOpacity, blur: tabSwitchStartBlur)
     }
 
     // MARK: - Kademeli giriş
@@ -106,6 +104,12 @@ public enum Motion {
         public static let settled = EntryState(opacity: 1, offsetY: 0, scale: 1)
         /// The look before the entry animation starts.
         public static let hidden = EntryState(opacity: 0, offsetY: 12, scale: 0.98)
+    }
+
+    /// Whether the staggered entry plays on `tab`: only on the tab shown at launch (`launchTab`).
+    /// Any other tab shows its content settled at once when a tab switch first brings it on screen.
+    public static func entryPlays(tab: AppTab, launchTab: AppTab) -> Bool {
+        tab == launchTab
     }
 
     /// Seconds one element takes to enter.
@@ -148,12 +152,15 @@ private struct MotionEntryModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // Ekranın girişi bittiyse (bkz. motionEntryScope) sonradan oluşan görünümler doğrudan görünür.
     @Environment(\.motionEntryFinished) private var entryFinished
+    // Bu sekmede giriş oynar mı (yalnızca açılıştaki sekme); kapalıysa içerik hemen yerinde görünür.
+    @Environment(\.motionEntryEnabled) private var entryEnabled
     // İlk görünüşte bir kez oynar; sekme canlı kaldığı için sonraki görünüşlerde tekrar etmez.
     @State private var hasEntered = false
 
     func body(content: Content) -> some View {
         let isAnimated = Motion.isAnimated(reduceMotion: reduceMotion, staticMotionRequested: Motion.staticMotionRequested)
-        let state = Motion.entryState(hasEntered: hasEntered || entryFinished, isAnimated: isAnimated)
+        let isSettled = hasEntered || entryFinished || !entryEnabled
+        let state = Motion.entryState(hasEntered: isSettled, isAnimated: isAnimated)
         // Görünüm hiyerarşiden çıkarılmaz; yalnızca saydamlık, kayma ve ölçek değişir.
         content
             .opacity(state.opacity)
@@ -162,7 +169,7 @@ private struct MotionEntryModifier: ViewModifier {
             .onAppear {
                 guard !hasEntered else { return }
                 // Giriş zaten oynadıysa (yeni eklenen kart, ay değişimi, dal değişimi) animasyon yok.
-                if isAnimated, !entryFinished {
+                if isAnimated, !entryFinished, entryEnabled {
                     withAnimation(Motion.entryAnimation(order: order)) { hasEntered = true }
                 } else {
                     hasEntered = true
@@ -174,6 +181,8 @@ private struct MotionEntryModifier: ViewModifier {
 extension EnvironmentValues {
     // Ekranın kademeli girişi bitti mi; `motionEntryScope` yazar, `MotionEntryModifier` okur.
     @Entry var motionEntryFinished = false
+    // Kademeli giriş bu ekranda oynayabilir mi; AppTabShell açılıştaki sekme dışındakilerde kapatır.
+    @Entry var motionEntryEnabled = true
 }
 
 /// Owns the "entry has played" flag of one screen (see `motionEntryScope()`).
@@ -205,23 +214,23 @@ private struct TabSwitchModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         // Efekt `if` ile eklenip kaldırılmaz: dal değişimi TabView'in kimliğini değiştirir ve sekmelerin
-        // yığınları ile kaydırma konumları sıfırlanır. Yerleşik durumda kayma 0, saydamlık 1'dir (etkisiz).
+        // yığınları ile kaydırma konumları sıfırlanır. Yerleşik durumda saydamlık 1, bulanıklık 0'dır (etkisiz).
         let start = start
         return content
             .keyframeAnimator(initialValue: Motion.TabSwitchState.settled, trigger: trigger) { content, state in
                 content
                     .opacity(state.opacity)
-                    .offset(x: state.offsetX)
+                    .blur(radius: state.blur)
             } keyframes: { _ in
                 // Her tetiklemede başlangıca atlanır ve oradan yerine oturulur; art arda dokunuşlarda
                 // animasyon baştan başlar, son seçilen sekmede biter.
-                KeyframeTrack(\.offsetX) {
-                    MoveKeyframe(start.offsetX)
-                    LinearKeyframe(0, duration: Motion.tabSwitchDuration, timingCurve: .easeOut)
-                }
                 KeyframeTrack(\.opacity) {
                     MoveKeyframe(start.opacity)
                     LinearKeyframe(1, duration: Motion.tabSwitchDuration, timingCurve: .easeOut)
+                }
+                KeyframeTrack(\.blur) {
+                    MoveKeyframe(start.blur)
+                    LinearKeyframe(0, duration: Motion.tabSwitchDuration, timingCurve: .easeOut)
                 }
             }
     }
@@ -239,6 +248,8 @@ public extension View {
     /// Marks this view as a screen whose ``motionEntry(order:)`` elements play only on its first appearance.
     ///
     /// Elements created after that entry (a card added later, a month or branch change) just appear.
+    /// ``AppTabShell`` turns the entry off for every tab except the one shown at launch
+    /// (``Motion/entryPlays(tab:launchTab:)``), so a tab switch never plays it.
     func motionEntryScope() -> some View {
         modifier(MotionEntryScopeModifier())
     }

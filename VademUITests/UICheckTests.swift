@@ -1405,6 +1405,8 @@ final class UICheckTests: XCTestCase {
                 var previousMinY: CGFloat?
                 var attempts = 0
                 var dragX: CGFloat = 0.5
+                // Sürüklemenin başladığı yükseklik (pencerenin oranı); alttaki düğme çubuğu engellerse yukarı alınır.
+                var dragY: CGFloat = 0.8
                 var trail: [Int] = []
 
                 for _ in 0..<12 {
@@ -1424,9 +1426,16 @@ final class UICheckTests: XCTestCase {
                     // İçerik sonu: öğe artık yer değiştirmiyor, daha fazla sürüklemek boşa zaman.
                     // Ama önce sürüklemeyi kenar boşluğundan dene: AX5'te büyüyen grafik/kart ortadaki
                     // sürüklemeyi kendisi yakalayıp içeriği kaydırmıyordu (#142).
+                    // Kenar boşluğu da işe yaramazsa ekranın ortasından dene: AX5'te büyüyen alt düğme çubuğu
+                    // (safeAreaInset) %80 yüksekliği kaplayınca sürükleme düğmede başlıyordu (#256).
                     if let previousMinY, abs(previousMinY - minY) < 1 {
-                        if dragX < 0.5 { break }
-                        dragX = 0.03
+                        if dragY < 0.8 { break }
+                        if dragX < 0.5 {
+                            dragX = 0.5
+                            dragY = 0.5
+                        } else {
+                            dragX = 0.03
+                        }
                     }
                     previousMinY = minY
                     // Öğeyi parmakla tutup hedef bandın ortasına sürükle; tek seferde ekranın en fazla yarısı.
@@ -1437,8 +1446,10 @@ final class UICheckTests: XCTestCase {
                     // 12 deneme ve ~430 pt'lik adımlar yetmiyordu (#142). Yakında yine kısa, hassas adım.
                     let far = distance > window.height * 1.5
                     let maxStep = window.height * (far ? 0.8 : 0.5)
-                    let step = max(-maxStep, min(maxStep, wanted))
-                    let from = app.coordinate(withNormalizedOffset: CGVector(dx: dragX, dy: step > 0 ? 0.8 : 0.3))
+                    // Yukarı sürükleme ekranın üst kenarını geçmesin: başlangıç yüksekliği adımı sınırlar.
+                    let upLimit = window.height * (dragY - 0.05)
+                    let step = max(-maxStep, min(maxStep, upLimit, wanted))
+                    let from = app.coordinate(withNormalizedOffset: CGVector(dx: dragX, dy: step > 0 ? dragY : 0.3))
                     let to = from.withOffset(CGVector(dx: 0, dy: -step))
                     from.press(forDuration: 0.05, thenDragTo: to, withVelocity: far ? .fast : .default, thenHoldForDuration: 0.2)
                 }
