@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 /// The short hand-off from the system launch screen to the app: the same background and logo,
