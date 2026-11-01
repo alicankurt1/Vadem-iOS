@@ -1446,4 +1446,76 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "sheet must close after cancel")
         XCTAssertFalse(scrollToRow(titled: "ORNEK MOBILYA", in: app, attempts: 3), "cancel must not add anything")
     }
+
+    // MARK: Ekstre toplamı (#256)
+
+    /// Ekstre toplamı satırı listenin sonundadır; görünür olana dek yukarı kaydırır.
+    @MainActor
+    private func scrollToStatementTotal(in app: XCUIApplication, attempts: Int = 6) -> Bool {
+        let toggle = app.buttons["statementReview.statementTotal.toggle"]
+        for _ in 0..<attempts {
+            if toggle.exists && toggle.isHittable { return true }
+            app.swipeUp()
+        }
+        return toggle.exists && toggle.isHittable
+    }
+
+    /// Örnek veride ekstre toplamı sunulur: seçili başlar, hesabı gösterir, Ekle düğmesi onu sayar;
+    /// kapatılınca düğmeden kalkar, açılınca geri gelir. Hiçbir şey Ekle'den önce kaydedilmez.
+    @MainActor
+    func testStatementReviewStatementTotalOfferToggles() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-statement-review"])
+        XCTAssertTrue(element("statementReview.title", in: app).waitForExistence(timeout: 10), "review screen not shown")
+        let save = app.buttons["statementReview.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "Add button not found")
+        XCTAssertTrue(save.label.localizedCaseInsensitiveContains("statement total"), "Add must count the statement total, got: \(save.label)")
+
+        XCTAssertTrue(scrollToStatementTotal(in: app), "statement total toggle not reachable")
+        XCTAssertTrue(element("statementReview.statementTotal", in: app).exists, "statement total row not found")
+        let toggle = app.buttons["statementReview.statementTotal.toggle"]
+        XCTAssertTrue(toggle.isSelected, "statement total must start selected")
+        let breakdown = element("statementReview.statementTotal.breakdown", in: app)
+        XCTAssertTrue(breakdown.exists, "breakdown not shown")
+        XCTAssertFalse(breakdown.label.isEmpty, "breakdown must be readable")
+        XCTAssertFalse(element("statementReview.statementTotal.none", in: app).exists, "sample statement is not covered by its installments")
+
+        toggle.tap()
+        XCTAssertFalse(toggle.isSelected, "toggle must unselect the statement total")
+        XCTAssertFalse(save.label.localizedCaseInsensitiveContains("statement total"), "Add must drop the statement total, got: \(save.label)")
+        toggle.tap()
+        XCTAssertTrue(toggle.isSelected, "toggle must select the statement total again")
+        XCTAssertTrue(save.label.localizedCaseInsensitiveContains("statement total"))
+    }
+
+    /// Satırın seçimi değişince hesap canlı güncellenir (seçili satır tutarı toplamdan düşer).
+    @MainActor
+    func testStatementReviewBreakdownUpdatesWithRowSelection() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-statement-review"])
+        XCTAssertTrue(element("statementReview.title", in: app).waitForExistence(timeout: 10), "review screen not shown")
+        XCTAssertTrue(scrollToStatementTotal(in: app), "statement total toggle not reachable")
+        let breakdown = element("statementReview.statementTotal.breakdown", in: app)
+        let before = breakdown.label
+        XCTAssertFalse(before.isEmpty)
+
+        // Satırlar listenin üstünde: ikinci satırın seçimini kaldır, hesabı yeniden oku.
+        for _ in 0..<6 where !app.buttons["statementReview.row.1"].isHittable { app.swipeDown() }
+        let giyim = app.buttons["statementReview.row.1"]
+        XCTAssertTrue(giyim.waitForExistence(timeout: 5), "second row not found")
+        if giyim.isSelected { giyim.tap() }
+        XCTAssertFalse(giyim.isSelected)
+        XCTAssertTrue(scrollToStatementTotal(in: app), "statement total toggle not reachable")
+        XCTAssertNotEqual(breakdown.label, before, "breakdown must change when a row is unselected")
+    }
+
+    /// Ekstre toplamı seçiliyken Ekle sayfayı kapatır (taksitler ve toplam birlikte kaydedilir).
+    @MainActor
+    func testStatementReviewSaveWithStatementTotalClosesSheet() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-statement-review"])
+        XCTAssertTrue(element("statementReview.title", in: app).waitForExistence(timeout: 10), "review screen not shown")
+        let save = app.buttons["statementReview.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "Add button not found")
+        XCTAssertTrue(save.isEnabled, "Add must be enabled")
+        save.tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "sheet must close after saving")
+    }
 }

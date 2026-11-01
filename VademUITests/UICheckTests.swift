@@ -1106,7 +1106,10 @@ final class UICheckTests: XCTestCase {
         try capture(
             screen: "statement-review",
             launchArguments: ["-ui-sample-data", "-ui-statement-review"],
-            sections: [.top, .scrolled(to: "statementReview.row.2", named: "rows"), .scrolled(to: "statementReview.row.3", named: "last")]
+            sections: [
+                .top, .scrolled(to: "statementReview.row.2", named: "rows"), .scrolled(to: "statementReview.row.3", named: "last"),
+                .scrolled(to: "statementReview.statementTotal", named: "statement-total"),
+            ]
         ) { app, variant in
             XCTAssertTrue(
                 app.descendants(matching: .any)["statementReview.title"].waitForExistence(timeout: 10),
