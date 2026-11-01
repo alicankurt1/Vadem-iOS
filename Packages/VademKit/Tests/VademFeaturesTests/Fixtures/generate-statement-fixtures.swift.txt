@@ -1,0 +1,53 @@
+// Kullanım: cp bu-dosya /tmp/gen.swift && swift /tmp/gen.swift <çıktı klasörü>
+// Yalnızca uydurma ekstre satırları üretir; gerçek veri yok.
+import CoreGraphics
+import CoreText
+import Foundation
+import ImageIO
+import UniformTypeIdentifiers
+
+let lines = [
+    "12.10.2026 ORNEK ELEKTRONIK 3/6 1.234,56 TL",
+    "15.10.2026 ORNEK GIYIM Taksit 2/4 450,00",
+    "ORNEK MARKET 85,50",
+]
+let out = URL(fileURLWithPath: CommandLine.arguments[1])
+
+func draw(_ ctx: CGContext, height: CGFloat, size: CGFloat) {
+    for (i, line) in lines.enumerated() {
+        let attr = NSAttributedString(string: line, attributes: [
+            kCTFontAttributeName as NSAttributedString.Key: CTFontCreateWithName("Helvetica" as CFString, size, nil),
+            kCTForegroundColorFromContextAttributeName as NSAttributedString.Key: true,
+        ])
+        ctx.textPosition = CGPoint(x: 30, y: height - 60 - CGFloat(i) * size * 2.2)
+        CTLineDraw(CTLineCreateWithAttributedString(attr), ctx)
+    }
+}
+
+// PDF (metin katmanlı)
+var box = CGRect(x: 0, y: 0, width: 600, height: 200)
+let pdf = CGContext(out.appendingPathComponent("statement-sample.pdf") as CFURL, mediaBox: &box, nil)!
+pdf.beginPDFPage(nil)
+pdf.setFillColor(CGColor(gray: 0, alpha: 1))
+draw(pdf, height: 200, size: 16)
+pdf.endPDFPage()
+pdf.closePDF()
+
+// PNG (yalnızca piksel; OCR gerekir)
+let w = 1400, h = 400
+let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                    space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)!
+ctx.setFillColor(CGColor(gray: 1, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+draw(ctx, height: CGFloat(h), size: 48)
+let dest = CGImageDestinationCreateWithURL(out.appendingPathComponent("statement-sample.png") as CFURL, UTType.png.identifier as CFString, 1, nil)!
+CGImageDestinationAddImage(dest, ctx.makeImage()!, nil)
+CGImageDestinationFinalize(dest)
+
+// Taranmış PDF (metin katmanı yok; sayfa yalnızca piksel, OCR gerekir)
+var scanBox = CGRect(x: 0, y: 0, width: CGFloat(w), height: CGFloat(h))
+let scan = CGContext(out.appendingPathComponent("statement-scanned.pdf") as CFURL, mediaBox: &scanBox, nil)!
+scan.beginPDFPage(nil)
+scan.draw(ctx.makeImage()!, in: scanBox)
+scan.endPDFPage()
+scan.closePDF()

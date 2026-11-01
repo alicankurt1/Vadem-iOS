@@ -948,7 +948,7 @@ final class UICheckTests: XCTestCase {
             launchArguments: ["-ui-sample-data", "-ui-add-sheet"],
             sections: [.top, .scrolled(to: "add.sheet.payment", named: "payment")]
         ) { app, variant in
-            for kind in ["installment", "subscription", "payment"] {
+            for kind in ["installment", "subscription", "payment", "statementImport"] {
                 XCTAssertTrue(
                     app.descendants(matching: .any)["add.sheet.\(kind)"].waitForExistence(timeout: 5),
                     "[ui-check] add-sheet__\(variant.name): \(kind) option not found"
@@ -1057,6 +1057,55 @@ final class UICheckTests: XCTestCase {
                 "[ui-check] add-sheet-tr__\(variant.name): installment option not found"
             )
         }
+    }
+
+    // MARK: Ekstreden içe aktarma (#215)
+
+    /// Ekstre içe aktarma ekranını bir başlatma durumunda açar; `marker` o durumun kimliğini bekler.
+    @MainActor
+    private func captureStatementImport(
+        screen: String, argument: String, marker: String, language: [String] = [],
+        sections: [Section] = [.top]
+    ) throws {
+        try capture(
+            screen: screen,
+            launchArguments: ["-ui-sample-data", argument] + language,
+            sections: sections
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)[marker].waitForExistence(timeout: 10),
+                "[ui-check] \(screen)__\(variant.name): \(marker) not found"
+            )
+        }
+    }
+
+    @MainActor
+    func testStatementImportEmpty() throws {
+        try captureStatementImport(screen: "statement-import-empty", argument: "-ui-statement-import", marker: "statementImport.chooseImage")
+    }
+
+    @MainActor
+    func testStatementImportFound() throws {
+        try captureStatementImport(
+            screen: "statement-import-found", argument: "-ui-statement-import-found", marker: "statementImport.results",
+            sections: [.top, .scrolled(to: "statementImport.candidate.2", named: "last")]
+        )
+    }
+
+    @MainActor
+    func testStatementImportNoInstallments() throws {
+        try captureStatementImport(
+            screen: "statement-import-no-installments", argument: "-ui-statement-import-no-installments",
+            marker: "statementImport.noInstallments"
+        )
+    }
+
+    @MainActor
+    func testStatementImportFoundTurkish() throws {
+        try captureStatementImport(
+            screen: "statement-import-found-tr", argument: "-ui-statement-import-found", marker: "statementImport.results",
+            language: ["-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"]
+        )
     }
 
     // MARK: Taksit hızlı adımları (#189)

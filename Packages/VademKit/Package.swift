@@ -25,7 +25,13 @@ let package = Package(
         .target(name: "VademTestSupport", dependencies: ["VademCore"], path: "Sources/VademTestSupport"),
         .testTarget(name: "VademCoreTests", dependencies: ["VademCore", "VademTestSupport"]),
         .testTarget(name: "VademPersistenceTests", dependencies: ["VademPersistence", "VademTestSupport"]),
-        .testTarget(name: "VademFeaturesTests", dependencies: ["VademFeatures", "VademCore"]),
+        .testTarget(
+            name: "VademFeaturesTests",
+            dependencies: ["VademFeatures", "VademCore"],
+            exclude: ["Fixtures/generate-statement-fixtures.swift.txt"],
+            // Uydurma ekstre PDF'i ve resmi (entegrasyon testi için).
+            resources: [.copy("Fixtures/statement-sample.pdf"), .copy("Fixtures/statement-sample.png"), .copy("Fixtures/statement-scanned.pdf")]
+        ),
     ],
     swiftLanguageModes: [.v6]
 )
