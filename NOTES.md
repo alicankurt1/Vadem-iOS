@@ -652,3 +652,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Reviewer: fonksiyonel test yalnızca statik yolu kapsıyordu, animasyonlu yol testsizdi; animasyonlu açılışta Home'un kullanılabildiğini doğrulayan ikinci test eklendi. Ayrıca kullanılmayan bir `import Foundation`.
 - **Karar:** Kullanıcı isteğiyle tam galeri yakalaması çalıştırılmadı; her yakalama `-ui-static-motion` ile açıldığı için overlay zaten oluşmuyor, yani yakalama bu değişikliği göremezdi.
 - **Ders:** Açılış ekranının kendisi (renk, logo, açık/koyu) otomatik test edilemiyor, simülatör açılış ekranlarını önbelleğe alır. Gerçek cihazda elle bakmak açık kalan iş.
+
+### Koşu #258 — İlk açılış tanıtımı
+
+- **Ne yapıldı:** PR #266 (63 dk, 8 verify, 0 başarısız, 2 düzeltme turu). 4 sayfalık tanıtım `AppTabShell` içinde bir katman olarak gösteriliyor (`fullScreenCover` değil), böylece #257 logo geçişi üstte kalıyor. Karar süreç başına bir kez, senkron store okumasıyla alınıyor; Home'da titreme yok.
+- **Kapı neyi yakaladı:** Reviewer: Ayarlar'dan tekrar oynatmada "Şimdi değil" kullanıcının açık hatırlatıcılarını kapatıyordu (major); tekrar oynatmada hatırlatıcı düğmeleri artık gösterilmiyor. UI yakalama: AX5'te sistem sayfa noktaları metnin üstüne biniyordu; sonra kendi gösterge satırımız 56x8 pt olduğu için `[a11y]` dokunma alanı hatası verdi, 44 pt yapıldı.
+- **Açık kalan:** Tekrar oynatmada hatırlatıcı "açık" sayılırken yalnızca tercih okunuyor, sistem izni okunmuyor (reddedilmiş olsa da "açık" görünür).
+- **Ders:** Sistem `TabView(.page)` göstergesi büyük metinde ve erişilebilirlik denetiminde sorunlu; kendi göstergeni yazarsan dokunma alanını baştan 44 pt tasarla.
