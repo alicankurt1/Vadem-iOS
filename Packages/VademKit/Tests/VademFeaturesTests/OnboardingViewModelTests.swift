@@ -263,4 +263,87 @@ struct OnboardingViewModelTests {
         model.skip()
         #expect(counter.value == 1)
     }
+
+    // MARK: Yeniden gösterim (Ayarlar'dan)
+
+    private static func replay(remindersOn: Bool, status: ReminderAuthorization = .notDetermined) -> (Setup, OnboardingViewModel) {
+        let setup = setup(status: status, preferences: ReminderPreferences(isEnabled: remindersOn, timing: .both))
+        let model = setup.settings.makeOnboardingModel(defaults: setup.defaults, isReplay: true)
+        model.pageIndex = 3
+        return (setup, model)
+    }
+
+    @Test("First run is not a replay and still turns reminders off with Not now")
+    func firstRunUnchanged() async throws {
+        let setup = Self.setup()
+        #expect(!setup.model.isReplay)
+        #expect(setup.model.showsReminderButtons)
+        await setup.model.notNow()?.value
+        #expect(!setup.settings.isEnabled)
+        #expect(!setup.store.load().isEnabled)
+    }
+
+    @Test("Replay with reminders on offers no buttons and says reminders are on")
+    func replayOnNoButtons() {
+        let (setup, model) = Self.replay(remindersOn: true)
+        #expect(model.isReplay)
+        #expect(!model.showsReminderButtons)
+        #expect(model.reminderStatusText != nil)
+        #expect(model.reminderChoice == nil)
+        #expect(setup.settings.isEnabled)
+    }
+
+    @Test("Replay with reminders on: Not now and Turn on do nothing and keep reminders on")
+    func replayOnChoicesIgnored() async {
+        let (setup, model) = Self.replay(remindersOn: true)
+        #expect(model.notNow() == nil)
+        #expect(model.turnOnReminders() == nil)
+        await Task.yield()
+        #expect(setup.settings.isEnabled)
+        #expect(setup.store.load().isEnabled)
+        #expect(setup.center.requestCount == 0)
+        #expect(model.reminderChoice == nil)
+    }
+
+    @Test("Replay with reminders off offers both buttons")
+    func replayOffButtons() {
+        let (_, model) = Self.replay(remindersOn: false)
+        #expect(model.showsReminderButtons)
+        #expect(model.reminderStatusText == nil)
+    }
+
+    @Test("Replay with reminders off: Not now records the choice and keeps them off without a prompt")
+    func replayOffNotNow() async {
+        let (setup, model) = Self.replay(remindersOn: false)
+        let task = model.notNow()
+        await task?.value
+        #expect(model.reminderChoice == .declined)
+        #expect(!model.showsReminderButtons)
+        #expect(model.reminderStatusText != nil)
+        #expect(!setup.settings.isEnabled)
+        #expect(!setup.store.load().isEnabled)
+        #expect(setup.center.requestCount == 0)
+    }
+
+    @Test("Replay with reminders off: Turn on reminders asks once and turns them on")
+    func replayOffTurnOn() async throws {
+        let (setup, model) = Self.replay(remindersOn: false)
+        let task = try #require(model.turnOnReminders())
+        await task.value
+        #expect(setup.center.requestCount == 1)
+        #expect(setup.settings.isEnabled)
+        #expect(setup.settings.authorization == .allowed)
+        #expect(model.reminderChoice == .turnedOn)
+        #expect(model.turnOnReminders() == nil)
+        #expect(setup.center.requestCount == 1)
+    }
+
+    @Test("Replay Skip and Get started still mark seen and finish")
+    func replayFinishes() {
+        let (setup, model) = Self.replay(remindersOn: true)
+        model.continueTapped()
+        #expect(model.isFinished)
+        #expect(OnboardingViewModel.seenVersion(in: setup.defaults) == OnboardingDecision.currentVersion)
+        #expect(setup.center.requestCount == 0)
+    }
 }

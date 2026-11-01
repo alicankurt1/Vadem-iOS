@@ -561,6 +561,10 @@ final class FunctionalFlowTests: XCTestCase {
         let app = launchHome(extraArguments: ["-ui-onboarding"])
         XCTAssertTrue(app.descendants(matching: .any)["onboarding"].waitForExistence(timeout: 10), "walkthrough must open")
         XCTAssertTrue(app.descendants(matching: .any)["onboarding.page.1"].waitForExistence(timeout: 5), "page 1 must show")
+        XCTAssertTrue(
+            app.descendants(matching: .any)["onboarding.pageIndicator"].waitForExistence(timeout: 5),
+            "page indicator must show"
+        )
         return app
     }
 
@@ -635,6 +639,24 @@ final class FunctionalFlowTests: XCTestCase {
         app.buttons["onboarding.skip"].tap()
         XCTAssertTrue(app.switches["settings.reminders"].waitForExistence(timeout: 5), "must return to Settings")
         XCTAssertFalse(element("onboarding", in: app).exists, "walkthrough must close")
+    }
+
+    @MainActor
+    func testReplayWithRemindersOnShowsNoReminderButtonsAndKeepsThemOn() throws {
+        // Örnek veride hatırlatmalar açık başlar; yeniden gösterimde seçim sunulmaz ve kapatılmaz.
+        let app = launchHome()
+        app.buttons["tab.settings"].tap()
+        let row = element("settings.showWalkthrough", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "Show walkthrough again row not found")
+        row.tap()
+        pageToLast(in: app)
+        XCTAssertFalse(app.buttons["onboarding.notNow"].exists, "Not now must not show on a replay with reminders on")
+        XCTAssertFalse(app.buttons["onboarding.turnOnReminders"].exists, "Turn on reminders must not show")
+        XCTAssertTrue(element("onboarding.reminderStatus", in: app).exists, "status line must say reminders are on")
+        app.buttons["onboarding.getStarted"].tap()
+        let toggle = app.switches["settings.reminders"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "must return to Settings")
+        XCTAssertEqual(toggle.value as? String, "1", "replay must keep reminders on")
     }
 
     @MainActor
