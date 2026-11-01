@@ -612,3 +612,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Reviewer 2 minor, 2 nit buldu (kaynak metin testi çizilen barı değil çağrı yerini denetliyor; görsel değişikliği UI capture kanıtlıyor). Hata yakalayan test yok. Okunabilirlik iOS 26 kenar bulanıklığına dayanıyor, iOS 18'de doğrulanmadı.
 - **Harness:** `testHomeScreen` zaman aşımı #229, #230, #231 koşularında tekrarlandı; üçüncü kez olunca PR #248 Home capture testlerinin süresini 180 sn'den 300 sn'ye çıkardı ve kontrast yeniden ölçüm süresini `timing.txt`'ye yazdırdı.
 - **Ders:** Tekrarlayan flake'i "yeniden koş, geçti" diye geçmek yerine sayıp eşiğe ulaşınca kök nedene (süre payı, ölçülmeyen yeniden ölçüm süresi) ayrı harness PR'ı açmak daha doğru.
+
+### Koşu #215 — Ekstreden metin okuma: PDF ve görsel (Faz 21)
+
+- **Ne yapıldı:** PR #250 (4 verify, 0 başarısız, 1 düzeltme turu). Add sheet'e "Import from statement" eklendi; PDF için PDFKit, metin katmanı olmayan sayfa ve görseller için Vision OCR, hepsi cihazda. Metin kaynağı `StatementTextSource` protokolünün arkasında, bu yüzden view model sahte kaynakla test edildi; #216 için `onCandidatesFound` devir noktası bırakıldı.
+- **Kapı neyi yakaladı:** Reviewer 3 minor, 4 nit buldu: taranmış PDF yolu testsizdi (sentetik taranmış PDF fixture'ı eklendi), `Task.detached` iptali iletmiyordu, debug başlatma durumları release'e giriyordu (`#if DEBUG`). UI capture'da erişilebilirlik denetimi "Text clipped" buldu: sonuç satırında görünen "3/6" metninin etiketi daha uzundu ("Taksit 3/6").
+- **Ders:** Görünen kısa metin ile daha uzun erişilebilirlik etiketi birlikte olunca denetim metni kırpılmış sayıyor; satırı tek öğe yapıp tam etiketi vermek (`accessibilityElement(children: .ignore)`) sorunu çözdü.
+- **Ders:** `Task.detached` üst görevin iptalini kendiliğinden iletmez; `withTaskCancellationHandler` ile açıkça iletmek gerekir. Gerçek cihazda PDF/fotoğraf seçimi elle denenmedi, bu açık kaldı.
