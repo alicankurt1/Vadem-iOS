@@ -645,3 +645,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Ne yapıldı:** #256'nın AX5 yakalaması `marker not reached after 3 attempts` ile düştü: alttaki Add butonu AX5'te üç satıra sarılıp sürükleme başlangıç noktasını (yüksekliğin %80'i) tüm genişlikte kapatıyordu.
 - **Çözüm:** Sol kenar yedeğinden sonra pencerenin ortasından üçüncü bir başlangıç noktası denenir; yukarı adımlar üst kenarı aşmaz.
 - **Ders:** Harness sorunu özellik dalında değil ayrı `harness/` PR'ında çözüldü ve önce birleştirildi; düzeltme, özellik ağacına uygulanarak (commit edilmeden) doğrulandı.
+
+### Koşu #257 — Markalı açılış ekranı
+
+- **Ne yapıldı:** PR #264 (50 dk, 6 verify, 0 başarısız, 1 düzeltme turu). `UILaunchScreen` `Config/Vadem-Info.plist` içinde; ilk karede aynı renk ve logoyla bir overlay 0,45 sn'de solup küçülüyor. Overlay Reduce Motion ve `-ui-static-motion` altında hiç oluşturulmuyor, dokunmayı almıyor, VoiceOver'dan gizli.
+- **Kapı neyi yakaladı:** Reviewer: fonksiyonel test yalnızca statik yolu kapsıyordu, animasyonlu yol testsizdi; animasyonlu açılışta Home'un kullanılabildiğini doğrulayan ikinci test eklendi. Ayrıca kullanılmayan bir `import Foundation`.
+- **Karar:** Kullanıcı isteğiyle tam galeri yakalaması çalıştırılmadı; her yakalama `-ui-static-motion` ile açıldığı için overlay zaten oluşmuyor, yani yakalama bu değişikliği göremezdi.
+- **Ders:** Açılış ekranının kendisi (renk, logo, açık/koyu) otomatik test edilemiyor, simülatör açılış ekranlarını önbelleğe alır. Gerçek cihazda elle bakmak açık kalan iş.
