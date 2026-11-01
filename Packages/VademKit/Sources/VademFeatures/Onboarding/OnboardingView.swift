@@ -157,8 +157,13 @@ public struct OnboardingView: View {
                     .frame(width: 8, height: 8)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 24)
-        .padding(.top, 8)
+        // En az 44×44 pt dokunma ve erişilebilirlik alanı: dolgu noktaların kendi çerçevesini büyütür,
+        // contentShape bütün alanı sayar (yalnızca 8 pt'lik noktalar değil).
+        .padding(.horizontal, 12)
+        .frame(minWidth: 44, minHeight: 44)
+        .contentShape(.rect)
+        // Erişilebilirlik çerçevesi de aynı alan; yoksa öğe noktaların birleşimi (8 pt) olur.
+        .contentShape(.accessibility, .rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Page \(model.pageIndex + 1) of \(model.pages.count)", bundle: .module))
         .accessibilityAdjustableAction { direction in
@@ -169,6 +174,9 @@ public struct OnboardingView: View {
             }
         }
         .accessibilityIdentifier("onboarding.pageIndicator")
+        // Satır kendi yüksekliğinde, kaydırılan içeriğin dışında kalır.
+        .frame(maxWidth: .infinity)
+        .padding(.top, 4)
     }
 
     // Alt düğme: Devam; son sayfada Başla.

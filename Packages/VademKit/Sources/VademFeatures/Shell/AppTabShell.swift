@@ -165,8 +165,8 @@ public struct AppTabShell: View {
         _onboardingModel = State(initialValue: initialOnboardingModel)
     }
 
-    // Görüldü sürümü, veri olup olmadığı ve başlatma argümanları; depo okunamazsa tanıtım açılmaz.
     // Açılış kararı alındı mı; ana aktörde, süreç boyunca bir kez true olur.
+    // Bayrak süreç genelidir: aynı süreçte kurulan ikinci bir kabuk (ör. yeniden kurulum) `.hide` alır.
     private static var hasTakenLaunchOnboardingDecision = false
 
     // Açılış kararı yalnızca ilk çağrıda hesaplanır (yan etkiler dahil); sonraki çağrılar `.hide` döner.
@@ -176,6 +176,7 @@ public struct AppTabShell: View {
         return onboardingDecision(for: model)
     }
 
+    // Görüldü sürümü, veri olup olmadığı ve başlatma argümanları; depo okunamazsa tanıtım açılmaz.
     private static func onboardingDecision(for model: HomeViewModel) -> OnboardingDecision {
         let arguments = ProcessInfo.processInfo.arguments
         let seenVersion = OnboardingViewModel.seenVersion()
