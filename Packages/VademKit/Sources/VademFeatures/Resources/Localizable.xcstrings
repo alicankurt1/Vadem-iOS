@@ -740,6 +740,23 @@
         }
       }
     },
+    "Add installments and subscriptions" : {
+      "comment" : "Walkthrough page 2 title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add installments and subscriptions"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit ve abonelik ekle"
+          }
+        }
+      }
+    },
     "Add payment" : {
       "localizations" : {
         "en" : {
@@ -2204,6 +2221,23 @@
         }
       }
     },
+    "Get started" : {
+      "comment" : "Walkthrough last page button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get started"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başla"
+          }
+        }
+      }
+    },
     "Gift" : {
       "comment" : "Quick title chip of the one-time payment flow",
       "localizations" : {
@@ -2381,6 +2415,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu politika değişirse güncel metin bir uygulama güncellemesiyle burada görünür."
+          }
+        }
+      }
+    },
+    "Import from a statement" : {
+      "comment" : "Walkthrough page 3 title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import from a statement"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstreden aktar"
           }
         }
       }
@@ -2804,6 +2855,23 @@
         }
       }
     },
+    "Never miss a due date" : {
+      "comment" : "Walkthrough page 4 title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never miss a due date"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son ödeme gününü kaçırma"
+          }
+        }
+      }
+    },
     "New card" : {
       "localizations" : {
         "en" : {
@@ -3095,6 +3163,23 @@
         }
       }
     },
+    "Not now" : {
+      "comment" : "Walkthrough reminders page button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şimdi değil"
+          }
+        }
+      }
+    },
     "Nothing due on %@" : {
       "comment" : "The argument is a day, e.g. 12 October",
       "localizations" : {
@@ -3339,6 +3424,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gizlilik politikasını açar"
+          }
+        }
+      }
+    },
+    "Opens the walkthrough" : {
+      "comment" : "Accessibility hint of the Settings walkthrough row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the walkthrough"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanıtımı açar"
           }
         }
       }
@@ -3624,6 +3726,23 @@
         }
       }
     },
+    "Pick a statement PDF or photo; Vadem reads it on your device and lists the installments for you to review." : {
+      "comment" : "Walkthrough page 3 text",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a statement PDF or photo; Vadem reads it on your device and lists the installments for you to review."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir ekstre PDF'i ya da fotoğrafı seç; Vadem onu cihazında okur ve taksitleri onayına sunar."
+          }
+        }
+      }
+    },
     "Pick your statement as a PDF or an image. It is read on this device; nothing is uploaded." : {
       "comment" : "Statement import intro",
       "localizations" : {
@@ -3787,6 +3906,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hatırlat"
+          }
+        }
+      }
+    },
+    "Reminders are off. You can turn them on in Settings." : {
+      "comment" : "Walkthrough reminders page after Not now",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders are off. You can turn them on in Settings."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hatırlatmalar kapalı. Ayarlar'dan açabilirsin."
+          }
+        }
+      }
+    },
+    "Reminders are on." : {
+      "comment" : "Walkthrough reminders page after turning them on",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders are on."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hatırlatmalar açık."
           }
         }
       }
@@ -4018,6 +4171,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tüm ödemeleri göster"
+          }
+        }
+      }
+    },
+    "Show walkthrough again" : {
+      "comment" : "Settings row that opens the walkthrough",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show walkthrough again"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanıtımı yeniden göster"
           }
         }
       }
@@ -4297,6 +4467,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekme, %lld/%lld"
+          }
+        }
+      }
+    },
+    "Tap + to add an installment, a subscription or a one-time payment in a few quick steps." : {
+      "comment" : "Walkthrough page 2 text",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap + to add an installment, a subscription or a one-time payment in a few quick steps."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit, abonelik ya da tek seferlik ödemeyi + düğmesiyle birkaç kısa adımda ekle."
           }
         }
       }
@@ -4873,6 +5060,23 @@
         }
       }
     },
+    "Turn on reminders" : {
+      "comment" : "Walkthrough reminders page button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on reminders"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hatırlatmaları aç"
+          }
+        }
+      }
+    },
     "Unread" : {
       "comment" : "VoiceOver prefix of an unread inbox entry",
       "localizations" : {
@@ -4951,6 +5155,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vadem"
+          }
+        }
+      }
+    },
+    "Vadem adds up your installments and subscriptions and shows this month's total at a glance." : {
+      "comment" : "Walkthrough page 1 text",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem adds up your installments and subscriptions and shows this month's total at a glance."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem taksitlerini ve aboneliklerini toplar, bu ayın toplamını tek bakışta gösterir."
+          }
+        }
+      }
+    },
+    "Vadem can remind you the day before and on the day a payment is due." : {
+      "comment" : "Walkthrough page 4 text",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem can remind you the day before and on the day a payment is due."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vadem bir ödemeyi son gününden bir gün önce ve o gün sana hatırlatabilir."
           }
         }
       }

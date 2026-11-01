@@ -10,7 +10,7 @@ import VademCore
 @MainActor
 public enum HomeSampleData {
     /// The launch argument that opens Home on the sample data.
-    public static let launchArgument = "-ui-sample-data"
+    public nonisolated static let launchArgument = "-ui-sample-data"
 
     /// The fixed calendar: Gregorian, UTC.
     public static var calendar: Calendar {

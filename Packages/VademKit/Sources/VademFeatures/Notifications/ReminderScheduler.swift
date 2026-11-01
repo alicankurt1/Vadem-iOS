@@ -65,6 +65,24 @@ public final class ReminderScheduler {
         } while needsAnotherPass
     }
 
+    /// Asks for the notification permission when it is not determined yet, even with nothing to
+    /// plan (the walkthrough's "Turn on reminders"), then runs ``refresh()``.
+    ///
+    /// Like ``refresh()`` it asks at most once per process after an answer; allowed or denied
+    /// permissions are never asked again.
+    public func requestAuthorization() async {
+        if !hasRequestedAuthorization, await center.authorizationStatus() == .notDetermined {
+            do {
+                _ = try await center.requestAuthorization()
+                // Cevap geldi: bu oturumda bir daha sorulmaz.
+                hasRequestedAuthorization = true
+            } catch {
+                // Cevap yok (ör. sahne etkin değildi): sonraki yenileme yeniden dener.
+            }
+        }
+        await refresh()
+    }
+
     private func refreshOnce() async {
         // Tercihler her turda okunur: ayar değişince bir sonraki yenileme hemen uyar.
         let settings = preferences.load()

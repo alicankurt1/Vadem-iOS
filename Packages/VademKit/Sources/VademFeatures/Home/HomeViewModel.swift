@@ -223,6 +223,16 @@ public final class HomeViewModel {
         selectedDay.map { Self.dayText(day: $0, of: month) }
     }
 
+    /// `true` when the repository holds any card, installment, subscription or one-time payment
+    /// (the walkthrough is not shown to users with data); throws the repository's error.
+    public func hasAnyData() throws -> Bool {
+        // Ayrı ayrı okunur; ilk dolu türde durulur.
+        if try !repository.cards().isEmpty { return true }
+        if try !repository.installments().isEmpty { return true }
+        if try !repository.subscriptions().isEmpty { return true }
+        return try !repository.oneTimePayments().isEmpty
+    }
+
     /// A new Settings screen model on the injected ``SettingsDependencies`` and the same repository.
     public func makeSettingsModel() -> SettingsViewModel {
         SettingsViewModel(dependencies: settings, repository: repository)
