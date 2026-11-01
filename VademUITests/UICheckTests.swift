@@ -1101,6 +1101,25 @@ final class UICheckTests: XCTestCase {
     }
 
     @MainActor
+    func testStatementReview() throws {
+        // Ekstre inceleme ekranı örnek adaylarla; uzun olduğu için son satıra kadar parçalı alınır.
+        try capture(
+            screen: "statement-review",
+            launchArguments: ["-ui-sample-data", "-ui-statement-review"],
+            sections: [.top, .scrolled(to: "statementReview.row.2", named: "rows"), .scrolled(to: "statementReview.row.3", named: "last")]
+        ) { app, variant in
+            XCTAssertTrue(
+                app.descendants(matching: .any)["statementReview.title"].waitForExistence(timeout: 10),
+                "[ui-check] statement-review__\(variant.name): title not found"
+            )
+            XCTAssertTrue(
+                app.descendants(matching: .any)["statementReview.save"].exists,
+                "[ui-check] statement-review__\(variant.name): Add button not found"
+            )
+        }
+    }
+
+    @MainActor
     func testStatementImportFoundTurkish() throws {
         try captureStatementImport(
             screen: "statement-import-found-tr", argument: "-ui-statement-import-found", marker: "statementImport.results",

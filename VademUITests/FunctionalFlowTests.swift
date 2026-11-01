@@ -1379,4 +1379,52 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertTrue(element("privacy.policy.intro", in: app).waitForExistence(timeout: 5), "privacy policy not pushed")
         try assertEndOfScrollClearsBar(in: app, screen: "Privacy policy")
     }
+
+    // MARK: Ekstre incelemesi (#216)
+
+    /// İnceleme ekranı örnek adaylarla açılır: bir satırın seçimi kaldırılır, biri düzenlenir, kaydedilir;
+    /// seçili satırlar Home'da görünür, seçimi kaldırılan görünmez.
+    @MainActor
+    func testStatementReviewUnselectEditSaveShowsOnHome() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-statement-review"])
+        XCTAssertTrue(element("statementReview.title", in: app).waitForExistence(timeout: 10), "review screen not shown")
+        let save = app.buttons["statementReview.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "Add button not found")
+
+        // Seçimi kaldır: ikinci satır ("ORNEK GIYIM"); varsayılan seçili, değilse olduğu gibi bırakılır.
+        let giyim = app.buttons["statementReview.row.1"]
+        XCTAssertTrue(giyim.waitForExistence(timeout: 5), "second row not found")
+        if giyim.isSelected { giyim.tap() }
+        XCTAssertFalse(giyim.isSelected, "row must be unselected after tapping")
+
+        // Birinci satırı düzenle: başlığın sonuna metin ekle.
+        let edit = app.buttons["statementReview.row.0.edit"]
+        XCTAssertTrue(edit.exists, "edit button of the first row not found")
+        edit.tap()
+        let titleField = app.textFields["statementReview.edit.title"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 5), "edit sheet not shown")
+        titleField.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+        titleField.typeText(" Duzen")
+        app.buttons["statementReview.edit.done"].tap()
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "review must be shown again after editing")
+
+        XCTAssertTrue(save.isEnabled, "Add must be enabled with valid selected rows")
+        save.tap()
+
+        // Sayfa kapanır, Home'da düzenlenen satır görünür; seçimi kaldırılan görünmez.
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "sheet must close after saving")
+        XCTAssertTrue(scrollToRow(titled: "Duzen", in: app), "edited imported installment not shown on Home")
+        XCTAssertTrue(scrollToRow(titled: "ORNEK MOBILYA", in: app), "selected imported installment not shown on Home")
+        XCTAssertFalse(row(titled: "ORNEK GIYIM", in: app).exists, "unselected row must not be added")
+    }
+
+    /// İptal hiçbir şey kaydetmez; Home'a dönülür.
+    @MainActor
+    func testStatementReviewCancelSavesNothing() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-statement-review"])
+        XCTAssertTrue(element("statementReview.title", in: app).waitForExistence(timeout: 10), "review screen not shown")
+        app.buttons["statementReview.cancel"].tap()
+        XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "sheet must close after cancel")
+        XCTAssertFalse(scrollToRow(titled: "ORNEK MOBILYA", in: app, attempts: 3), "cancel must not add anything")
+    }
 }
