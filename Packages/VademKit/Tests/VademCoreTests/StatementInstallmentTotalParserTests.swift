@@ -232,6 +232,26 @@ struct StatementInstallmentTotalParserTests {
         #expect(StatementParser.parseStatement(lines: lines).summary == nil)
     }
 
+    @Test("A label line without a value does not stop the search; a later labelled line is used")
+    func laterLabelledLine() throws {
+        let totalCase = try #require(StatementParser.parseStatement(lines: [
+            "Dönem Borcunuz ekstre kesim tarihindeki borcunuzu gösterir.",
+            "Ödemelerinizi zamanında yapmanız önerilir.",
+            "Dönem Borcunuz 46.354,97 TL",
+            "Son Ödeme Tarihi 02 Kasım 2026",
+        ]).summary)
+        #expect(totalCase.total == Self.dec("46354.97"))
+
+        let dueCase = try #require(StatementParser.parseStatement(lines: [
+            "Dönem Borcunuz 46.354,97 TL",
+            "Son Ödeme Tarihi için ödeme yapmayı unutmayınız.",
+            "Teşekkür ederiz.",
+            "Son Ödeme Tarihi 02 Kasım 2026",
+        ]).summary)
+        #expect(dueCase.dueDate == Self.date(2, 11, 2026))
+        #expect(dueCase.total == Self.dec("46354.97"))
+    }
+
     @Test("A statement with a summary but no installment line has no candidates")
     func summaryWithoutCandidates() throws {
         let result = StatementParser.parseStatement(lines: ["Dönem Borcunuz 100,00 TL", "Son Ödeme Tarihi 02 Kasım 2026"])
