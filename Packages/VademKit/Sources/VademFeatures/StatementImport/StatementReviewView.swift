@@ -8,10 +8,15 @@ import VademCore
 /// gets a "Possible duplicate" badge (and starts unselected). Edit opens a sheet with the title, the amount and
 /// both installment numbers. Add saves the selected rows (``StatementReviewViewModel/save()``) and calls
 /// `onSaved`; Cancel calls `onCancel` and saves nothing; Back returns to the import screen.
+/// With a statement summary, a "Statement total" row below the installments offers the statement debt as a one-time
+/// payment on its due date, with its own checkbox and the calculation (total − installments = amount); when the
+/// installments already cover the total, a short note says it is not added.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
 /// Identifiers: the static constants below; rows ``rowIdentifier(_:)`` (the checkbox button, selected trait when
 /// selected), ``editIdentifier(_:)``, ``duplicateIdentifier(_:)``, ``rowErrorIdentifier(_:)``; the card and month
-/// lists `statementReview.options` with rows `statementReview.option.<index>` (the card list starts with "No card").
+/// lists `statementReview.options` with rows `statementReview.option.<index>` (the card list starts with "No card");
+/// the statement total ``statementTotalIdentifier`` with ``statementTotalToggleIdentifier`` (selected trait when
+/// selected), ``statementTotalBreakdownIdentifier`` and ``statementTotalNoneIdentifier``.
 @MainActor
 public struct StatementReviewView: View {
     /// The launch argument that opens the Add sheet on this screen with ``sampleCandidates`` (debug builds, sample data).
@@ -44,6 +49,14 @@ public struct StatementReviewView: View {
     public nonisolated static let editErrorIdentifier = "statementReview.edit.error"
     /// The edit sheet's Done button.
     public nonisolated static let editDoneIdentifier = "statementReview.edit.done"
+    /// The statement total section (shown with a statement summary).
+    public nonisolated static let statementTotalIdentifier = "statementReview.statementTotal"
+    /// The statement total's checkbox button.
+    public nonisolated static let statementTotalToggleIdentifier = "statementReview.statementTotal.toggle"
+    /// The statement total's calculation, e.g. `46.354,97 − 3.327,77 = 43.027,20`.
+    public nonisolated static let statementTotalBreakdownIdentifier = "statementReview.statementTotal.breakdown"
+    /// The note shown when the installments already cover the statement total (nothing is offered).
+    public nonisolated static let statementTotalNoneIdentifier = "statementReview.statementTotal.none"
 
     /// The checkbox button of the row at `index` (0-based, statement order).
     public nonisolated static func rowIdentifier(_ index: Int) -> String { "statementReview.row.\(index)" }
@@ -115,7 +128,12 @@ public struct StatementReviewView: View {
                             }
                             .accessibilityIdentifier(Self.statementMonthIdentifier)
                         }
-                        rowList
+                        if !model.rows.isEmpty {
+                            rowList
+                        }
+                        if model.summary != nil {
+                            statementTotalSection
+                        }
                     }
                     // 20 pt yan boşluk: sol kenarda her zaman arka plan rengi kalır.
                     .padding(.horizontal, 20)
@@ -275,6 +293,99 @@ public struct StatementReviewView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(Text("Edit \(displayTitle(row))", bundle: .module))
         .accessibilityIdentifier(Self.editIdentifier(index))
+    }
+
+    // Ekstre borcu: seçilebilir tek seferlik ödeme ve hesabı; taksitler borcu karşılıyorsa yalnızca kısa not.
+    private var statementTotalSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if model.isStatementTotalOffered {
+                statementTotalButton
+            } else {
+                Text("Statement total", bundle: .module)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.vademTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let breakdown = model.statementTotalBreakdown {
+                Text(verbatim: breakdown)
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.vademTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel(breakdownLabel)
+                    .accessibilityIdentifier(Self.statementTotalBreakdownIdentifier)
+            }
+            Group {
+                if model.isStatementTotalOffered {
+                    Text("Selected and already saved installments are subtracted, so the same money is not counted twice.", bundle: .module)
+                } else {
+                    Text("The installments already cover the statement total, so it is not added.", bundle: .module)
+                        .accessibilityIdentifier(Self.statementTotalNoneIdentifier)
+                }
+            }
+            .font(.footnote)
+            .foregroundStyle(Color.vademTextSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.vademSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(Self.statementTotalIdentifier)
+    }
+
+    private var statementTotalButton: some View {
+        let selected = model.isStatementTotalSelected
+        let amount = model.statementTotalRemainder ?? .zero
+        let due = model.statementDueDateText.map { String(localized: "Due \($0)", bundle: .module) }
+        return Button {
+            model.toggleStatementTotal()
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(selected ? Color.vademBrand : Color.vademTextSecondary)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Statement total", bundle: .module)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Color.vademTextPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    AmountText(amount)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.vademTextSecondary)
+                    if let due {
+                        Text(due)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.vademTextSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.leading)
+            }
+            .frame(minHeight: 44)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        // Tek öğe: başlık, eklenecek tutar ve son ödeme tarihi; seçim durumu özellik olarak.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            [String(localized: "Statement total", bundle: .module), AmountText.spokenLabel(amount), due]
+                .compactMap { $0 }.joined(separator: ", ")
+        )
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier(Self.statementTotalToggleIdentifier)
+    }
+
+    // "46.354,97 − 3.327,77 = 43.027,20" sesli okumada sözcüklerle.
+    private var breakdownLabel: Text {
+        guard let summary = model.summary, let remainder = model.statementTotalRemainder else { return Text(verbatim: "") }
+        let total = AmountText.spokenLabel(Money(summary.total))
+        let deduction = AmountText.spokenLabel(model.statementTotalDeduction)
+        let result = AmountText.spokenLabel(remainder)
+        return Text("Statement total \(total) minus installments \(deduction) equals \(result)", bundle: .module)
     }
 
     private var saveButton: some View {
@@ -444,6 +555,12 @@ private struct StatementReviewRowEditor: View {
 
 #if DEBUG
 extension StatementReviewView {
+    /// A made-up statement summary for the debug launch argument: 12,500 TL due on 2 November 2026. With the
+    /// sample candidates (three selected rows and the duplicate Laptop row, 8,184.56 TL) the offer is 4,315.44 TL.
+    public static var sampleSummary: StatementSummary {
+        StatementSummary(total: Decimal(12_500), dueDate: StatementDate(year: 2026, month: 11, day: 2)!)
+    }
+
     /// Four sample candidates for the debug launch argument; the third ("Laptop", 4,000 TL, 4/12) duplicates the
     /// sample data's Laptop installment (48,000 TL in 12 from July 2026, so 4,000 TL a month) on the Everyday card
     /// (the first card, so the default).

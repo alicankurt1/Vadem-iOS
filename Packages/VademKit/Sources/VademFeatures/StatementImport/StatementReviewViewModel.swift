@@ -27,6 +27,13 @@ public struct StatementReviewRow: Identifiable, Hashable, Sendable {
 /// installments are card-less, paid on today's day. The statement month starts at today's month; each plan
 /// is built so its current installment falls in that month. Nothing is saved before ``save()``.
 /// "Today" is injected (`todayMonth`, `todayDay`), never read from the clock.
+///
+/// With a ``summary`` (the statement total and due date), the statement debt is offered as one one-time payment on
+/// the due date, on the chosen card, with its own selection (``isStatementTotalSelected``, starts selected).
+/// So the same money is not counted twice, its amount is the statement total minus this month's installment
+/// amounts of the selected rows and of the rows that are possible duplicates of saved installments
+/// (``statementTotalDeduction``); it updates with the selection, the amounts and the card. When that remainder is
+/// zero or less there is no offer (``isStatementTotalOffered`` is `false`).
 @MainActor
 @Observable
 public final class StatementReviewViewModel: Identifiable {
@@ -37,6 +44,12 @@ public final class StatementReviewViewModel: Identifiable {
 
     /// The rows, in statement order.
     public var rows: [StatementReviewRow]
+    /// The statement total and due date, or `nil` when the statement had none; setting it selects the offer.
+    public var summary: StatementSummary? {
+        didSet { if summary != oldValue { isStatementTotalSelected = true } }
+    }
+    /// `true` when Add also saves the statement total as a one-time payment (while ``isStatementTotalOffered``).
+    public var isStatementTotalSelected = true
     /// The cards to choose from, in the repository's order.
     public private(set) var cards: [Card] = []
     /// The card for every added installment, or `nil` for card-less installments.
@@ -71,12 +84,14 @@ public final class StatementReviewViewModel: Identifiable {
     // Kayıtlı taksitler bir kez okunur; olası tekrar kontrolü bunlarla yapılır.
     @ObservationIgnored private var existing: [InstallmentItem] = []
 
-    /// Creates the review for `candidates` and loads the cards and saved installments.
+    /// Creates the review for `candidates` (and the statement `summary`, if any) and loads the cards and saved
+    /// installments.
     ///
     /// `todayMonth` is the default statement month, `todayDay` the payment day of card-less installments;
     /// `locale` decides the amount text's decimal separator.
     public init(
         candidates: [InstallmentCandidate],
+        summary: StatementSummary? = nil,
         repository: any PaymentRepository,
         todayMonth: YearMonth,
         todayDay: Int,
@@ -92,6 +107,7 @@ public final class StatementReviewViewModel: Identifiable {
             around: todayMonth, before: Self.monthsBefore, after: Self.monthsAfter
         )
         self.rows = []
+        self.summary = summary
         do {
             cards = try repository.cards()
             existing = try repository.installments()
@@ -120,9 +136,16 @@ public final class StatementReviewViewModel: Identifiable {
         rows.count { $0.isSelected }
     }
 
-    /// The Add button's title: "Add N installments" with N = ``selectedCount``.
+    /// The Add button's title: "Add N installments" with N = ``selectedCount``; with the statement total too,
+    /// "Add N installments and the statement total", or "Add the statement total" when no row is selected.
     public var saveTitle: String {
-        String(localized: "Add \(selectedCount) installments", bundle: .module)
+        guard willAddStatementTotal else {
+            return String(localized: "Add \(selectedCount) installments", bundle: .module)
+        }
+        if selectedCount == 0 {
+            return String(localized: "Add the statement total", bundle: .module)
+        }
+        return String(localized: "Add \(selectedCount) installments and the statement total", bundle: .module)
     }
 
     /// Selects or unselects the row at `index`.
@@ -212,12 +235,75 @@ public final class StatementReviewViewModel: Identifiable {
         item(for: row) != nil
     }
 
-    /// `true` when the load succeeded (``loadFailed`` is `false`), at least one row is selected and every
-    /// selected row is valid.
+    /// `true` when the load succeeded (``loadFailed`` is `false`), at least one row is selected or the statement
+    /// total will be added (``willAddStatementTotal``), and every selected row is valid.
     public var canSave: Bool {
         guard !loadFailed else { return false }
         let selected = rows.filter(\.isSelected)
-        return !selected.isEmpty && selected.allSatisfy(isValid)
+        return (!selected.isEmpty || willAddStatementTotal) && selected.allSatisfy(isValid)
+    }
+
+    // MARK: Ekstre borcu
+
+    /// What is subtracted from the statement total: this month's installment amount (rounded to kuruş) of every
+    /// row that is selected or a possible duplicate of a saved installment; rows without a valid amount count zero.
+    public var statementTotalDeduction: Money {
+        // Seçili satırlar eklenecek, olası tekrarlar zaten kayıtlı: ikisi de ekstre borcunun içinde.
+        rows.filter { $0.isSelected || isPossibleDuplicate($0) }
+            .compactMap { row in candidate(for: row).map { Money($0.installmentAmount) } }
+            .reduce(Money.zero, +)
+    }
+
+    /// The statement total minus ``statementTotalDeduction``, or `nil` without a ``summary``.
+    public var statementTotalRemainder: Money? {
+        summary.map { Money($0.total) - statementTotalDeduction }
+    }
+
+    /// `true` when there is a ``summary``, ``statementTotalRemainder`` is greater than zero and it makes a valid
+    /// one-time payment (e.g. the due month is supported).
+    public var isStatementTotalOffered: Bool {
+        statementTotalItem() != nil
+    }
+
+    /// `true` when Add saves the statement total: it is offered and selected.
+    public var willAddStatementTotal: Bool {
+        isStatementTotalSelected && isStatementTotalOffered
+    }
+
+    /// The calculation as `"46.354,97 − 3.327,77 = 43.027,20"` (total − deduction = remainder), or `nil` without
+    /// a ``summary``.
+    public var statementTotalBreakdown: String? {
+        guard let summary, let remainder = statementTotalRemainder else { return nil }
+        let total = AmountText.formattedMagnitude(Money(summary.total))
+        let deduction = AmountText.formattedMagnitude(statementTotalDeduction)
+        // Kalan eksiyse işareti görünsün; teklif zaten yapılmaz.
+        let result = (remainder.isNegative ? "\u{2212}" : "") + AmountText.formattedMagnitude(remainder)
+        return "\(total) \u{2212} \(deduction) = \(result)"
+    }
+
+    /// The due date of the statement as `"2 November 2026"`-style text, or `nil` without a ``summary``.
+    public var statementDueDateText: String? {
+        summary.map { StatementImportView.dueDateText($0.dueDate) }
+    }
+
+    /// Selects or unselects the statement total.
+    public func toggleStatementTotal() {
+        isStatementTotalSelected.toggle()
+    }
+
+    /// The title of the saved statement payment: "Statement total".
+    public nonisolated static var statementTotalTitle: String {
+        String(localized: "Statement total", bundle: .module)
+    }
+
+    // Ekstre borcu tek seferlik ödeme olarak: son ödeme gününde, seçili kartta, kalan tutarla.
+    private func statementTotalItem() -> OneTimePaymentItem? {
+        guard let summary, let remainder = statementTotalRemainder, remainder > .zero else { return nil }
+        let draft = OneTimePaymentDraft(
+            title: Self.statementTotalTitle, cardID: cardID, amount: remainder.amount,
+            dueMonth: summary.dueDate.yearMonth, dueDay: summary.dueDate.day
+        )
+        return draft.makeItem()
     }
 
     // MARK: Kart ve ay
@@ -234,22 +320,25 @@ public final class StatementReviewViewModel: Identifiable {
 
     // MARK: Kaydetme
 
-    /// Saves every selected row as a new installment and remembers the card.
+    /// Saves every selected row as a new installment, and the statement total as a one-time payment when
+    /// ``willAddStatementTotal``, and remembers the card.
     ///
     /// All selected rows are validated first; if one is invalid nothing is saved and `false` is returned.
-    /// A repository error removes the installments saved so far, sets ``failureMessage`` and returns `false`.
+    /// A repository error removes everything saved so far, sets ``failureMessage`` and returns `false`.
     @discardableResult
     public func save() -> Bool {
         // Yükleme başarısızsa tekrar kontrolü yapılamaz; kaydedilmez.
         guard !loadFailed else { return false }
         let items = rows.filter(\.isSelected).compactMap(item(for:))
-        guard !items.isEmpty, items.count == selectedCount else { return false }
+        let statementTotal = isStatementTotalSelected ? statementTotalItem() : nil
+        guard !items.isEmpty || statementTotal != nil, items.count == selectedCount else { return false }
         var saved: [InstallmentItem.ID] = []
         do {
             for item in items {
                 try repository.save(item)
                 saved.append(item.id)
             }
+            if let statementTotal { try repository.save(statementTotal) }
         } catch {
             // Yarım kalan içe aktarma geri alınır: ya hepsi eklenir ya hiçbiri.
             for id in saved { try? repository.deleteInstallment(id: id) }

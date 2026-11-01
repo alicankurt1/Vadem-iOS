@@ -615,6 +615,67 @@
         }
       }
     },
+    "Add %lld installments and the statement total" : {
+      "comment" : "Statement import review: the add button, number of selected installments, with the statement total",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Add %arg installment and the statement total"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Add %arg installments and the statement total"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit ve ekstre borcunu ekle"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit ve ekstre borcunu ekle"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Add a card" : {
       "localizations" : {
         "en" : {
@@ -691,6 +752,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ödeme ekle"
+          }
+        }
+      }
+    },
+    "Add the statement total" : {
+      "comment" : "Statement import review: the add button when only the statement total is selected",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add the statement total"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstre borcunu ekle"
           }
         }
       }
@@ -1750,6 +1828,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bitti"
+          }
+        }
+      }
+    },
+    "Due %@" : {
+      "comment" : "Statement import: due date of the statement total, e.g. 2 November 2026",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Due %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son ödeme: %@"
           }
         }
       }
@@ -3862,6 +3957,23 @@
         }
       }
     },
+    "Selected and already saved installments are subtracted, so the same money is not counted twice." : {
+      "comment" : "Statement import review: why the statement total offer is less than the statement total",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selected and already saved installments are subtracted, so the same money is not counted twice."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seçili ve zaten kayıtlı taksitler düşülür; aynı para iki kez sayılmaz."
+          }
+        }
+      }
+    },
     "Send" : {
       "localizations" : {
         "en" : {
@@ -4036,6 +4148,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekstre ayı"
+          }
+        }
+      }
+    },
+    "Statement total" : {
+      "comment" : "Statement import: the statement debt (Dönem Borcunuz) and the one-time payment saved for it",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statement total"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstre borcu"
+          }
+        }
+      }
+    },
+    "Statement total %@ minus installments %@ equals %@" : {
+      "comment" : "Statement import review: spoken calculation of the statement total offer; total, subtracted installments, result",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statement total %1$@ minus installments %2$@ equals %3$@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstre borcu %1$@ eksi taksitler %2$@ eşittir %3$@"
           }
         }
       }
@@ -4362,6 +4508,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taksit kaydedilemedi. Lütfen tekrar deneyin."
+          }
+        }
+      }
+    },
+    "The installments already cover the statement total, so it is not added." : {
+      "comment" : "Statement import review: note when the installments are at least the statement total",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The installments already cover the statement total, so it is not added."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksitler ekstre borcunu zaten karşılıyor; ayrıca eklenmez."
           }
         }
       }

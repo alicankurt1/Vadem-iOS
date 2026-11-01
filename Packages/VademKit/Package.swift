@@ -28,9 +28,12 @@ let package = Package(
         .testTarget(
             name: "VademFeaturesTests",
             dependencies: ["VademFeatures", "VademCore"],
-            exclude: ["Fixtures/generate-statement-fixtures.swift.txt"],
+            exclude: ["Fixtures/generate-statement-fixtures.swift.txt", "Fixtures/generate-statement-columns-fixtures.swift.txt"],
             // Uydurma ekstre PDF'i ve resmi (entegrasyon testi için).
-            resources: [.copy("Fixtures/statement-sample.pdf"), .copy("Fixtures/statement-sample.png"), .copy("Fixtures/statement-scanned.pdf")]
+            resources: [
+                .copy("Fixtures/statement-sample.pdf"), .copy("Fixtures/statement-sample.png"), .copy("Fixtures/statement-scanned.pdf"),
+                .copy("Fixtures/statement-columns.pdf"), .copy("Fixtures/statement-columns.png"),
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]

@@ -55,7 +55,7 @@ struct StatementImportViewModelTests {
     func found() async throws {
         let model = StatementImportViewModel(source: ScriptedStatementTextSource(lines: Self.installmentLines))
         await model.read(.pdf(Data()))
-        guard case .found(let candidates) = model.state else {
+        guard case .found(let candidates, _) = model.state else {
             Issue.record("expected found, got \(model.state)")
             return
         }
@@ -159,7 +159,7 @@ struct StatementImportViewModelTests {
         model.onCandidatesFound = { received.append($0) }
         await model.read(.pdf(Data()))
         #expect(received.count == 1)
-        if case .found(let candidates) = model.state { #expect(received.first == candidates) }
+        if case .found(let candidates, _) = model.state { #expect(received.first == candidates) }
 
         // Bulunamayan durumlarda devredilmez.
         let empty = StatementImportViewModel(source: ScriptedStatementTextSource(lines: ["ORNEK MARKET 85,50"]))
