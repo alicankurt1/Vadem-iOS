@@ -5,10 +5,13 @@ import VademCore
 /// above the bottom button (never over the page content), Skip at the
 /// top right on pages 1–3, Continue at the bottom (Get started on the last page).
 ///
-/// Each page shows a static SF Symbol, a title and one sentence; VoiceOver reads the title and the
-/// text together. Page content scrolls, so it fits at AX5 Dynamic Type. Moving to the next page is
-/// animated only when motion is on (not under Reduce Motion or `-ui-static-motion`); there are no
-/// continuous animations. The screen keeps its background color at the left edge.
+/// Each page shows a decorative animated illustration (``OnboardingIllustration``, hidden from
+/// VoiceOver), a title and one sentence; VoiceOver reads the title and the text together. Only the
+/// visible page's illustration loops (see ``OnboardingAnimation``); under Reduce Motion or
+/// `-ui-static-motion` every illustration is a static end-state frame and there are no continuous
+/// animations. The illustration scales down at accessibility text sizes and page content scrolls,
+/// so it fits at AX5 Dynamic Type. Moving to the next page is animated only when motion is on. The
+/// screen keeps its background color at the left edge.
 ///
 /// Identifiers: `onboarding` (screen), `onboarding.page.<1…4>` (title and text of each page),
 /// `onboarding.skip`, `onboarding.continue`, `onboarding.getStarted`, `onboarding.turnOnReminders`,
@@ -18,9 +21,6 @@ import VademCore
 public struct OnboardingView: View {
     @Bindable private var model: OnboardingViewModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // Simge yazı boyutuyla büyür; AX5'te metne yer kalsın diye üst sınırı vardır.
-    @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 72
-    private static let maxIconSize: CGFloat = 112
 
     /// Creates the walkthrough for `model`.
     public init(model: OnboardingViewModel) {
@@ -32,7 +32,7 @@ public struct OnboardingView: View {
             topBar
             TabView(selection: $model.pageIndex) {
                 ForEach(Array(model.pages.enumerated()), id: \.element) { index, page in
-                    pageView(page)
+                    pageView(page, isVisible: model.pageIndex == index)
                         .tag(index)
                 }
             }
@@ -74,14 +74,11 @@ public struct OnboardingView: View {
         .padding(.top, 8)
     }
 
-    private func pageView(_ page: OnboardingPage) -> some View {
+    private func pageView(_ page: OnboardingPage, isVisible: Bool) -> some View {
         ScrollView {
             VStack(spacing: 28) {
-                // Durağan simge; canlandırmalar ayrı bir işte gelir.
-                Image(systemName: page.systemImage)
-                    .font(.system(size: min(iconSize, Self.maxIconSize), weight: .regular))
-                    .foregroundStyle(Color.vademBrand)
-                    .accessibilityHidden(true)
+                // Canlandırma yalnızca görünen sayfada döner; diğerlerinde durağan son kare.
+                OnboardingIllustration(page: page, isVisible: isVisible)
                     .padding(.top, 24)
                 // Başlık ve cümle VoiceOver'da tek öğe olarak birlikte okunur.
                 VStack(spacing: 12) {
