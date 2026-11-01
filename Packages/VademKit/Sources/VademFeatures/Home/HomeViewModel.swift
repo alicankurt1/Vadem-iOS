@@ -329,6 +329,17 @@ public final class HomeViewModel {
         )
     }
 
+    /// A new statement import review of `candidates` on the same repository: the statement month starts at
+    /// today's month, the card at the last used one (else the first card); a save remembers the card.
+    public func makeStatementReviewModel(
+        candidates: [InstallmentCandidate], locale: Locale = .current
+    ) -> StatementReviewViewModel {
+        StatementReviewViewModel(
+            candidates: candidates, repository: repository, todayMonth: todayMonth, todayDay: todayDay,
+            lastUsedCard: lastUsedCard, locale: locale
+        )
+    }
+
     /// A new add-subscription form on the same repository, starting at the selected ``month``.
     ///
     /// Call ``reload()`` after it saves, so the new payment shows.
