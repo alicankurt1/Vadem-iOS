@@ -6,3 +6,7 @@
 // App Group shared with the widget and App Intents (Phase 13).
 // Must match VademPersistence.appGroupIdentifier.
 CODE_SIGN_ENTITLEMENTS = Config/Vadem.entitlements
+
+// Branded launch screen (UILaunchScreen: LaunchBackground color, LaunchLogo image) has no
+// INFOPLIST_KEY_ equivalent for its sub-keys; the rest of Info.plist is generated.
+INFOPLIST_FILE = Config/Vadem-Info.plist

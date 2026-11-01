@@ -1547,4 +1547,29 @@ final class FunctionalFlowTests: XCTestCase {
         save.tap()
         XCTAssertTrue(app.buttons["home.add"].waitForExistence(timeout: 10), "sheet must close after saving")
     }
+
+    /// #257: `-ui-static-motion` altında açılış örtüsü yoktur; Home hemen erişilir ve dokunuşu engellenmez.
+    @MainActor
+    func testHomeIsReachableImmediatelyUnderStaticMotion() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"])
+        // Kısa bir bekleme: geçiş süresi (~0.45 s) beklenmeden Home görünür olmalı.
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 3), "Home must be shown right away without a launch overlay")
+        XCTAssertTrue(add.isHittable, "Add button must be hittable at once (overlay must not block touches)")
+        XCTAssertTrue(element("home.total", in: app).exists, "hero panel missing")
+    }
+
+    /// #257: Animasyonlu açılışta örtü geçişten sonra kalkar; Home dokunuşu engellenmez ve ekran okuyucudan gizlenmez.
+    @MainActor
+    func testHomeIsUsableAfterAnimatedLaunchHandOff() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"], animated: true)
+        let add = app.buttons["home.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 10), "Add button must exist after the launch hand-off")
+        // Sabit bekleme yok: örtü kalkınca düğme dokunulabilir olur.
+        let hittable = NSPredicate(format: "isHittable == true")
+        let ready = XCTNSPredicateExpectation(predicate: hittable, object: add)
+        XCTAssertEqual(XCTWaiter().wait(for: [ready], timeout: 5), .completed, "Launch overlay must not block touches")
+        add.tap()
+        XCTAssertTrue(element("add.sheet.installment", in: app).waitForExistence(timeout: 5), "Tapping add must open the sheet")
+    }
 }
