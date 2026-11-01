@@ -60,8 +60,9 @@ struct FormScroll<Content: View>: View {
 @MainActor
 struct FormField<Content: View>: View {
     var title: String?
-    let errorMessage: String?
-    let errorIdentifier: String
+    // Hata gösterilmeyen alanlar (ör. adım sayıcılar) ikisini de vermez.
+    var errorMessage: String? = nil
+    var errorIdentifier: String = ""
     // Verilirse satırın boş yerine dokunmak bunu çalıştırır (metin alanına odaklanmak için).
     var onTapRow: (() -> Void)?
     @ViewBuilder let content: Content

@@ -40,13 +40,29 @@ public final class StatementReviewViewModel: Identifiable {
     /// The cards to choose from, in the repository's order.
     public private(set) var cards: [Card] = []
     /// The card for every added installment, or `nil` for card-less installments.
-    public var cardID: Card.ID?
+    ///
+    /// Changing it re-applies the default selection to rows whose duplicate status changes: a row that becomes
+    /// a possible duplicate is unselected, one that stops being one is selected.
+    public var cardID: Card.ID? {
+        didSet {
+            guard cardID != oldValue else { return }
+            // Kart değişince rozet ile onay kutusu tutarlı kalsın: tekrar durumu değişen satırın seçimi yenilenir.
+            for index in rows.indices {
+                let wasDuplicate = isPossibleDuplicate(rows[index], cardID: oldValue)
+                let isDuplicate = isPossibleDuplicate(rows[index], cardID: cardID)
+                if wasDuplicate != isDuplicate { rows[index].isSelected = !isDuplicate }
+            }
+        }
+    }
     /// The month of the statement: the current installment of every row falls in it.
     public var statementMonth: YearMonth
     /// The months the statement month list offers, in order; contains today's month.
     public let statementMonthOptions: [YearMonth]
     /// A message for a load or save failure, or `nil`.
     public private(set) var failureMessage: String?
+    /// `true` when the cards or the saved installments could not be loaded; saving is then disabled, since
+    /// possible duplicates cannot be detected.
+    public private(set) var loadFailed = false
 
     @ObservationIgnored private let repository: any PaymentRepository
     @ObservationIgnored private let lastUsedCard: LastUsedCardStore
@@ -80,6 +96,7 @@ public final class StatementReviewViewModel: Identifiable {
             cards = try repository.cards()
             existing = try repository.installments()
         } catch {
+            loadFailed = true
             failureMessage = AddInstallmentViewModel.cardsLoadErrorMessage
         }
         cardID = CardPicker.initialSelection(cards: cards, lastUsedCardID: lastUsedCard.cardID) ?? cards.first?.id
@@ -141,6 +158,10 @@ public final class StatementReviewViewModel: Identifiable {
 
     /// `true` when the row looks like an installment that is already saved, on the chosen card.
     public func isPossibleDuplicate(_ row: StatementReviewRow) -> Bool {
+        isPossibleDuplicate(row, cardID: cardID)
+    }
+
+    private func isPossibleDuplicate(_ row: StatementReviewRow, cardID: Card.ID?) -> Bool {
         candidate(for: row)?.isPossibleDuplicate(of: existing, cardID: cardID) ?? false
     }
 
@@ -191,8 +212,10 @@ public final class StatementReviewViewModel: Identifiable {
         item(for: row) != nil
     }
 
-    /// `true` when at least one row is selected and every selected row is valid.
+    /// `true` when the load succeeded (``loadFailed`` is `false`), at least one row is selected and every
+    /// selected row is valid.
     public var canSave: Bool {
+        guard !loadFailed else { return false }
         let selected = rows.filter(\.isSelected)
         return !selected.isEmpty && selected.allSatisfy(isValid)
     }
@@ -217,6 +240,8 @@ public final class StatementReviewViewModel: Identifiable {
     /// A repository error removes the installments saved so far, sets ``failureMessage`` and returns `false`.
     @discardableResult
     public func save() -> Bool {
+        // Yükleme başarısızsa tekrar kontrolü yapılamaz; kaydedilmez.
+        guard !loadFailed else { return false }
         let items = rows.filter(\.isSelected).compactMap(item(for:))
         guard !items.isEmpty, items.count == selectedCount else { return false }
         var saved: [InstallmentItem.ID] = []

@@ -97,14 +97,21 @@ public enum StatementImport {
         return String(joined.prefix(InstallmentItem.maxTitleLength)).trimmingCharacters(in: .whitespaces)
     }
 
+    /// The shortest folded title that counts when contained in the other one (equal titles always count).
+    public static let minimumContainedTitleLength = 3
+
     /// `true` when the two titles are equal, or one contains the other, after folding: case and diacritics
     /// are ignored (Turkish `ı` and `İ` count as `i`), runs of whitespace become one space and the ends are
-    /// trimmed. An empty title is never similar.
+    /// trimmed. The contained title needs at least ``minimumContainedTitleLength`` characters, so `"A"` is not
+    /// similar to every merchant. An empty title is never similar.
     public static func isSimilarTitle(_ lhs: String, _ rhs: String) -> Bool {
         let a = folded(lhs)
         let b = folded(rhs)
         guard !a.isEmpty, !b.isEmpty else { return false }
-        return a == b || a.contains(b) || b.contains(a)
+        if a == b { return true }
+        // Çok kısa başlık neredeyse her satıcı adında geçer; içerme ancak yeterince uzunsa sayılır.
+        let (shorter, longer) = a.count <= b.count ? (a, b) : (b, a)
+        return shorter.count >= minimumContainedTitleLength && longer.contains(shorter)
     }
 
     // Karşılaştırma biçimi: Türkçe noktalı/noktasız i önce eşitlenir, sonra büyük-küçük harf ve aksan atılır.

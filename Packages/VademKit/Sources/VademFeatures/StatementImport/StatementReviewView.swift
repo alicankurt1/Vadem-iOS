@@ -367,7 +367,7 @@ private struct StatementReviewRowEditor: View {
                 if model.rows.indices.contains(index) {
                     let row = model.rows[index]
                     FormCard {
-                        FormField(title: String(localized: "Title", bundle: .module), errorMessage: nil, errorIdentifier: "") {
+                        FormField(title: String(localized: "Title", bundle: .module)) {
                             // Dikey eksen: büyük yazı boyutlarında metin kırpılmaz, sarılır.
                             TextField(
                                 String(localized: "Title", bundle: .module),
@@ -375,10 +375,7 @@ private struct StatementReviewRowEditor: View {
                             )
                             .accessibilityIdentifier(StatementReviewView.editTitleIdentifier)
                         }
-                        FormField(
-                            title: String(localized: "Amount per installment", bundle: .module), errorMessage: nil,
-                            errorIdentifier: ""
-                        ) {
+                        FormField(title: String(localized: "Amount per installment", bundle: .module)) {
                             TextField(
                                 String(localized: "Amount per installment", bundle: .module),
                                 text: $model.rows[index].amountText, axis: .vertical
@@ -389,7 +386,7 @@ private struct StatementReviewRowEditor: View {
                             .accessibilityHint(Text("In Turkish lira", bundle: .module))
                             .accessibilityIdentifier(StatementReviewView.editAmountIdentifier)
                         }
-                        FormField(errorMessage: nil, errorIdentifier: "") {
+                        FormField {
                             Stepper(
                                 value: Binding(
                                     get: { model.rows[index].currentInstallment },
@@ -402,7 +399,7 @@ private struct StatementReviewRowEditor: View {
                             }
                             .accessibilityIdentifier(StatementReviewView.editCurrentIdentifier)
                         }
-                        FormField(errorMessage: nil, errorIdentifier: "") {
+                        FormField {
                             Stepper(
                                 value: Binding(
                                     get: { model.rows[index].totalInstallments },
@@ -447,8 +444,9 @@ private struct StatementReviewRowEditor: View {
 
 #if DEBUG
 extension StatementReviewView {
-    /// Four sample candidates for the debug launch argument; the third ("Laptop", 400 TL, 4/12) duplicates the
-    /// sample data's Laptop installment on the Everyday card (the first card, so the default).
+    /// Four sample candidates for the debug launch argument; the third ("Laptop", 4,000 TL, 4/12) duplicates the
+    /// sample data's Laptop installment (48,000 TL in 12 from July 2026, so 4,000 TL a month) on the Everyday card
+    /// (the first card, so the default).
     public static var sampleCandidates: [InstallmentCandidate] {
         [
             InstallmentCandidate(
@@ -460,7 +458,7 @@ extension StatementReviewView {
                 currentInstallment: 2, totalInstallments: 4
             ),
             InstallmentCandidate(
-                id: sampleID(3), merchant: "LAPTOP", installmentAmount: Decimal(400),
+                id: sampleID(3), merchant: "LAPTOP", installmentAmount: Decimal(4_000),
                 currentInstallment: 4, totalInstallments: 12
             ),
             InstallmentCandidate(
