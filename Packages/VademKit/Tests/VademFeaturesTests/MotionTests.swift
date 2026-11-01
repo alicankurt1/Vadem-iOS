@@ -1,3 +1,4 @@
+import SwiftUI
 import Testing
 import VademFeatures
 
@@ -41,9 +42,10 @@ struct MotionTransitionTests {
 
     // MARK: - Tab switch
 
-    @Test("Settled look has no offset and is fully opaque")
+    @Test("Settled look is fully opaque and unblurred")
     func settledLook() {
         #expect(Motion.TabSwitchState.settled.opacity == 1)
+        #expect(Motion.TabSwitchState.settled.blur == 0)
     }
 
     @Test("Same tab is settled", arguments: AppTab.allCases)
@@ -59,17 +61,46 @@ struct MotionTransitionTests {
         #expect(start.opacity <= 1)
     }
 
-    @Test("Opposite switches mirror each other", arguments: AppTab.allCases, AppTab.allCases)
-    func mirrored(a: AppTab, b: AppTab) {
-        let forward = Motion.tabSwitchStart(from: a, to: b)
-        let back = Motion.tabSwitchStart(from: b, to: a)
-        #expect(forward.opacity == back.opacity)
+    // Yön yok: her farklı sekme çifti aynı sakin çapraz geçişi kullanır.
+    @Test("Every pair of different tabs uses the same cross-fade look", arguments: AppTab.allCases, AppTab.allCases)
+    func sameLookForEveryPair(from: AppTab, to: AppTab) {
+        guard from != to else { return }
+        let start = Motion.tabSwitchStart(from: from, to: to)
+        #expect(start == Motion.tabSwitchStart(from: to, to: from))
+        #expect(start.opacity < 1)
+        #expect(start.opacity == Motion.tabSwitchStartOpacity)
+        #expect(start.blur == Motion.tabSwitchStartBlur)
     }
 
-    @Test("Offset is subtle and duration is short (about 0.2 to 0.3 s)")
+    @Test("Start blur is very slight")
+    func startBlurSlight() {
+        #expect(Motion.tabSwitchStartBlur > 0)
+        #expect(Motion.tabSwitchStartBlur <= 4)
+    }
+
+    @Test("Tab switch duration is short (about 0.2 to 0.3 s)")
     func tabSwitchTuning() {
         #expect(Motion.tabSwitchDuration >= 0.2)
         #expect(Motion.tabSwitchDuration <= 0.3)
+    }
+
+    // Arka plan tonu içerikle aynı sürede değişir (senkron).
+    @Test("Ambient tint follows the tab switch timing")
+    func ambientTintInSync() {
+        #expect(Motion.ambientTint == Animation.easeOut(duration: Motion.tabSwitchDuration))
+    }
+
+    // MARK: - Entry only at launch
+
+    @Test("Entry plays only on the launch tab", arguments: AppTab.allCases, AppTab.allCases)
+    func entryPlaysOnlyOnLaunchTab(tab: AppTab, launchTab: AppTab) {
+        #expect(Motion.entryPlays(tab: tab, launchTab: launchTab) == (tab == launchTab))
+    }
+
+    @Test("Exactly one tab plays the entry for a given launch tab", arguments: AppTab.allCases)
+    func exactlyOneTabPlays(launchTab: AppTab) {
+        let playing = AppTab.allCases.filter { Motion.entryPlays(tab: $0, launchTab: launchTab) }
+        #expect(playing == [launchTab])
     }
 
     // MARK: - Stagger
