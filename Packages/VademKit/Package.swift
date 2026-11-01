@@ -30,7 +30,7 @@ let package = Package(
             dependencies: ["VademFeatures", "VademCore"],
             exclude: ["Fixtures/generate-statement-fixtures.swift.txt"],
             // Uydurma ekstre PDF'i ve resmi (entegrasyon testi için).
-            resources: [.copy("Fixtures/statement-sample.pdf"), .copy("Fixtures/statement-sample.png")]
+            resources: [.copy("Fixtures/statement-sample.pdf"), .copy("Fixtures/statement-sample.png"), .copy("Fixtures/statement-scanned.pdf")]
         ),
     ],
     swiftLanguageModes: [.v6]

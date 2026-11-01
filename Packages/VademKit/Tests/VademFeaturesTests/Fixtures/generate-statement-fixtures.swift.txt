@@ -43,3 +43,11 @@ draw(ctx, height: CGFloat(h), size: 48)
 let dest = CGImageDestinationCreateWithURL(out.appendingPathComponent("statement-sample.png") as CFURL, UTType.png.identifier as CFString, 1, nil)!
 CGImageDestinationAddImage(dest, ctx.makeImage()!, nil)
 CGImageDestinationFinalize(dest)
+
+// Taranmış PDF (metin katmanı yok; sayfa yalnızca piksel, OCR gerekir)
+var scanBox = CGRect(x: 0, y: 0, width: CGFloat(w), height: CGFloat(h))
+let scan = CGContext(out.appendingPathComponent("statement-scanned.pdf") as CFURL, mediaBox: &scanBox, nil)!
+scan.beginPDFPage(nil)
+scan.draw(ctx.makeImage()!, in: scanBox)
+scan.endPDFPage()
+scan.closePDF()

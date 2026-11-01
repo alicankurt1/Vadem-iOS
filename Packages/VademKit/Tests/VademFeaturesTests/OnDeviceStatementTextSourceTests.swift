@@ -43,6 +43,17 @@ struct OnDeviceStatementTextSourceTests {
         #expect(candidates.map(\.currentInstallment) == [3, 2])
     }
 
+    @Test("Scanned PDF without a text layer is rendered and OCR'd")
+    func scannedPDF() async throws {
+        let data = try fixture("statement-scanned", "pdf")
+        let lines = try await OnDeviceStatementTextSource().lines(from: .pdf(data))
+        #expect(!lines.isEmpty)
+        let candidates = StatementParser.parse(lines: lines)
+        #expect(candidates.count == 2)
+        #expect(candidates.map(\.totalInstallments) == [6, 4])
+        #expect(candidates.map(\.currentInstallment) == [3, 2])
+    }
+
     @Test("Garbage bytes are unreadable files", arguments: [
         StatementInput.pdf(Data("not a pdf".utf8)),
         StatementInput.image(Data("not an image".utf8)),
@@ -55,7 +66,7 @@ struct OnDeviceStatementTextSourceTests {
 
     @Test("Empty data is unreadable")
     func emptyData() async {
-        await #expect(throws: StatementTextSourceError.self) {
+        await #expect(throws: StatementTextSourceError.unreadableFile) {
             _ = try await OnDeviceStatementTextSource().lines(from: .pdf(Data()))
         }
     }
