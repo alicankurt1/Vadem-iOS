@@ -25,7 +25,7 @@ import UIKit
 /// ``AddCardView/launchArgument`` and ``AddSubscriptionView/launchArgument`` open their add forms
 /// (all errors shown with their `errorsLaunchArgument`); ``AddFlowSheet/launchArgument`` and
 /// ``InstallmentFlowView/launchArgument`` open the Add sheet (``StatementImportLaunchState/launchArgument`` opens it
-/// on the statement import screen); ``SubscriptionFlowStep/launchArgument``,
+/// on the statement import screen, ``StatementReviewView/launchArgument`` on the review step); ``SubscriptionFlowStep/launchArgument``,
 /// ``OneTimeFlowStep/launchArgument`` and ``AddFlowGalleryStep/launchArgument`` open those flows at a
 /// step (see ``HomeView/init(model:onAdd:onDataChanged:)`` for the edit forms, the assistant and the inbox).
 /// ``HomeViewModel/requestInbox()`` selects This month, where Home pushes the ``InboxView``.
@@ -107,7 +107,8 @@ public struct AppTabShell: View {
             initialAddSubscriptionModel = addSubscriptionModel
         } else if arguments.contains(AddFlowSheet.launchArgument)
                     || arguments.contains(InstallmentFlowView.launchArgument)
-                    || StatementImportLaunchState.state(in: arguments) != nil {
+                    || StatementImportLaunchState.state(in: arguments) != nil
+                    || arguments.contains(StatementReviewView.launchArgument) {
             initialAddSheetPresented = true
         } else if let step = SubscriptionFlowStep.step(in: arguments) {
             // Kart adımında bir seçim görünsün diye ilk kart son kullanılan sayılır.
@@ -189,8 +190,9 @@ public struct AppTabShell: View {
                 makeSubscriptionFlow: { model.makeSubscriptionFlowModel() },
                 makeAddCardModel: model.makeAddCardModel,
                 makeOneTimeFlow: { model.makeOneTimeFlowModel() },
-                // Ekstre cihazda okunur; bulunan taksitler henüz kaydedilmez.
-                makeStatementImport: { StatementImportViewModel(source: OnDeviceStatementTextSource()) }
+                // Ekstre cihazda okunur; bulunan taksitler yalnızca inceleme ekranında onaylanınca kaydedilir.
+                makeStatementImport: { StatementImportViewModel(source: OnDeviceStatementTextSource()) },
+                makeStatementReview: { model.makeStatementReviewModel(candidates: $0) }
             ) { kind in
                 pendingAddKind = kind
                 isAddSheetPresented = false

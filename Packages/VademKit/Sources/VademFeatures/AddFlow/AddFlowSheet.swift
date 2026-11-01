@@ -1,4 +1,5 @@
 import SwiftUI
+import VademCore
 
 /// The bottom sheet Home opens from Add: "What do you want to add?" and three large kind buttons,
 /// Installment, Subscription and Payment (``AddFlowKind``).
@@ -13,7 +14,8 @@ import SwiftUI
 /// (medium or even large only) the accessibility audit reported every multi-word text as clipped.
 /// Each kind button reads its visible title and subtitle together (no custom label).
 /// With `makeStatementImport`, a fourth option "Import from statement" (``statementImportIdentifier``) opens the
-/// ``StatementImportView`` inside the sheet (back returns to the options).
+/// ``StatementImportView`` inside the sheet (back returns to the options). With `makeStatementReview` too, its
+/// "Review and add" opens the ``StatementReviewView`` (back returns to the import screen, Add closes the sheet).
 /// Identifiers: `add.sheet.title`, `add.sheet.close`, `add.sheet.<kind>` (``AddFlowKind/accessibilityIdentifier``),
 /// `add.sheet.statementImport`.
 /// No continuous animations, so it is idle under `-ui-static-motion`.
@@ -30,6 +32,7 @@ public struct AddFlowSheet: View {
     private let makeOneTimeFlow: (() -> OneTimeFlowViewModel)?
     private let makeAddCardModel: (() -> AddCardViewModel)?
     private let makeStatementImport: (() -> StatementImportViewModel)?
+    private let makeStatementReview: (([InstallmentCandidate]) -> StatementReviewViewModel)?
     // Sayfada süren abonelik akışının modeli; Abonelik seçilince kurulur.
     @State private var subscriptionFlow: SubscriptionFlowViewModel?
     // Sayfanın içinde süren akış; nil iken üç düğme görünür.
@@ -40,6 +43,8 @@ public struct AddFlowSheet: View {
     @State private var oneTimeFlow: OneTimeFlowViewModel?
     // Ekstreden içe aktarma ekranının modeli; nil değilken sayfada o ekran görünür.
     @State private var statementImport: StatementImportViewModel?
+    // Bulunan taksitlerin inceleme ekranının modeli; nil değilken sayfada o ekran görünür.
+    @State private var statementReview: StatementReviewViewModel?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -53,14 +58,18 @@ public struct AddFlowSheet: View {
     /// Payment goes to `onSelect`.
     /// `makeStatementImport` adds a fourth option, "Import from statement", that opens ``StatementImportView``
     /// inside the sheet with a new model each time; without it the option is hidden.
-    /// In debug builds, ``InstallmentFlowView/launchArgument`` starts with the installment flow running and
-    /// a ``StatementImportLaunchState/launchArgument`` with the statement import screen in that state.
+    /// `makeStatementReview` creates the review step's model for the found installments; without it the
+    /// import screen has no review button.
+    /// In debug builds, ``InstallmentFlowView/launchArgument`` starts with the installment flow running,
+    /// a ``StatementImportLaunchState/launchArgument`` with the statement import screen in that state and
+    /// ``StatementReviewView/launchArgument`` with the review of ``StatementReviewView/sampleCandidates``.
     public init(
         makeInstallmentFlow: (() -> InstallmentFlowViewModel)? = nil,
         makeSubscriptionFlow: (() -> SubscriptionFlowViewModel)? = nil,
         makeAddCardModel: (() -> AddCardViewModel)? = nil,
         makeOneTimeFlow: (() -> OneTimeFlowViewModel)? = nil,
         makeStatementImport: (() -> StatementImportViewModel)? = nil,
+        makeStatementReview: (([InstallmentCandidate]) -> StatementReviewViewModel)? = nil,
         onSelect: @escaping (AddFlowKind) -> Void
     ) {
         self.makeInstallmentFlow = makeInstallmentFlow
@@ -68,8 +77,13 @@ public struct AddFlowSheet: View {
         self.makeAddCardModel = makeAddCardModel
         self.makeOneTimeFlow = makeOneTimeFlow
         self.makeStatementImport = makeStatementImport
+        self.makeStatementReview = makeStatementReview
         self.onSelect = onSelect
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(StatementReviewView.launchArgument), let makeStatementReview {
+            // İnceleme ekranı örnek adaylarla doğrudan açılır; geri dönülünce seçenekler görünür.
+            _statementReview = State(initialValue: makeStatementReview(StatementReviewView.sampleCandidates))
+        }
         if let launchState = StatementImportLaunchState.state(in: ProcessInfo.processInfo.arguments),
            let makeStatementImport {
             // Boş ekran gerçek kaynakla, sonuç durumları sahte kaynakla açılır.
@@ -104,11 +118,26 @@ public struct AddFlowSheet: View {
                         inlineKind = nil
                     }
                 }
+            } else if let statementReview {
+                StatementReviewView(
+                    model: statementReview,
+                    onBack: { showStatementImport() },
+                    onCancel: { dismiss() },
+                    onSaved: { dismiss() }
+                )
             } else if let statementImport {
                 StatementImportView(
                     model: statementImport,
                     onBack: { showChooser() },
-                    onClose: { dismiss() }
+                    onClose: { dismiss() },
+                    onReview: makeStatementReview.map { make in
+                        { candidates in
+                            withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+                                // Her incelemede yeni model: önceki düzenlemeler taşınmaz.
+                                statementReview = make(candidates)
+                            }
+                        }
+                    }
                 )
             } else {
                 chooser
@@ -154,6 +183,14 @@ public struct AddFlowSheet: View {
             installmentFlow = nil
             oneTimeFlow = nil
             statementImport = nil
+            statementReview = nil
+        }
+    }
+
+    // İncelemeden içe aktarma ekranına dönüş; okunan sonuç korunur (yoksa seçenekler görünür).
+    private func showStatementImport() {
+        withAnimation(Motion.animation(Motion.quick, reduceMotion: reduceMotion)) {
+            statementReview = nil
         }
     }
 

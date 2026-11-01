@@ -7,27 +7,41 @@ import VademCore
 /// (photo picker); the file is read on the device and the installments found are listed read-only.
 ///
 /// While reading, a progress indicator shows (a static symbol under Reduce Motion or `-ui-static-motion`);
-/// nothing readable, no installment and a failed read each get their own message. Nothing is saved here.
+/// nothing readable, no installment and a failed read each get their own message. Nothing is saved here:
+/// with `onReview`, found installments get a "Review and add" button (``reviewIdentifier``) that hands them to
+/// the review step (``StatementReviewView``).
 /// Identifiers: `statementImport.back`, `statementImport.close`, `statementImport.title`,
 /// `statementImport.choosePDF`, `statementImport.chooseImage`, `statementImport.reading`,
 /// `statementImport.noText`, `statementImport.noInstallments`, `statementImport.failed`,
-/// `statementImport.results` and `statementImport.candidate.<index>` (0-based, statement order).
+/// `statementImport.results`, `statementImport.candidate.<index>` (0-based, statement order) and
+/// `statementImport.review`.
 @MainActor
 public struct StatementImportView: View {
+    /// The "Review and add" button shown with the found installments.
+    public nonisolated static let reviewIdentifier = "statementImport.review"
+
     @Bindable private var model: StatementImportViewModel
     private let onBack: () -> Void
     private let onClose: () -> Void
+    private let onReview: (([InstallmentCandidate]) -> Void)?
 
     @State private var isPDFPickerPresented = false
     @State private var photoItem: PhotosPickerItem?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Creates the screen for `model`; `onBack` returns to the Add sheet's options, `onClose` closes the sheet.
-    public init(model: StatementImportViewModel, onBack: @escaping () -> Void, onClose: @escaping () -> Void) {
+    /// Creates the screen for `model`; `onBack` returns to the Add sheet's options, `onClose` closes the sheet
+    /// and `onReview` (if given) opens the review step with the found installments.
+    public init(
+        model: StatementImportViewModel,
+        onBack: @escaping () -> Void,
+        onClose: @escaping () -> Void,
+        onReview: (([InstallmentCandidate]) -> Void)? = nil
+    ) {
         self.model = model
         self.onBack = onBack
         self.onClose = onClose
+        self.onReview = onReview
     }
 
     public var body: some View {
@@ -149,8 +163,11 @@ public struct StatementImportView: View {
                 systemImage: "exclamationmark.triangle", identifier: "statementImport.failed"
             )
         case .found(let candidates):
-            // #216 burada inceleme ve onay adımını gösterecek; şimdilik salt okunur liste.
+            // Bulunanlar salt okunur listelenir; kaydetmeden önce inceleme adımında onaylanır.
             results(candidates)
+            if let onReview {
+                reviewButton { onReview(candidates) }
+            }
         }
     }
 
@@ -226,6 +243,24 @@ public struct StatementImportView: View {
                 + Text("installment \(candidate.currentInstallment) of \(candidate.totalInstallments)", bundle: .module)
                 + Text(verbatim: ", ") + Text(AmountText.spokenLabel(Money(candidate.installmentAmount)))
         )
+    }
+
+    // Birincil düğme: inceleme adımına geçer.
+    private func reviewButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text("Review and add", bundle: .module)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.vademOnAccent)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(Color.vademAccent, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 8)
+        .accessibilityIdentifier(Self.reviewIdentifier)
     }
 
     // Ekle sayfasındaki seçeneklerle aynı görünüm: simge, başlık ve altında kısa açıklama.

@@ -554,6 +554,67 @@
         }
       }
     },
+    "Add %lld installments" : {
+      "comment" : "Statement import review: the add button, number of selected installments",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Add %arg installment"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Add %arg installments"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@count@"
+          },
+          "substitutions" : {
+            "count" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit ekle"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg taksit ekle"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Add a card" : {
       "localizations" : {
         "en" : {
@@ -759,6 +820,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tutar sıfırdan büyük olmalı."
+          }
+        }
+      }
+    },
+    "Amount per installment" : {
+      "comment" : "Statement import review edit sheet: the amount of one installment",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amount per installment"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksit tutarı"
           }
         }
       }
@@ -1152,6 +1230,23 @@
         }
       }
     },
+    "Check what was found. Only the selected installments are added." : {
+      "comment" : "Statement import review: subtitle",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check what was found. Only the selected installments are added."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bulunanları kontrol et. Yalnızca seçili taksitler eklenir."
+          }
+        }
+      }
+    },
     "Chips" : {
       "comment" : "Design gallery section",
       "localizations" : {
@@ -1346,6 +1441,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Devam"
+          }
+        }
+      }
+    },
+    "Current installment: %lld" : {
+      "comment" : "Statement import review edit sheet: stepper label, the installment on the statement",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current installment: %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şu anki taksit: %lld"
           }
         }
       }
@@ -1718,6 +1830,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bugüne kadar vadesi gelen"
+          }
+        }
+      }
+    },
+    "Edit %@" : {
+      "comment" : "Statement import review: spoken label of a row's edit button, with the row's title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düzenle: %@"
           }
         }
       }
@@ -2837,6 +2966,23 @@
         }
       }
     },
+    "No title" : {
+      "comment" : "Statement import review: shown for a row whose title is empty",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No title"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başlıksız"
+          }
+        }
+      }
+    },
     "No upcoming payments." : {
       "comment" : "Siri answer",
       "localizations" : {
@@ -3417,6 +3563,23 @@
         }
       }
     },
+    "Possible duplicate" : {
+      "comment" : "Statement import review: badge on a row that looks like a saved installment",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Possible duplicate"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olası tekrar"
+          }
+        }
+      }
+    },
     "Previous month" : {
       "localizations" : {
         "en" : {
@@ -3496,6 +3659,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kaydedelim mi?"
+          }
+        }
+      }
+    },
+    "Remaining: %lld · Ends %@" : {
+      "comment" : "Statement import review: payments left counting this one, and the end month",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remaining: %1$lld · Ends %2$@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kalan: %1$lld · Bitiş: %2$@"
           }
         }
       }
@@ -3594,6 +3774,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tekrar"
+          }
+        }
+      }
+    },
+    "Review and add" : {
+      "comment" : "Statement import: button that opens the review of the found installments",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review and add"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gözden geçir ve ekle"
+          }
+        }
+      }
+    },
+    "Review installments" : {
+      "comment" : "Statement import review: screen title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review installments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksitleri gözden geçir"
           }
         }
       }
@@ -3805,6 +4019,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hesap kesim günü"
+          }
+        }
+      }
+    },
+    "Statement month" : {
+      "comment" : "Statement import review: the month of the statement, the current installment falls in it",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statement month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekstre ayı"
           }
         }
       }
@@ -4131,6 +4362,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taksit kaydedilemedi. Lütfen tekrar deneyin."
+          }
+        }
+      }
+    },
+    "The installments fall outside the supported months." : {
+      "comment" : "Statement import review: error when a plan's months are out of range",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The installments fall outside the supported months."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taksitler desteklenen ayların dışına düşüyor."
           }
         }
       }
@@ -4491,6 +4739,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yaklaşan"
+          }
+        }
+      }
+    },
+    "Use %lld to %lld installments, the current one not above the total." : {
+      "comment" : "Statement import review: error for invalid installment numbers",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use %1$lld to %2$lld installments, the current one not above the total."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld ile %2$lld arasında taksit seç; şu anki taksit toplamı geçmesin."
           }
         }
       }
