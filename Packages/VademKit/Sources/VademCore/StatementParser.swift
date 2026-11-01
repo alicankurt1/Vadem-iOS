@@ -10,7 +10,7 @@ import Foundation
 ///   `Taksit`). Valid only when `1 ≤ current ≤ total`, `total ≥ 2` and `total` is in
 ///   ``InstallmentPlan/supportedCounts``. Two different markers on one line make it ambiguous, so it is skipped.
 ///   In the `x…=` form, current is `k`, total is `count` and the amount is `monthly`; `monthly × count` must
-///   equal `total` within 1 kuruş per installment, else the line is skipped.
+///   equal `total` within 1% of `total` (statements round and add small extras), else the line is skipped.
 /// - **Amount**: Turkish format with 2 fraction digits (`234,56`, `1.234,56`, `1.234,56 TL`, `₺1.234,56`).
 ///   When a line has several amounts, the **last** one is the installment amount (statements print the
 ///   purchase total first and the installment amount in the last column). A negative (credit) or zero
@@ -276,7 +276,7 @@ private struct Patterns {
         return nil
     }
 
-    // Aylık × sayı, toplamdan taksit başına en çok 1 kuruş sapabilir (bankanın yuvarlaması).
+    // Aylık × sayı, basılı toplamdan en çok %1 sapabilir (yuvarlama ve küçük ekler).
     private func parsedStatedMarker(_ match: NSTextCheckingResult, in string: NSString) -> Marker? {
         guard let monthly = Patterns.value(of: string.substring(with: match.range(at: 1))),
               let count = Int(string.substring(with: match.range(at: 2))),
@@ -284,7 +284,7 @@ private struct Patterns {
               let current = Int(string.substring(with: match.range(at: 4)))
         else { return nil }
         let difference = monthly * Decimal(count) - planTotal
-        let tolerance = Decimal(count) / 100
+        let tolerance = planTotal / 100
         guard difference <= tolerance, -difference <= tolerance else { return nil }
         return Marker(current: current, total: count, range: match.range, amount: monthly)
     }
