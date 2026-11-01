@@ -155,6 +155,23 @@ struct StatementImportTests {
         #expect(StatementImport.isSimilarTitle(b, a) == expected)
     }
 
+    @Test("A very short title contained in a longer one is not similar", arguments: [
+        ("A", "ADIDAS"), ("AB", "ABC MARKET"), ("İ", "Migros"), (" a ", "Teknosa"),
+    ])
+    func shortContainedTitleNotSimilar(short: String, long: String) {
+        #expect(!StatementImport.isSimilarTitle(short, long))
+        #expect(!StatementImport.isSimilarTitle(long, short))
+    }
+
+    @Test("A contained title of the minimum length still counts; equal short titles match")
+    func minimumLengthBoundary() {
+        #expect(StatementImport.minimumContainedTitleLength == 3)
+        #expect(StatementImport.isSimilarTitle("ABC", "ABC MARKET"))
+        #expect(StatementImport.isSimilarTitle("abc market", "ABC"))
+        #expect(StatementImport.isSimilarTitle("A", "a"))
+        #expect(StatementImport.isSimilarTitle("AB", "ab"))
+    }
+
     // MARK: Olası tekrar
 
     private static func existing(

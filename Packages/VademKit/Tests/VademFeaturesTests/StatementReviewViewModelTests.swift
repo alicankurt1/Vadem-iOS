@@ -26,6 +26,25 @@ struct StatementReviewViewModelTests {
         func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws {}
     }
 
+    private struct LoadFailingRepository: PaymentRepository {
+        struct Failure: Error {}
+        let failCards: Bool
+        let saved = SavedBox()
+        final class SavedBox: @unchecked Sendable { var count = 0 }
+        func cards() throws -> [Card] { if failCards { throw Failure() }; return [] }
+        func save(_ card: Card) throws {}
+        func deleteCard(id: Card.ID) throws {}
+        func installments() throws -> [InstallmentItem] { if !failCards { throw Failure() }; return [] }
+        func save(_ item: InstallmentItem) throws { saved.count += 1 }
+        func deleteInstallment(id: InstallmentItem.ID) throws {}
+        func subscriptions() throws -> [SubscriptionItem] { [] }
+        func save(_ item: SubscriptionItem) throws {}
+        func deleteSubscription(id: SubscriptionItem.ID) throws {}
+        func oneTimePayments() throws -> [OneTimePaymentItem] { [] }
+        func save(_ item: OneTimePaymentItem) throws {}
+        func deleteOneTimePayment(id: OneTimePaymentItem.ID) throws {}
+    }
+
     private static func store(lastUsed: Card.ID? = nil) -> LastUsedCardStore {
         let name = "vadem.tests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
@@ -369,5 +388,95 @@ struct StatementReviewViewModelTests {
         #expect(model.save())
         let item = try #require(try repository.installments().first { $0.title == "ORNEK ELEKTRONIK" })
         #expect(item.plan.amount(in: Self.october).amount == Decimal(string: "1234.56")!)
+    }
+
+    // MARK: Kart değişimi ve yükleme hatası (#216 düzeltmeleri)
+
+    private static func savedGiyim(on card: Card) -> InstallmentItem {
+        InstallmentItem(
+            title: "Ornek Giyim", cardID: card.id,
+            plan: InstallmentPlan(total: Money(1800), count: 4, firstMonth: YearMonth(year: 2026, month: 9)!)!
+        )!
+    }
+
+    @Test("Changing the card to one with a duplicate unselects that row")
+    func cardChangeBecomesDuplicate() throws {
+        let a = Self.card("Akbank"), b = Self.card("Bonus")
+        // Kayıtlı plan b kartında; varsayılan kart a olduğundan satır başta seçili.
+        let (model, _, _) = try Self.makeModel(cards: [a, b], lastUsed: a.id, saved: [Self.savedGiyim(on: b)])
+        #expect(model.rows.map(\.isSelected) == [true, true, true])
+        model.cardID = b.id
+        #expect(model.isPossibleDuplicate(model.rows[1]))
+        #expect(model.rows.map(\.isSelected) == [true, false, true])
+    }
+
+    @Test("Changing the card away from a duplicate selects that row")
+    func cardChangeStopsBeingDuplicate() throws {
+        let a = Self.card("Akbank"), b = Self.card("Bonus")
+        let (model, _, _) = try Self.makeModel(cards: [a, b], lastUsed: b.id, saved: [Self.savedGiyim(on: b)])
+        #expect(model.rows.map(\.isSelected) == [true, false, true])
+        model.cardID = a.id
+        #expect(!model.isPossibleDuplicate(model.rows[1]))
+        #expect(model.rows.map(\.isSelected) == [true, true, true])
+    }
+
+    @Test("Rows whose duplicate status does not change keep the manual choice on a card change")
+    func cardChangeKeepsManualChoice() throws {
+        let a = Self.card("Akbank"), b = Self.card("Bonus")
+        let (model, _, _) = try Self.makeModel(cards: [a, b], lastUsed: a.id, saved: [Self.savedGiyim(on: b)])
+        // Duplicate olmayan satır elle kapatılır; duplicate olan satırı kullanıcı bilerek seçer.
+        model.toggleSelection(at: 0)
+        model.cardID = nil
+        // a -> nil: hiçbir satırın durumu değişmez (kayıt b kartında).
+        #expect(model.rows.map(\.isSelected) == [false, true, true])
+        model.cardID = b.id
+        // Yalnızca satır 1 duplicate olur; satır 0 ve 2 olduğu gibi kalır.
+        #expect(model.rows.map(\.isSelected) == [false, false, true])
+        model.toggleSelection(at: 1)
+        #expect(model.rows[1].isSelected)
+        // Duplicate durumu değişmeyen kart değişimi (b -> b) seçimi bozmaz.
+        model.cardID = b.id
+        #expect(model.rows.map(\.isSelected) == [false, true, true])
+    }
+
+    @Test("A failed cards load disables saving and saves nothing")
+    func cardsLoadFailure() {
+        let repository = LoadFailingRepository(failCards: true)
+        let model = StatementReviewViewModel(
+            candidates: Self.candidates(), repository: repository, todayMonth: Self.october, todayDay: 17,
+            lastUsedCard: Self.store(), locale: Self.english
+        )
+        #expect(model.failureMessage != nil)
+        #expect(!model.canSave)
+        #expect(!model.save())
+        #expect(repository.saved.count == 0)
+    }
+
+    @Test("A failed installments load disables saving and saves nothing")
+    func installmentsLoadFailure() {
+        let repository = LoadFailingRepository(failCards: false)
+        let model = StatementReviewViewModel(
+            candidates: Self.candidates(), repository: repository, todayMonth: Self.october, todayDay: 17,
+            lastUsedCard: Self.store(), locale: Self.english
+        )
+        #expect(model.failureMessage != nil)
+        #expect(!model.canSave)
+        #expect(!model.save())
+        #expect(repository.saved.count == 0)
+    }
+
+    @Test("Sample candidate 2 is a possible duplicate of the sample data's Laptop and starts unselected")
+    func sampleCandidatesDuplicateLaptop() throws {
+        let model = StatementReviewViewModel(
+            candidates: StatementReviewView.sampleCandidates, repository: HomeSampleData.makeRepository(),
+            todayMonth: Self.october, todayDay: 12, lastUsedCard: Self.store(), locale: Self.english
+        )
+        #expect(model.rows.count == 4)
+        #expect(model.isPossibleDuplicate(model.rows[2]))
+        #expect(model.rows.map(\.isSelected) == [true, true, false, true])
+        #expect(!model.isPossibleDuplicate(model.rows[0]))
+        #expect(!model.isPossibleDuplicate(model.rows[1]))
+        #expect(!model.isPossibleDuplicate(model.rows[3]))
+        #expect(model.selectedCount == 3)
     }
 }

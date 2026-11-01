@@ -1418,6 +1418,25 @@ final class FunctionalFlowTests: XCTestCase {
         XCTAssertFalse(row(titled: "ORNEK GIYIM", in: app).exists, "unselected row must not be added")
     }
 
+    /// Örnek veride "Laptop" zaten kayıtlı: üçüncü aday (indeks 2) olası tekrar rozetini gösterir, seçili başlamaz
+    /// ve Ekle düğmesi 4 değil 3 taksiti sayar.
+    @MainActor
+    func testStatementReviewSampleDuplicateShowsBadgeAndStartsUnselected() throws {
+        let app = launchHome(extraArguments: ["-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-ui-statement-review"])
+        XCTAssertTrue(element("statementReview.title", in: app).waitForExistence(timeout: 10), "review screen not shown")
+        XCTAssertTrue(element("statementReview.row.2.duplicate", in: app).waitForExistence(timeout: 5), "duplicate badge of the Laptop row not shown")
+        XCTAssertFalse(element("statementReview.row.0.duplicate", in: app).exists, "first row must not be flagged")
+        XCTAssertFalse(element("statementReview.row.1.duplicate", in: app).exists, "second row must not be flagged")
+        XCTAssertFalse(element("statementReview.row.3.duplicate", in: app).exists, "fourth row must not be flagged")
+        let laptop = app.buttons["statementReview.row.2"]
+        XCTAssertTrue(laptop.exists, "Laptop row not found")
+        XCTAssertFalse(laptop.isSelected, "possible duplicate must start unselected")
+        XCTAssertTrue(app.buttons["statementReview.row.0"].isSelected, "non-duplicate rows start selected")
+        let save = app.buttons["statementReview.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5), "Add button not found")
+        XCTAssertTrue(save.label.contains("3"), "Add button must count 3 installments, got: \(save.label)")
+    }
+
     /// İptal hiçbir şey kaydetmez; Home'a dönülür.
     @MainActor
     func testStatementReviewCancelSavesNothing() throws {
