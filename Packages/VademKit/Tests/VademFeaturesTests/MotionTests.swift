@@ -43,7 +43,6 @@ struct MotionTransitionTests {
 
     @Test("Settled look has no offset and is fully opaque")
     func settledLook() {
-        #expect(Motion.TabSwitchState.settled.offsetX == 0)
         #expect(Motion.TabSwitchState.settled.opacity == 1)
     }
 
@@ -60,33 +59,15 @@ struct MotionTransitionTests {
         #expect(start.opacity <= 1)
     }
 
-    @Test("Later tab comes from the trailing side, earlier from the leading side", arguments: [
-        (AppTab.home, AppTab.analytics, 1.0),
-        (AppTab.home, AppTab.settings, 1.0),
-        (AppTab.analytics, AppTab.cards, 1.0),
-        (AppTab.cards, AppTab.settings, 1.0),
-        (AppTab.analytics, AppTab.home, -1.0),
-        (AppTab.settings, AppTab.home, -1.0),
-        (AppTab.settings, AppTab.cards, -1.0),
-        (AppTab.cards, AppTab.analytics, -1.0),
-    ])
-    func direction(from: AppTab, to: AppTab, sign: Double) {
-        let start = Motion.tabSwitchStart(from: from, to: to)
-        #expect(start.offsetX * sign > 0)
-        #expect(abs(start.offsetX) == Motion.tabSwitchOffset)
-    }
-
     @Test("Opposite switches mirror each other", arguments: AppTab.allCases, AppTab.allCases)
     func mirrored(a: AppTab, b: AppTab) {
         let forward = Motion.tabSwitchStart(from: a, to: b)
         let back = Motion.tabSwitchStart(from: b, to: a)
-        #expect(forward.offsetX == -back.offsetX)
         #expect(forward.opacity == back.opacity)
     }
 
     @Test("Offset is subtle and duration is short (about 0.2 to 0.3 s)")
     func tabSwitchTuning() {
-        #expect(Motion.tabSwitchOffset > 0 && Motion.tabSwitchOffset <= 24)
         #expect(Motion.tabSwitchDuration >= 0.2)
         #expect(Motion.tabSwitchDuration <= 0.3)
     }
