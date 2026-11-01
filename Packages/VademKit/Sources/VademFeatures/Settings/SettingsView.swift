@@ -184,7 +184,7 @@ public struct SettingsView: View {
     private var walkthroughCard: some View {
         FormCard {
             Button {
-                onboardingModel = model.makeOnboardingModel { onboardingModel = nil }
+                onboardingModel = model.makeOnboardingModel(isReplay: true) { onboardingModel = nil }
             } label: {
                 HStack(spacing: 8) {
                     Text("Show walkthrough again", bundle: .module)

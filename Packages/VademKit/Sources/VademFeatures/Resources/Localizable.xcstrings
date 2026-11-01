@@ -3478,6 +3478,23 @@
         }
       }
     },
+    "Page %lld of %lld" : {
+      "comment" : "Walkthrough page indicator, spoken: current page, page count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page %lld of %lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sayfa %lld / %lld"
+          }
+        }
+      }
+    },
     "Paid" : {
       "comment" : "Hero panel caption prefix: Paid ₺1.200,00 of ₺4.825,50",
       "localizations" : {

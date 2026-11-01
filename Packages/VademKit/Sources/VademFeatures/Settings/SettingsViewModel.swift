@@ -123,12 +123,14 @@ public final class SettingsViewModel: Identifiable {
         update(asksPermission: true) { $0.isEnabled = true }
     }
 
-    /// A new walkthrough model whose reminder choice changes this model (Settings' "Show walkthrough again").
+    /// A new walkthrough model whose reminder choice changes this model; `isReplay` is `true` for
+    /// Settings' "Show walkthrough again" (see ``OnboardingViewModel/isReplay``).
     public func makeOnboardingModel(
         defaults: UserDefaults = .standard,
+        isReplay: Bool = false,
         onFinish: @escaping @MainActor () -> Void = {}
     ) -> OnboardingViewModel {
-        OnboardingViewModel(defaults: defaults, reminders: self, onFinish: onFinish)
+        OnboardingViewModel(defaults: defaults, reminders: self, isReplay: isReplay, onFinish: onFinish)
     }
 
     /// Turns the monthly summary on or off: saves at once, then refreshes the scheduler (turning it

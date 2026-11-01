@@ -1,7 +1,8 @@
 import SwiftUI
 import VademCore
 
-/// The first-run walkthrough: four pages in a paged `TabView` with a page indicator, Skip at the
+/// The first-run walkthrough: four pages in a paged `TabView` with a page indicator in its own row
+/// above the bottom button (never over the page content), Skip at the
 /// top right on pages 1–3, Continue at the bottom (Get started on the last page).
 ///
 /// Each page shows a static SF Symbol, a title and one sentence; VoiceOver reads the title and the
@@ -11,11 +12,15 @@ import VademCore
 ///
 /// Identifiers: `onboarding` (screen), `onboarding.page.<1…4>` (title and text of each page),
 /// `onboarding.skip`, `onboarding.continue`, `onboarding.getStarted`, `onboarding.turnOnReminders`,
-/// `onboarding.notNow` and `onboarding.reminderStatus` (the line shown after a reminder choice).
+/// `onboarding.notNow`, `onboarding.reminderStatus` (the line shown after a reminder choice) and
+/// `onboarding.pageIndicator` (adjustable: "Page 2 of 4").
 @MainActor
 public struct OnboardingView: View {
     @Bindable private var model: OnboardingViewModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // Simge yazı boyutuyla büyür; AX5'te metne yer kalsın diye üst sınırı vardır.
+    @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 72
+    private static let maxIconSize: CGFloat = 112
 
     /// Creates the walkthrough for `model`.
     public init(model: OnboardingViewModel) {
@@ -32,10 +37,10 @@ public struct OnboardingView: View {
                 }
             }
             #if os(iOS)
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            // Açık zeminde de görünsün diye nokta göstergesinin arkasında bir zemin vardır.
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            // Sistem göstergesi içeriğin üstüne biniyordu (AX5); yerine kendi satırında bir gösterge var.
+            .tabViewStyle(.page(indexDisplayMode: .never))
             #endif
+            pageIndicator
             bottomButton
         }
         .foregroundStyle(Color.vademTextPrimary)
@@ -74,7 +79,7 @@ public struct OnboardingView: View {
             VStack(spacing: 28) {
                 // Durağan simge; canlandırmalar ayrı bir işte gelir.
                 Image(systemName: page.systemImage)
-                    .font(.system(size: 72, weight: .regular))
+                    .font(.system(size: min(iconSize, Self.maxIconSize), weight: .regular))
                     .foregroundStyle(Color.vademBrand)
                     .accessibilityHidden(true)
                     .padding(.top, 24)
@@ -97,8 +102,7 @@ public struct OnboardingView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 24)
-            // Sayfa göstergesi içeriğin altına binmesin.
-            .padding(.bottom, 56)
+            .padding(.bottom, 24)
         }
         .scrollBounceBehavior(.basedOnSize)
     }
@@ -141,6 +145,30 @@ public struct OnboardingView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("onboarding.reminderStatus")
         }
+    }
+
+    // Sayfa noktaları kaydırılan içeriğin dışında, alt düğmenin üstünde kendi satırında durur.
+    // VoiceOver'da tek öğe: "Sayfa 2 / 4"; yukarı/aşağı kaydırma sayfa değiştirir.
+    private var pageIndicator: some View {
+        HStack(spacing: 8) {
+            ForEach(model.pages.indices, id: \.self) { index in
+                Circle()
+                    .fill(index == model.pageIndex ? Color.vademBrand : Color.vademSeparator)
+                    .frame(width: 8, height: 8)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 24)
+        .padding(.top, 8)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Page \(model.pageIndex + 1) of \(model.pages.count)", bundle: .module))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: model.pageIndex += 1
+            case .decrement: model.pageIndex -= 1
+            @unknown default: break
+            }
+        }
+        .accessibilityIdentifier("onboarding.pageIndicator")
     }
 
     // Alt düğme: Devam; son sayfada Başla.

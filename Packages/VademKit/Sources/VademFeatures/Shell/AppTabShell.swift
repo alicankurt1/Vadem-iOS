@@ -31,7 +31,9 @@ import UIKit
 /// step (see ``HomeView/init(model:onAdd:onDataChanged:)`` for the edit forms, the assistant and the inbox).
 /// ``HomeViewModel/requestInbox()`` selects This month, where Home pushes the ``InboxView``.
 /// On first launch (``OnboardingDecision``) the ``OnboardingView`` covers the shell as a layer in
-/// the same hierarchy (not a full-screen cover); Skip or Get started fades it out.
+/// the same hierarchy (not a full-screen cover); Skip or Get started fades it out. The decision reads
+/// the repository synchronously in `init` (so Home never flashes) and is taken once per process:
+/// a re-created shell neither reads the store again nor reopens or re-marks the walkthrough.
 @MainActor
 public struct AppTabShell: View {
     @State private var model: HomeViewModel
@@ -142,8 +144,9 @@ public struct AppTabShell: View {
         #endif
         launchTab = initialTab
         // Karar ilk karede verilir (veri depodan eşzamanlı okunur): Home bir an görünüp kaybolmaz.
+        // Süreç başına bir kez: kabuk yeniden kurulursa depo tekrar okunmaz, görüldü tekrar yazılmaz.
         var initialOnboardingModel: OnboardingViewModel?
-        switch Self.onboardingDecision(for: model) {
+        switch Self.takeLaunchOnboardingDecision(for: model) {
         case .show:
             // Ayarlar sekmesiyle aynı model: seçim Ayarlar'daki hatırlatma anahtarında görünür.
             initialOnboardingModel = settings.makeOnboardingModel()
@@ -163,6 +166,16 @@ public struct AppTabShell: View {
     }
 
     // Görüldü sürümü, veri olup olmadığı ve başlatma argümanları; depo okunamazsa tanıtım açılmaz.
+    // Açılış kararı alındı mı; ana aktörde, süreç boyunca bir kez true olur.
+    private static var hasTakenLaunchOnboardingDecision = false
+
+    // Açılış kararı yalnızca ilk çağrıda hesaplanır (yan etkiler dahil); sonraki çağrılar `.hide` döner.
+    private static func takeLaunchOnboardingDecision(for model: HomeViewModel) -> OnboardingDecision {
+        guard !hasTakenLaunchOnboardingDecision else { return .hide }
+        hasTakenLaunchOnboardingDecision = true
+        return onboardingDecision(for: model)
+    }
+
     private static func onboardingDecision(for model: HomeViewModel) -> OnboardingDecision {
         let arguments = ProcessInfo.processInfo.arguments
         let seenVersion = OnboardingViewModel.seenVersion()

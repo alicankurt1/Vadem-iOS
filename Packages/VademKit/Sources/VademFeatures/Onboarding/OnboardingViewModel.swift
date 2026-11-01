@@ -75,8 +75,11 @@ public enum OnboardingPage: Int, CaseIterable, Sendable, Hashable, Identifiable 
 /// The seen state is the walkthrough version saved under ``seenVersionKey`` in the injected
 /// `UserDefaults`. Skip and Get started save it and call `onFinish`; neither asks for the
 /// notification permission. "Turn on reminders" goes through ``SettingsViewModel/turnOnReminders()``
-/// (which asks the system once); "Not now" turns payment reminders off with
-/// ``SettingsViewModel/setEnabled(_:)``. Neither closes the walkthrough.
+/// (which asks the system once). On first run "Not now" turns payment reminders off with
+/// ``SettingsViewModel/setEnabled(_:)``. A replay (``isReplay``, Settings' "Show walkthrough again")
+/// never switches reminders off: when they are already on the reminder buttons are not offered
+/// and the page says "Reminders are on."; when they are off, "Not now" only records the choice.
+/// Neither choice closes the walkthrough.
 @MainActor
 @Observable
 public final class OnboardingViewModel: Identifiable {
@@ -107,6 +110,9 @@ public final class OnboardingViewModel: Identifiable {
     /// `true` after Skip or Get started.
     public private(set) var isFinished = false
 
+    /// `true` when opened again from Settings rather than on first launch.
+    public let isReplay: Bool
+
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let reminders: SettingsViewModel?
     @ObservationIgnored private let onFinish: @MainActor () -> Void
@@ -115,12 +121,14 @@ public final class OnboardingViewModel: Identifiable {
     ///
     /// `defaults` keeps the seen version (tests pass `UserDefaults(suiteName:)`); `reminders` is the
     /// Settings model whose toggle the reminder choice changes (`nil` changes nothing); `onFinish`
-    /// runs once after Skip or Get started.
+    /// runs once after Skip or Get started. `isReplay` marks a replay from Settings (see the type).
     public init(
         defaults: UserDefaults = .standard,
         reminders: SettingsViewModel?,
+        isReplay: Bool = false,
         onFinish: @escaping @MainActor () -> Void = {}
     ) {
+        self.isReplay = isReplay
         self.defaults = defaults
         self.reminders = reminders
         self.onFinish = onFinish
@@ -137,24 +145,36 @@ public final class OnboardingViewModel: Identifiable {
     public var isLastPage: Bool { pageIndex == pages.count - 1 }
     /// Skip is offered on every page but the last.
     public var showsSkip: Bool { !isLastPage }
-    /// `true` while "Turn on reminders" and "Not now" are offered (before a choice is made).
-    public var showsReminderButtons: Bool { reminderChoice == nil }
+    /// `true` while "Turn on reminders" and "Not now" are offered: before a choice is made, and
+    /// on a replay only while reminders are off.
+    public var showsReminderButtons: Bool {
+        reminderChoice == nil && !remindersAlreadyOnInReplay
+    }
+
+    // Ayarlar'dan yeniden açıldı ve hatırlatmalar zaten açık: seçim sunulmaz, kapatılmaz.
+    private var remindersAlreadyOnInReplay: Bool {
+        isReplay && reminders?.isEnabled == true
+    }
 
     /// The line shown on the reminders page after a choice, or `nil` before one.
     public var reminderStatusText: String? {
         switch reminderChoice {
         case nil:
-            return nil
+            return remindersAlreadyOnInReplay ? Self.remindersOnText : nil
         case .turnedOn:
             // İzin reddedildiyse Ayarlar'daki açıklama tekrarlanır; kullanıcı yine de devam eder.
             if reminders?.authorization == .denied { return SettingsView.permissionDeniedMessage }
-            return String(localized: "Reminders are on.", bundle: .module, comment: "Walkthrough reminders page after turning them on")
+            return Self.remindersOnText
         case .declined:
             return String(
                 localized: "Reminders are off. You can turn them on in Settings.",
                 bundle: .module, comment: "Walkthrough reminders page after Not now"
             )
         }
+    }
+
+    private static var remindersOnText: String {
+        String(localized: "Reminders are on.", bundle: .module, comment: "Walkthrough reminders page after turning them on")
     }
 
     /// Continue: shows the next page; on the last page it is ``getStarted()``.
@@ -182,18 +202,22 @@ public final class OnboardingViewModel: Identifiable {
     /// - Returns: The refresh; await its `value` to know it finished (`nil` without a Settings model).
     @discardableResult
     public func turnOnReminders() -> Task<Void, Never>? {
-        guard reminderChoice == nil else { return nil }
+        guard showsReminderButtons else { return nil }
         reminderChoice = .turnedOn
         return reminders?.turnOnReminders()
     }
 
-    /// Turns payment reminders off; the walkthrough itself never asks for the permission here.
+    /// On first run turns payment reminders off; on a replay only records the choice (reminders
+    /// are never switched off from a replay). The walkthrough itself never asks for the permission here.
     ///
-    /// - Returns: The refresh; await its `value` to know it finished (`nil` without a Settings model).
+    /// - Returns: The refresh; await its `value` to know it finished (`nil` on a replay, after a
+    ///   choice, or without a Settings model).
     @discardableResult
     public func notNow() -> Task<Void, Never>? {
-        guard reminderChoice == nil else { return nil }
+        guard showsReminderButtons else { return nil }
         reminderChoice = .declined
+        // Yeniden gösterimde kullanıcının ayarı değiştirilmez.
+        guard !isReplay else { return nil }
         return reminders?.setEnabled(false)
     }
 
