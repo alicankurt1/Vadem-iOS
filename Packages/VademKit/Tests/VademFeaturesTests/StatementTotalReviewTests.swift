@@ -100,7 +100,7 @@ struct StatementTotalReviewTests {
 
     @Test("Possible duplicates of saved installments are subtracted even when unselected")
     func duplicatesSubtracted() throws {
-        let card = Self.card("Akbank")
+        let card = Self.card("Everyday")
         let (model, _) = try Self.makeModel(cards: [card], saved: [Self.savedGiyim(on: card)])
         #expect(model.rows.map(\.isSelected) == [true, false, true])
         // 1234,56 + 400 seçili, 450 olası tekrar: hepsi düşer.
@@ -110,7 +110,7 @@ struct StatementTotalReviewTests {
 
     @Test("A row that is both selected and a duplicate counts once")
     func selectedDuplicateCountsOnce() throws {
-        let card = Self.card("Akbank")
+        let card = Self.card("Everyday")
         let (model, _) = try Self.makeModel(cards: [card], saved: [Self.savedGiyim(on: card)])
         model.toggleSelection(at: 1)
         #expect(model.rows[1].isSelected)
@@ -119,12 +119,12 @@ struct StatementTotalReviewTests {
 
     @Test("Changing the card re-evaluates duplicates and the offer")
     func cardChange() throws {
-        let a = Self.card("Akbank"), b = Self.card("Bonus")
+        let a = Self.card("Everyday"), b = Self.card("Bonus")
         let (model, _) = try Self.makeModel(cards: [a, b], lastUsed: b.id, saved: [Self.savedGiyim(on: a)])
         #expect(model.rows.allSatisfy { $0.isSelected })
         model.toggleSelection(at: 1)
         #expect(model.statementTotalDeduction.amount == Self.dec("1634.56"))
-        // Akbank'ta Giyim olası tekrar olur: seçimi kalkar ama toplamdan yine düşer.
+        // Everyday'ta Giyim olası tekrar olur: seçimi kalkar ama toplamdan yine düşer.
         model.cardID = a.id
         #expect(!model.rows[1].isSelected)
         #expect(model.statementTotalDeduction.amount == Self.dec("2084.56"))
@@ -167,7 +167,7 @@ struct StatementTotalReviewTests {
 
     @Test("Nothing is saved before Add, whatever the user toggles")
     func nothingBeforeAdd() throws {
-        let a = Self.card("Akbank"), b = Self.card("Bonus")
+        let a = Self.card("Everyday"), b = Self.card("Bonus")
         let (model, repository) = try Self.makeModel(cards: [a, b])
         model.toggleSelection(at: 0)
         model.toggleStatementTotal()
@@ -179,7 +179,7 @@ struct StatementTotalReviewTests {
 
     @Test("Add saves the installments and one one-time payment on the due date, on the chosen card")
     func saveBoth() throws {
-        let a = Self.card("Akbank"), b = Self.card("Bonus")
+        let a = Self.card("Everyday"), b = Self.card("Bonus")
         let (model, repository) = try Self.makeModel(cards: [a, b], lastUsed: a.id)
         model.cardID = b.id
         model.toggleSelection(at: 1)
