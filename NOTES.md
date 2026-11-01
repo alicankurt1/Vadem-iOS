@@ -659,3 +659,10 @@ Her fazda öğrenilen kavramlar ve mülakat soruları.
 - **Kapı neyi yakaladı:** Reviewer: Ayarlar'dan tekrar oynatmada "Şimdi değil" kullanıcının açık hatırlatıcılarını kapatıyordu (major); tekrar oynatmada hatırlatıcı düğmeleri artık gösterilmiyor. UI yakalama: AX5'te sistem sayfa noktaları metnin üstüne biniyordu; sonra kendi gösterge satırımız 56x8 pt olduğu için `[a11y]` dokunma alanı hatası verdi, 44 pt yapıldı.
 - **Açık kalan:** Tekrar oynatmada hatırlatıcı "açık" sayılırken yalnızca tercih okunuyor, sistem izni okunmuyor (reddedilmiş olsa da "açık" görünür).
 - **Ders:** Sistem `TabView(.page)` göstergesi büyük metinde ve erişilebilirlik denetiminde sorunlu; kendi göstergeni yazarsan dokunma alanını baştan 44 pt tasarla.
+
+### Koşu #259 — Tanıtım sayfalarına animasyonlu çizimler
+
+- **Ne yapıldı:** PR #268 (33 dk, 5 verify, 0 başarısız, 1 düzeltme turu). Dört sayfanın her biri mevcut `Design/` bileşenlerinden (HeroPanel, AmountText, PaymentRow, SurfaceCard) kurulmuş, `PhaseAnimator` ve `symbolEffect` kullanan bir çizim gösteriyor. Zamanlama ve örnek veri SwiftUI'sız `OnboardingAnimation` içinde, birim testli.
+- **Kapı neyi yakaladı:** Reviewer: testte `Decimal` bir Double literalinden kuruluyordu, tam `Decimal` ile düzeltildi. Hedefli UI yakalaması (açık, koyu, AX5) ilk seferde temiz geçti.
+- **Karar:** Reduce Motion ve `-ui-static-motion` altında (ve ekran dışındayken) animatör hiç kurulmuyor, statik son kare gösteriliyor; yoksa erişilebilirlik denetimi uygulamayı hiç boşta görmez.
+- **Açık kalan:** `OnboardingPage.systemImage` üretimde artık kullanılmıyor, yalnızca testler okuyor; temizlik işinde kaldırılabilir. Kaydırılan sayfa geçiş sırasında son kareye atlıyor (kabul edildi).
