@@ -37,7 +37,8 @@ import Foundation
 /// **Statement summary** (``parseStatement(lines:)``): the total is the first amount after `Dönem Borcunuz`
 /// (else `Toplam Borcunuz`) on its line, before any `Asgari` (minimum payment) label, or the next line when
 /// that line is only an amount; it must be greater than zero. The due date is the first date after
-/// `Son Ödeme Tarihi`, or the next line when that line is only a date. Without both there is no summary.
+/// `Son Ödeme Tarihi`, or the next line when that line is only a date. When a labelled line gives nothing, later
+/// lines with the same label are tried. Without both there is no summary.
 public enum StatementParser {
     /// Returns the installment candidates found in `lines`, in the order they appear.
     public static func parse(lines: [String]) -> [InstallmentCandidate] {
@@ -365,11 +366,17 @@ private enum SummaryScan {
         return StatementSummary(total: total, dueDate: dueDate)
     }
 
-    // Etiketli ilk satır kullanılır: etiketten sonraki ilk tutar, yoksa yalnızca tutar olan sonraki satır.
+    // Etiketli satırlar sırayla denenir; sonuç veren ilk satır kullanılır (ör. tutarsız bir not satırı atlanır).
     private static func total(after label: String, in lines: [String], patterns: Patterns) -> Decimal? {
-        guard let index = lines.firstIndex(where: { $0.contains(label) }),
-              var rest = text(after: label, in: lines[index])
-        else { return nil }
+        lines.indices.lazy
+            .filter { lines[$0].contains(label) }
+            .compactMap { total(after: label, at: $0, in: lines, patterns: patterns) }
+            .first
+    }
+
+    // Etiketten sonraki ilk tutar, yoksa yalnızca tutar olan sonraki satır.
+    private static func total(after label: String, at index: Int, in lines: [String], patterns: Patterns) -> Decimal? {
+        guard var rest = text(after: label, in: lines[index]) else { return nil }
         if let minimum = rest.range(of: minimumPaymentLabel) {
             rest = String(rest[..<minimum.lowerBound])
         }
@@ -388,9 +395,15 @@ private enum SummaryScan {
     }
 
     private static func dueDate(in lines: [String], patterns: Patterns) -> StatementDate? {
-        guard let index = lines.firstIndex(where: { $0.contains(dueDateLabel) }),
-              let rest = text(after: dueDateLabel, in: lines[index])
-        else { return nil }
+        lines.indices.lazy
+            .filter { lines[$0].contains(dueDateLabel) }
+            .compactMap { dueDate(at: $0, in: lines, patterns: patterns) }
+            .first
+    }
+
+    // Etiketten sonraki ilk geçerli tarih, yoksa yalnızca tarih olan sonraki satır.
+    private static func dueDate(at index: Int, in lines: [String], patterns: Patterns) -> StatementDate? {
+        guard let rest = text(after: dueDateLabel, in: lines[index]) else { return nil }
         let found = patterns.dates(in: rest)
         if !found.isEmpty { return found.lazy.compactMap(\.date).first }
         guard index + 1 < lines.count, patterns.dates(in: lines[index]).isEmpty else { return nil }

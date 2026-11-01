@@ -259,15 +259,15 @@ public final class StatementReviewViewModel: Identifiable {
         summary.map { Money($0.total) - statementTotalDeduction }
     }
 
-    /// `true` when there is a ``summary`` and ``statementTotalRemainder`` is greater than zero.
+    /// `true` when there is a ``summary``, ``statementTotalRemainder`` is greater than zero and it makes a valid
+    /// one-time payment (e.g. the due month is supported).
     public var isStatementTotalOffered: Bool {
-        guard let remainder = statementTotalRemainder else { return false }
-        return remainder > .zero
+        statementTotalItem() != nil
     }
 
-    /// `true` when Add saves the statement total: it is offered, selected and makes a valid payment.
+    /// `true` when Add saves the statement total: it is offered and selected.
     public var willAddStatementTotal: Bool {
-        isStatementTotalSelected && statementTotalItem() != nil
+        isStatementTotalSelected && isStatementTotalOffered
     }
 
     /// The calculation as `"46.354,97 − 3.327,77 = 43.027,20"` (total − deduction = remainder), or `nil` without
@@ -298,7 +298,7 @@ public final class StatementReviewViewModel: Identifiable {
 
     // Ekstre borcu tek seferlik ödeme olarak: son ödeme gününde, seçili kartta, kalan tutarla.
     private func statementTotalItem() -> OneTimePaymentItem? {
-        guard let summary, isStatementTotalOffered, let remainder = statementTotalRemainder else { return nil }
+        guard let summary, let remainder = statementTotalRemainder, remainder > .zero else { return nil }
         let draft = OneTimePaymentDraft(
             title: Self.statementTotalTitle, cardID: cardID, amount: remainder.amount,
             dueMonth: summary.dueDate.yearMonth, dueDay: summary.dueDate.day
