@@ -62,6 +62,7 @@
 		D8A0000000000000000B0001 /* VademWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VademWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8A0000000000000000B0003 /* Widget.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Widget.xcconfig; sourceTree = "<group>"; };
 		D8A0000000000000000B0004 /* VademWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VademWidget.entitlements; sourceTree = "<group>"; };
+		D8A0000000000000000B0017 /* Vadem-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Vadem-Info.plist"; sourceTree = "<group>"; };
 		D8A0000000000000000B0016 /* VademWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "VademWidget-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -153,6 +154,7 @@
 				D8A0000000000000000000A6 /* App.xcconfig */,
 				D8A0000000000000000000A1 /* Shared.xcconfig */,
 				D8A0000000000000000000A7 /* Vadem.entitlements */,
+				D8A0000000000000000B0017 /* Vadem-Info.plist */,
 				D8A0000000000000000B0004 /* VademWidget.entitlements */,
 				D8A0000000000000000B0016 /* VademWidget-Info.plist */,
 				D8A0000000000000000B0003 /* Widget.xcconfig */,
@@ -522,7 +524,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -548,7 +549,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (

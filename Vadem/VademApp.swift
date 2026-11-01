@@ -47,6 +47,8 @@ struct VademApp: App {
                 setup.root
                 #endif
             }
+            // Açılış ekranı (Config/Vadem-Info.plist) ile aynı renk ve logo; kısa bir geçişle uygulamaya bırakır.
+            .launchHandoff(background: Color("LaunchBackground"), logo: Image("LaunchLogo"))
             // Aylık özet bildirimine dokunulunca gelen kutusu açılır; soğuk açılışta bekleyen dokunuş burada teslim edilir.
             .onAppear {
                 let model = setup.liveModel
